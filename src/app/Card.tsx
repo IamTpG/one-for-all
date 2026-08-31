@@ -38,6 +38,7 @@ function timeAgo(now: number, iso: string): string {
 
 export default function Card({ item }: { item: FeedItem }) {
   const [videoShown, setVideoShown] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   // Starts equal to the item's own timestamp so the first client render
   // matches the server render exactly (both show "just now"); ticks
   // forward after mount.
@@ -52,6 +53,15 @@ export default function Card({ item }: { item: FeedItem }) {
       clearInterval(interval);
     };
   }, []);
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setLightboxOpen(false);
+    }
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [lightboxOpen]);
 
   const Icon = ICONS[item.sourceType];
   const canReadMore = item.sourceType !== "github-trending";
@@ -118,8 +128,15 @@ export default function Card({ item }: { item: FeedItem }) {
         ) : (
           item.imageUrl && (
             <div className={styles.media}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={item.imageUrl} alt="" className={styles.mediaImg} loading="lazy" />
+              <button
+                className={styles.imageButton}
+                type="button"
+                aria-label="View full image"
+                onClick={() => setLightboxOpen(true)}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={item.imageUrl} alt="" className={styles.mediaImg} loading="lazy" />
+              </button>
             </div>
           )
         )}
@@ -159,6 +176,34 @@ export default function Card({ item }: { item: FeedItem }) {
           </div>
         )}
       </div>
+
+      {lightboxOpen && item.imageUrl && (
+        <div
+          className={styles.lightbox}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Full-size image"
+          onClick={() => setLightboxOpen(false)}
+        >
+          <button
+            className={styles.lightboxClose}
+            type="button"
+            aria-label="Close"
+            onClick={() => setLightboxOpen(false)}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M6 6 L18 18 M18 6 L6 18" />
+            </svg>
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={item.imageUrl}
+            alt=""
+            className={styles.lightboxImg}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </article>
   );
 }
