@@ -126,7 +126,7 @@ export default function Card({ item }: { item: FeedItem }) {
 
         {item.summary && (
           <div className={styles.summaryRow}>
-            {item.aiSummary && <span className={`${styles.aiBadge} mono`}>AI</span>}
+            {item.aiSummary && <span className={`${styles.aiBadge} mono`}>AI Summary</span>}
             <p className={`${styles.summary} ${styles.clamped}`}>{item.summary}</p>
           </div>
         )}

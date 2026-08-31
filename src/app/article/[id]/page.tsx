@@ -86,7 +86,7 @@ export default async function ArticlePage({
           <div className={styles.body}>
             {item.summary && (
               <div className={styles.summaryRow}>
-                {item.aiSummary && <span className={`${styles.aiBadge} mono`}>AI</span>}
+                {item.aiSummary && <span className={`${styles.aiBadge} mono`}>AI Summary</span>}
                 <p>{item.summary}</p>
               </div>
             )}
