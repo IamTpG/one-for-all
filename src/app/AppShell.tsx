@@ -48,16 +48,44 @@ export default function AppShell({
   const [now, setNow] = useState(fetchedAt);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
+  // The order you're currently scrolling through, frozen independently of
+  // the `items` prop. A router.refresh() (e.g. after toggling a source or
+  // watched repo) re-renders this component with a freshly re-sorted
+  // `items` array, which would otherwise splice new items into wherever
+  // their publish date lands — including above stuff you've already
+  // scrolled past. Instead, anything still present just gets its data
+  // refreshed in place, anything gone disappears immediately (that's the
+  // point of the toggle you just clicked), and anything genuinely new gets
+  // appended to the end. A real page reload (fresh mount) just takes
+  // whatever order the server gives it, no diffing involved.
+  const [stableItems, setStableItems] = useState<FeedItem[]>(items);
+  const previousItemsRef = useRef(items);
+
+  useEffect(() => {
+    if (items === previousItemsRef.current) return;
+    previousItemsRef.current = items;
+
+    setStableItems((prevStable) => {
+      const incomingById = new Map(items.map((item) => [item.id, item]));
+      const kept = prevStable
+        .filter((item) => incomingById.has(item.id))
+        .map((item) => incomingById.get(item.id)!);
+      const keptIds = new Set(kept.map((item) => item.id));
+      const appended = items.filter((item) => !keptIds.has(item.id));
+      return [...kept, ...appended];
+    });
+  }, [items]);
+
   const filteredItems = useMemo(() => {
     if (activeFilter.kind === "source") {
-      return items.filter((item) => item.sourceId === activeFilter.value);
+      return stableItems.filter((item) => item.sourceId === activeFilter.value);
     }
     if (activeFilter.kind === "topic") {
-      return items.filter((item) => item.topics?.includes(activeFilter.value));
+      return stableItems.filter((item) => item.topics?.includes(activeFilter.value));
     }
-    if (activeFilter.value === "all") return items;
-    return items.filter((item) => item.sourceType === activeFilter.value);
-  }, [items, activeFilter]);
+    if (activeFilter.value === "all") return stableItems;
+    return stableItems.filter((item) => item.sourceType === activeFilter.value);
+  }, [stableItems, activeFilter]);
 
   const visibleItems = filteredItems.slice(0, visibleCount);
   const hasMore = visibleCount < filteredItems.length;
