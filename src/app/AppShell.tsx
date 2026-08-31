@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { ActiveFilter, FeedItem } from "@/lib/types";
+import type { ActiveFilter, FeedItem, SettingsGroup } from "@/lib/types";
 import Card from "./Card";
+import FeedSettings from "./FeedSettings";
 import SidebarLeft from "./SidebarLeft";
 import SidebarRight from "./SidebarRight";
 import ThemeToggle from "./ThemeToggle";
@@ -20,12 +21,16 @@ function timeAgo(now: number, then: number): string {
 export default function AppShell({
   items,
   feeds,
+  settingsGroups,
+  disabledFeeds,
   trendingRepos,
   topHn,
   fetchedAt,
 }: {
   items: FeedItem[];
   feeds: { name: string; sourceId: string }[];
+  settingsGroups: SettingsGroup[];
+  disabledFeeds: string[];
   trendingRepos: FeedItem[];
   topHn: FeedItem[];
   fetchedAt: number;
@@ -103,6 +108,7 @@ export default function AppShell({
               <span className={styles.liveDot} aria-hidden="true" />
               {items.length} items · updated {timeAgo(now, fetchedAt)}
             </span>
+            <FeedSettings groups={settingsGroups} disabledFeeds={disabledFeeds} />
             <ThemeToggle />
           </div>
         </div>

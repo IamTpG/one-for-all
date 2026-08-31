@@ -19,3 +19,8 @@ export type FeedItem = {
 export type ActiveFilter =
   | { kind: "type"; value: SourceType | "all" }
   | { kind: "source"; value: string };
+
+export type SettingsGroup = {
+  title: string;
+  sources: { name: string; sourceId: string }[];
+};
