@@ -1,0 +1,243 @@
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.cardBody {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.sourceIcon {
+  width: 17px;
+  height: 17px;
+  flex: none;
+  color: var(--text-muted);
+}
+
+.sourceName {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+}
+
+.dotSep {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--text-faint);
+  flex: none;
+}
+
+.timestamp {
+  font-size: 0.72rem;
+  color: var(--text-faint);
+}
+
+.tagBadge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 5px;
+  padding: 2px 7px;
+  display: inline-flex;
+  width: fit-content;
+}
+
+.topicRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.topicPill {
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  background: var(--surface-sunken);
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+
+.headline {
+  font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1.35;
+  text-wrap: balance;
+  text-decoration: none;
+}
+.headline:hover {
+  color: var(--accent);
+}
+
+.summaryRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.aiBadge {
+  flex: none;
+  margin-top: 2px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.summary {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  max-width: 62ch;
+}
+.clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.readMore {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+  text-decoration: none;
+  padding: 2px 0;
+}
+.readMore:hover {
+  text-decoration: underline;
+}
+.chevronRight {
+  width: 11px;
+  height: 11px;
+  transform: rotate(-90deg);
+}
+
+/* ---------- Media ---------- */
+
+.media {
+  margin: 2px -16px 0;
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--surface-sunken);
+}
+
+.mediaImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.videoEmbed {
+  position: absolute;
+  inset: 0;
+}
+.videoEmbed :global(iframe) {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.playScrim {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 12, 16, 0.15);
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  width: 100%;
+}
+
+.playBtn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(16, 19, 26, 0.72);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+.playIcon {
+  width: 18px;
+  height: 18px;
+  color: #fff;
+  margin-left: 3px;
+}
+
+/* ---------- Meta row ---------- */
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-top: 1px solid var(--border);
+  margin-top: 2px;
+  padding-top: 10px;
+}
+
+.metaStat {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.metaIcon {
+  width: 13px;
+  height: 13px;
+  color: var(--text-faint);
+}
+
+.openLink {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 4px 6px;
+  margin-right: -6px;
+  border-radius: 6px;
+}
+.openLink:hover {
+  color: var(--accent);
+  background: var(--surface-sunken);
+}
+.openIcon {
+  width: 11px;
+  height: 11px;
+}
