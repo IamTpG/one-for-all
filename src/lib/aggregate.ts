@@ -7,10 +7,39 @@ import { classifyAndSummarize } from "@/lib/groq";
 import { matchKeywordTopics } from "@/lib/keywordTopics";
 import { getCachedAnalyses, setCachedAnalysis } from "@/lib/redis";
 import type { FeedItem } from "@/lib/types";
-import { repoListKey } from "@/lib/watchedRepos";
 
-let cache: { items: FeedItem[]; fetchedAt: number; key: string } | null = null;
+// fetchedRepos is every repo whose releases are currently represented in
+// `items` — a superset that only ever grows (repos aren't dropped from it
+// just because they've since been unwatched; see filterByWatchedRepos).
+// This decouples "what's been fetched" from "what the caller currently
+// wants displayed," so unwatching a repo never needs a fetch at all, and
+// watching a new one only ever needs a small targeted fetch for that repo
+// instead of re-running the whole pipeline.
+let cache: { items: FeedItem[]; fetchedAt: number; fetchedRepos: string[] } | null = null;
 let refreshing: Promise<void> | null = null;
+let addingRepos: Promise<void> | null = null;
+
+function sortByDateDesc(items: FeedItem[]): FeedItem[] {
+  return [...items].sort(
+    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+  );
+}
+
+function releaseRepoFromId(id: string): string | null {
+  if (!id.startsWith("gh-release:")) return null;
+  const [, repo] = id.split(":");
+  return repo ?? null;
+}
+
+// Only github-release items are repo-scoped; everything else (RSS, HN,
+// trending, Anthropic) passes through untouched.
+function filterByWatchedRepos(items: FeedItem[], repos: string[]): FeedItem[] {
+  const allowed = new Set(repos);
+  return items.filter((item) => {
+    const repo = releaseRepoFromId(item.id);
+    return repo === null || allowed.has(repo);
+  });
+}
 
 async function fetchAndMerge(repos: string[]): Promise<FeedItem[]> {
   const [rss, anthropic, hn, trending, releases] = await Promise.all([
@@ -21,9 +50,7 @@ async function fetchAndMerge(repos: string[]): Promise<FeedItem[]> {
     fetchGithubReleases(repos),
   ]);
 
-  return [...rss, ...anthropic, ...hn, ...trending, ...releases].sort(
-    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-  );
+  return sortByDateDesc([...rss, ...anthropic, ...hn, ...trending, ...releases]);
 }
 
 async function withConcurrency<T>(
@@ -80,35 +107,67 @@ async function enrichWithTopicsAndSummaries(items: FeedItem[]): Promise<FeedItem
 async function refresh(repos: string[]): Promise<void> {
   const merged = await fetchAndMerge(repos);
   const items = await enrichWithTopicsAndSummaries(merged);
-  cache = { items, fetchedAt: Date.now(), key: repoListKey(repos) };
+  cache = { items, fetchedAt: Date.now(), fetchedRepos: repos };
+}
+
+// Fetches releases for just the given (previously-unseen) repos and merges
+// them into the existing cache, leaving fetchedAt and every other source's
+// items untouched — used when watching a new repo shouldn't cost a full
+// pipeline re-run.
+async function addRepos(repos: string[]): Promise<void> {
+  if (!cache) return;
+  const releases = await fetchGithubReleases(repos);
+  const enriched = await enrichWithTopicsAndSummaries(releases);
+  cache = {
+    items: sortByDateDesc([...cache.items, ...enriched]),
+    fetchedAt: cache.fetchedAt,
+    fetchedRepos: [...cache.fetchedRepos, ...repos],
+  };
 }
 
 export async function getAggregatedFeed(
   repos: string[]
 ): Promise<{ items: FeedItem[]; fetchedAt: number }> {
-  const key = repoListKey(repos);
-
-  if (!cache || cache.key !== key) {
-    // Cold start, or the watched-repo list changed since the last fetch:
-    // either way the cached items don't reflect what's being asked for, so
-    // this request has to wait for a fresh one.
+  if (!cache) {
+    // True cold start: nothing to serve yet, this request has to wait.
     await refresh(repos);
-    return cache!;
+  } else {
+    let missing = repos.filter((r) => !cache!.fetchedRepos.includes(r));
+    if (missing.length > 0) {
+      // Single-flight guard: if another request is already fetching new
+      // repos, wait for it instead of duplicating the work, then recheck
+      // — it may have already covered what this request needed.
+      if (addingRepos) await addingRepos.catch(() => {});
+      missing = repos.filter((r) => !cache!.fetchedRepos.includes(r));
+      if (missing.length > 0) {
+        addingRepos = addRepos(missing)
+          .catch((err) => console.error("[aggregate] failed to add watched repos:", err))
+          .finally(() => {
+            addingRepos = null;
+          });
+        await addingRepos;
+      }
+    }
+
+    const isStale = Date.now() - cache.fetchedAt >= CACHE_TTL_MS;
+    if (isStale && !refreshing) {
+      // Stale-while-revalidate: serve what we have immediately, refresh in
+      // the background so the AI calls in enrichWithTopicsAndSummaries never
+      // add latency to a real request. Refreshes the full known repo set,
+      // not just the repos this particular request asked for, so a repo
+      // that's since been unwatched doesn't silently go stale forever.
+      refreshing = refresh(cache.fetchedRepos)
+        .catch((err) => console.error("[aggregate] background refresh failed:", err))
+        .finally(() => {
+          refreshing = null;
+        });
+    }
   }
 
-  const isStale = Date.now() - cache.fetchedAt >= CACHE_TTL_MS;
-  if (isStale && !refreshing) {
-    // Stale-while-revalidate: serve what we have immediately, refresh in
-    // the background so the AI calls in enrichWithTopicsAndSummaries never
-    // add latency to a real request.
-    refreshing = refresh(repos)
-      .catch((err) => console.error("[aggregate] background refresh failed:", err))
-      .finally(() => {
-        refreshing = null;
-      });
-  }
-
-  return cache;
+  return {
+    items: filterByWatchedRepos(cache!.items, repos),
+    fetchedAt: cache!.fetchedAt,
+  };
 }
 
 export async function getFeedItemById(id: string, repos: string[]): Promise<FeedItem | null> {
