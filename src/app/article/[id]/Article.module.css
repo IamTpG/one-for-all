@@ -189,10 +189,22 @@
   font-style: italic;
 }
 
-.summaryRow {
+.aiSummaryBox {
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
   gap: 8px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+}
+
+.aiSummaryBox p {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.6;
+  font-size: 0.98rem;
 }
 
 .aiBadge {

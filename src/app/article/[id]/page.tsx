@@ -80,16 +80,18 @@ export default async function ArticlePage({
           )
         )}
 
+        {item.aiSummary && item.summary && (
+          <div className={styles.aiSummaryBox}>
+            <span className={`${styles.aiBadge} mono`}>AI Summary</span>
+            <p>{item.summary}</p>
+          </div>
+        )}
+
         {contentHtml ? (
           <div className={styles.body} dangerouslySetInnerHTML={{ __html: contentHtml }} />
         ) : (
           <div className={styles.body}>
-            {item.summary && (
-              <div className={styles.summaryRow}>
-                {item.aiSummary && <span className={`${styles.aiBadge} mono`}>AI Summary</span>}
-                <p>{item.summary}</p>
-              </div>
-            )}
+            {item.summary && !item.aiSummary && <p>{item.summary}</p>}
             <p className={styles.fallbackNote}>
               Couldn&apos;t load the full article for this one.
             </p>
