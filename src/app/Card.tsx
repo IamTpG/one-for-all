@@ -78,14 +78,23 @@ export default function Card({ item }: { item: FeedItem }) {
 
         {item.tag && <span className={`${styles.tagBadge} mono`}>{item.tag}</span>}
 
-        <a
-          className={`${styles.headline} display`}
-          href={item.url}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {item.title}
-        </a>
+        {canReadMore ? (
+          <Link href={`/article/${encodeURIComponent(item.id)}`} className={`${styles.headline} display`}>
+            {item.title}
+          </Link>
+        ) : (
+          // GitHub Trending items have no detail page to link to (no
+          // extraction pipeline for them), so the title still opens the
+          // repo directly, same as the "Open" link in the meta row.
+          <a
+            className={`${styles.headline} display`}
+            href={item.url}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {item.title}
+          </a>
+        )}
 
         {item.topics && item.topics.length > 0 && (
           <div className={styles.topicRow}>
