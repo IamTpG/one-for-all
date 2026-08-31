@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import type { FeedItem } from "@/lib/types";
 import {
+  ChevronIcon,
   GithubIcon,
   HnIcon,
   OpenIcon,
@@ -51,6 +53,7 @@ export default function Card({ item }: { item: FeedItem }) {
   }, []);
 
   const Icon = ICONS[item.sourceType];
+  const canReadMore = item.sourceType !== "github-trending";
 
   return (
     <article className={styles.card}>
@@ -107,6 +110,13 @@ export default function Card({ item }: { item: FeedItem }) {
         )}
 
         {item.summary && <p className={`${styles.summary} ${styles.clamped}`}>{item.summary}</p>}
+
+        {canReadMore && (
+          <Link href={`/article/${encodeURIComponent(item.id)}`} className={styles.readMore}>
+            {item.sourceType === "github-release" ? "Full changelog" : "Read more"}
+            <ChevronIcon className={styles.chevronRight} />
+          </Link>
+        )}
 
         {(item.points !== undefined || item.sourceType === "hn" || item.sourceType === "github-trending") && (
           <div className={styles.metaRow}>

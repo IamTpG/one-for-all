@@ -27,3 +27,8 @@ export async function getAggregatedFeed(): Promise<{ items: FeedItem[]; fetchedA
   cache = { items, fetchedAt: Date.now() };
   return cache;
 }
+
+export async function getFeedItemById(id: string): Promise<FeedItem | null> {
+  const { items } = await getAggregatedFeed();
+  return items.find((item) => item.id === id) ?? null;
+}
