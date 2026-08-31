@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { TOPICS } from "@/lib/config";
+import { resolveLocalized } from "@/lib/language";
 import type { FeedItem } from "@/lib/types";
 import {
   ChevronIcon,
@@ -15,6 +16,7 @@ import {
   StarIcon,
   UpvoteIcon,
 } from "@/lib/icons";
+import { useLanguage } from "./LanguageProvider";
 import styles from "./Card.module.css";
 
 const ICONS = {
@@ -37,6 +39,7 @@ function timeAgo(now: number, iso: string): string {
 }
 
 export default function Card({ item }: { item: FeedItem }) {
+  const { language } = useLanguage();
   const [videoShown, setVideoShown] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   // Starts equal to the item's own timestamp so the first client render
@@ -65,6 +68,8 @@ export default function Card({ item }: { item: FeedItem }) {
 
   const Icon = ICONS[item.sourceType];
   const canReadMore = item.sourceType !== "github-trending";
+  const title = resolveLocalized(item.title, item.titleVi, language).text ?? item.title;
+  const localizedSummary = resolveLocalized(item.summary, item.summaryVi, language);
 
   return (
     <article className={styles.card}>
@@ -80,7 +85,7 @@ export default function Card({ item }: { item: FeedItem }) {
 
         {canReadMore ? (
           <Link href={`/article/${encodeURIComponent(item.id)}`} className={`${styles.headline} display`}>
-            {item.title}
+            {title}
           </Link>
         ) : (
           // GitHub Trending items have no detail page to link to (no
@@ -92,7 +97,7 @@ export default function Card({ item }: { item: FeedItem }) {
             target="_blank"
             rel="noopener noreferrer"
           >
-            {item.title}
+            {title}
           </a>
         )}
 
@@ -150,12 +155,15 @@ export default function Card({ item }: { item: FeedItem }) {
           )
         )}
 
-        {item.summary && (
-          <div className={styles.summaryRow}>
-            {item.aiSummary && <span className={`${styles.aiBadge} mono`}>AI Summary</span>}
-            <p className={`${styles.summary} ${styles.clamped}`}>{item.summary}</p>
-          </div>
-        )}
+        <div className={styles.summaryRow}>
+          {item.aiSummary && <span className={`${styles.aiBadge} mono`}>AI Summary</span>}
+          {localizedSummary.text && (
+            <p className={`${styles.summary} ${styles.clamped}`}>{localizedSummary.text}</p>
+          )}
+          {localizedSummary.note && (
+            <p className={`${styles.translationNote} mono`}>{localizedSummary.note}</p>
+          )}
+        </div>
 
         {canReadMore && (
           <Link href={`/article/${encodeURIComponent(item.id)}`} className={styles.readMore}>

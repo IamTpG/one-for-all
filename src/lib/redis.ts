@@ -81,12 +81,16 @@ export async function getJson<T>(key: string): Promise<T | null> {
   }
 }
 
-export async function setJson(key: string, value: unknown): Promise<boolean> {
+export async function setJson(key: string, value: unknown, ttlSeconds?: number): Promise<boolean> {
   const redis = getClient();
   if (!redis) return false;
 
   try {
-    await redis.set(key, JSON.stringify(value));
+    if (ttlSeconds) {
+      await redis.set(key, JSON.stringify(value), "EX", ttlSeconds);
+    } else {
+      await redis.set(key, JSON.stringify(value));
+    }
     return true;
   } catch (err) {
     console.error(`[redis] failed to write ${key}:`, err);

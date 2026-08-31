@@ -80,3 +80,12 @@ export const AI_CONCURRENCY = 2;
 
 // How long an item's AI-generated summary/topics stay cached in Redis (s).
 export const AI_CACHE_TTL_SECONDS = 90 * 24 * 60 * 60;
+
+// Article bodies are capped before translation — very long articles only
+// get their first portion translated rather than chunked and reassembled.
+export const TRANSLATE_MAX_CHARS = 6000;
+
+// Output needs to cover a whole translated article rather than a short
+// summary, and Vietnamese diacritics tokenize less efficiently than plain
+// English, so this is sized well above a naive chars/4 estimate.
+export const TRANSLATE_MAX_TOKENS = 4000;

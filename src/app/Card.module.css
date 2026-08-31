@@ -114,6 +114,12 @@
   overflow: hidden;
 }
 
+.translationNote {
+  font-size: 0.75rem;
+  font-style: italic;
+  color: var(--text-faint);
+}
+
 .readMore {
   align-self: flex-start;
   display: flex;

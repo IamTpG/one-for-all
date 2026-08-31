@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Be_Vietnam_Pro, Noto_Sans, IBM_Plex_Mono } from "next/font/google";
+import { LANGUAGE_COOKIE, parseLanguageCookie } from "@/lib/language";
+import { LanguageProvider } from "./LanguageProvider";
 import "./globals.css";
 
 const beVietnamPro = Be_Vietnam_Pro({
@@ -34,7 +37,10 @@ const THEME_INIT_SCRIPT = `
 })();
 `;
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const cookieStore = await cookies();
+  const initialLanguage = parseLanguageCookie(cookieStore.get(LANGUAGE_COOKIE)?.value);
+
   return (
     <html
       lang="en"
@@ -44,7 +50,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
-      <body>{children}</body>
+      <body>
+        <LanguageProvider initialLanguage={initialLanguage}>{children}</LanguageProvider>
+      </body>
     </html>
   );
 }

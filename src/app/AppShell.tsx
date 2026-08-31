@@ -6,6 +6,7 @@ import { LockIcon } from "@/lib/icons";
 import type { ActiveFilter, FeedItem, SettingsGroup } from "@/lib/types";
 import Card from "./Card";
 import FeedSettings from "./FeedSettings";
+import LanguageToggle from "./LanguageToggle";
 import SidebarLeft from "./SidebarLeft";
 import SidebarRight from "./SidebarRight";
 import ThemeToggle from "./ThemeToggle";
@@ -156,6 +157,7 @@ export default function AppShell({
                 <LockIcon />
               </Link>
             )}
+            <LanguageToggle />
             <ThemeToggle />
           </div>
         </div>

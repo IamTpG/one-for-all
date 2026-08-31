@@ -67,10 +67,14 @@ async function withConcurrency<T>(
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
 }
 
-// Keyword tagging always runs (free, synchronous). Groq's classification
-// and summary — if REDIS_URL/GROQ_API_KEY are configured — add to that,
-// looked up in one batched call and only computed once per item ever
-// (cached in Redis), never re-run for items already seen.
+// Keyword tagging always runs (free, synchronous). Groq's classification,
+// summary, and Vietnamese translation — if REDIS_URL/GROQ_API_KEY are
+// configured — add to that, looked up in one batched call. An item is
+// reprocessed only if it's never been analyzed at all, or if it's missing
+// the Vietnamese fields added after it was first cached (a one-time
+// backfill for anything cached before translation existed, naturally
+// throttled by AI_BATCH_LIMIT/AI_CONCURRENCY the same as fresh items
+// instead of a 90-day wait or a Groq-hammering burst).
 async function enrichWithTopicsAndSummaries(items: FeedItem[]): Promise<FeedItem[]> {
   const withKeywords = items.map((item) => ({
     ...item,
@@ -87,10 +91,17 @@ async function enrichWithTopicsAndSummaries(items: FeedItem[]): Promise<FeedItem
       summary: hit.summary,
       aiSummary: true,
       topics: Array.from(new Set([...item.topics, ...hit.topics])),
+      titleVi: hit.titleVi,
+      summaryVi: hit.summaryVi,
     };
   });
 
-  const needsAi = enriched.filter((item) => !cached.has(item.id)).slice(0, AI_BATCH_LIMIT);
+  const needsAi = enriched
+    .filter((item) => {
+      const hit = cached.get(item.id);
+      return !hit || !hit.titleVi || !hit.summaryVi;
+    })
+    .slice(0, AI_BATCH_LIMIT);
 
   await withConcurrency(needsAi, AI_CONCURRENCY, async (item) => {
     const result = await classifyAndSummarize(item);
@@ -99,6 +110,8 @@ async function enrichWithTopicsAndSummaries(items: FeedItem[]): Promise<FeedItem
     item.summary = result.summary;
     item.aiSummary = true;
     item.topics = Array.from(new Set([...item.topics, ...result.topics]));
+    if (result.titleVi) item.titleVi = result.titleVi;
+    if (result.summaryVi) item.summaryVi = result.summaryVi;
   });
 
   return enriched;

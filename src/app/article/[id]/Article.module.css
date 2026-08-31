@@ -21,6 +21,12 @@
   justify-content: space-between;
 }
 
+.topbarActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .backLink {
   display: flex;
   align-items: center;
