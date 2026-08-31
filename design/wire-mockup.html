@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wire</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@500;600;700;800&family=Noto+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --surface: #ffffff;
+    --surface-sunken: #eceef2;
+    --border: #dde1e7;
+    --text: #12161c;
+    --text-muted: #5b6472;
+    --text-faint: #8891a0;
+    --accent: #c8720a;
+    --accent-ink: #ffffff;
+    --accent-soft: #fcecd9;
+    --focus-ring: #c8720a;
+    --shadow: 0 1px 2px rgba(18, 22, 28, 0.04), 0 1px 1px rgba(18, 22, 28, 0.03);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10131a;
+      --surface: #171b24;
+      --surface-sunken: #1d222c;
+      --border: #2a2f3b;
+      --text: #e7e9ee;
+      --text-muted: #9ba3b2;
+      --text-faint: #6b7382;
+      --accent: #e2a93b;
+      --accent-ink: #1a1305;
+      --accent-soft: rgba(226, 169, 59, 0.14);
+      --focus-ring: #e2a93b;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(0, 0, 0, 0.2);
+    }
+    :root:not([data-theme="light"]) .icon-sun { display: none; }
+    :root:not([data-theme="light"]) .icon-moon { display: block; }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #10131a;
+    --surface: #171b24;
+    --surface-sunken: #1d222c;
+    --border: #2a2f3b;
+    --text: #e7e9ee;
+    --text-muted: #9ba3b2;
+    --text-faint: #6b7382;
+    --accent: #e2a93b;
+    --accent-ink: #1a1305;
+    --accent-soft: rgba(226, 169, 59, 0.14);
+    --focus-ring: #e2a93b;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(0, 0, 0, 0.2);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { height: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Noto Sans", "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: inherit; }
+
+  ::selection { background: var(--accent-soft); }
+
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  .mono {
+    font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .display {
+    font-family: "Be Vietnam Pro", "Segoe UI", Roboto, sans-serif;
+  }
+
+  /* ---------- Header ---------- */
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .topbar-inner {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 18px 16px 0;
+  }
+
+  .brand-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .brand-mark {
+    width: 22px;
+    height: 22px;
+    color: var(--accent);
+    flex: none;
+  }
+
+  .brand h1 {
+    font-family: "Be Vietnam Pro", sans-serif;
+    font-weight: 800;
+    font-size: 1.25rem;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .feed-meta {
+    font-size: 0.75rem;
+    color: var(--text-faint);
+    white-space: nowrap;
+  }
+
+  .theme-toggle {
+    flex: none;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0;
+  }
+  .theme-toggle:hover { color: var(--text); border-color: var(--text-faint); }
+
+  .theme-toggle svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .icon-moon { display: none; }
+  :root[data-theme="dark"] .icon-sun { display: none; }
+  :root[data-theme="dark"] .icon-moon { display: block; }
+
+  .filters {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 12px 0 12px;
+    scrollbar-width: none;
+  }
+  .filters::-webkit-scrollbar { display: none; }
+
+  .pill {
+    flex: none;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 13px;
+    cursor: pointer;
+    transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+  }
+
+  .pill:hover { border-color: var(--text-faint); color: var(--text); }
+
+  .pill[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pill, .card, .expand-panel, .play-scrim { transition: none !important; }
+  }
+
+  /* ---------- Layout / sidebars ---------- */
+
+  .layout {
+    max-width: 1216px;
+    margin: 0 auto;
+    padding: 0 16px;
+  }
+
+  .sidebar-left,
+  .sidebar-right {
+    display: none;
+  }
+
+  @media (min-width: 980px) {
+    .layout {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr) 240px;
+      gap: 24px;
+      align-items: start;
+    }
+    .sidebar-left,
+    .sidebar-right {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: sticky;
+      top: 96px;
+    }
+  }
+
+  .nav-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .nav-title {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    padding: 4px 10px 8px;
+  }
+
+  .nav-link {
+    text-align: left;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .nav-link:hover { background: var(--surface-sunken); color: var(--text); }
+  .nav-link[aria-pressed="true"] {
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .widget {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 14px 14px 6px;
+  }
+
+  .widget-title {
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    color: var(--text-faint);
+    margin-bottom: 4px;
+  }
+
+  .widget-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 8px 0;
+    border-top: 1px solid var(--border);
+    text-decoration: none;
+    color: var(--text);
+    font-size: 0.82rem;
+  }
+  .widget-row:first-of-type { border-top: none; }
+
+  .widget-rank {
+    width: 14px;
+    flex: none;
+    font-size: 0.7rem;
+    color: var(--text-faint);
+  }
+
+  .widget-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .widget-row:hover .widget-label { color: var(--accent); }
+
+  .widget-value {
+    flex: none;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+
+  /* ---------- Feed ---------- */
+
+  .feed {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 20px 16px 64px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  @media (min-width: 1220px) {
+    .feed { padding-top: 20px; }
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .card-body {
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .card-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .source-icon {
+    width: 17px;
+    height: 17px;
+    flex: none;
+    color: var(--text-muted);
+  }
+
+  .source-name {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--text-muted);
+  }
+
+  .dot-sep {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--text-faint);
+    flex: none;
+  }
+
+  .timestamp {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    color: var(--text-faint);
+  }
+
+  .unread-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex: none;
+    margin-left: auto;
+  }
+
+  .headline {
+    font-family: "Be Vietnam Pro", sans-serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    line-height: 1.35;
+    text-wrap: balance;
+    text-decoration: none;
+  }
+  .headline:hover { color: var(--accent); }
+
+  .summary {
+    font-size: 0.92rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+    max-width: 62ch;
+  }
+
+  .summary.clamped {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .expand-panel {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transition: grid-template-rows 220ms ease, opacity 200ms ease;
+  }
+  .expand-panel.open { grid-template-rows: 1fr; opacity: 1; }
+  .expand-panel > div { overflow: hidden; }
+
+  .expand-content {
+    padding-top: 4px;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: var(--text-muted);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .expand-content code {
+    font-family: "IBM Plex Mono", monospace;
+    background: var(--surface-sunken);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 0.85em;
+    color: var(--text);
+  }
+
+  .read-more {
+    align-self: flex-start;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--accent);
+    background: none;
+    border: none;
+    padding: 2px 0;
+    cursor: pointer;
+  }
+
+  .read-more svg {
+    width: 11px;
+    height: 11px;
+    transition: transform 180ms ease;
+  }
+  .read-more[aria-expanded="true"] svg { transform: rotate(180deg); }
+
+  /* ---------- Media ---------- */
+
+  .media {
+    margin: 2px -16px 0;
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+  }
+
+  .media-art {
+    position: absolute;
+    inset: 0;
+  }
+
+  .art-a { background: linear-gradient(135deg, #2c3a52 0%, #1a1f2b 55%, #12161c 100%); }
+  .art-b { background: linear-gradient(150deg, #3a2c1f 0%, #211c22 60%, #12161c 100%); }
+  .art-c { background: radial-gradient(circle at 30% 30%, #3d3120 0%, #171b24 65%); }
+
+  .art-lines {
+    position: absolute;
+    inset: 0;
+    opacity: 0.5;
+    stroke: rgba(255, 255, 255, 0.35);
+  }
+
+  .play-scrim {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 12, 16, 0.15);
+    cursor: pointer;
+    border: none;
+    padding: 0;
+    width: 100%;
+  }
+
+  .play-btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: rgba(16, 19, 26, 0.72);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 150ms ease, background 150ms ease;
+  }
+  .play-scrim:hover .play-btn { transform: scale(1.06); background: rgba(16, 19, 26, 0.88); }
+  .play-btn svg { width: 18px; height: 18px; color: #fff; margin-left: 3px; }
+
+  .duration-badge {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.68rem;
+    color: #fff;
+    background: rgba(10, 12, 16, 0.65);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .video-player-stub {
+    position: absolute;
+    inset: 0;
+    background: #0a0c10;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    color: #9ba3b2;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.75rem;
+    text-align: center;
+    padding: 16px;
+  }
+  .video-player-stub.showing { display: flex; }
+  .video-player-stub svg { width: 22px; height: 22px; color: var(--accent); }
+
+  /* ---------- Footer meta row ---------- */
+
+  .meta-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-top: 1px solid var(--border);
+    margin-top: 2px;
+    padding-top: 10px;
+  }
+
+  .meta-stat {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+  .meta-stat svg { width: 13px; height: 13px; color: var(--text-faint); }
+
+  .open-link {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 4px 6px;
+    margin-right: -6px;
+    border-radius: 6px;
+  }
+  .open-link:hover { color: var(--accent); background: var(--surface-sunken); }
+  .open-link svg { width: 11px; height: 11px; }
+
+  /* ---------- Repo / release specific ---------- */
+
+  .repo-line {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.98rem;
+    font-weight: 500;
+  }
+
+  .lang-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+    position: relative;
+    top: 1px;
+  }
+
+  .tag-badge {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-radius: 5px;
+    padding: 2px 7px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    width: fit-content;
+  }
+
+  .changelog {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--text-muted);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px 16px;
+    color: var(--text-faint);
+    font-size: 0.9rem;
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand-row">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M4 17 L4 9" />
+          <path d="M9 17 L9 5" />
+          <path d="M14 17 L14 12" />
+          <path d="M19 17 L19 7" />
+        </svg>
+        <h1>Wire</h1>
+      </div>
+      <div class="header-right">
+        <span class="feed-meta mono">38 items · updated 4m ago</span>
+        <button class="theme-toggle" type="button" id="themeToggle" aria-label="Switch to dark theme" aria-pressed="false">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <circle cx="12" cy="12" r="4.2"/>
+            <path d="M12 3 V5.2 M12 18.8 V21 M3 12 H5.2 M18.8 12 H21 M5.6 5.6 L7.2 7.2 M16.8 16.8 L18.4 18.4 M18.4 5.6 L16.8 7.2 M7.2 16.8 L5.6 18.4"/>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 14.5 A8.5 8.5 0 1 1 9.5 4 A6.8 6.8 0 0 0 20 14.5 Z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <nav class="filters" id="filters">
+      <button class="pill filter-control" type="button" data-filter="all" aria-pressed="true">All</button>
+      <button class="pill filter-control" type="button" data-filter="rss" aria-pressed="false">Blogs</button>
+      <button class="pill filter-control" type="button" data-filter="hn" aria-pressed="false">Hacker News</button>
+      <button class="pill filter-control" type="button" data-filter="trending" aria-pressed="false">GitHub Trending</button>
+      <button class="pill filter-control" type="button" data-filter="release" aria-pressed="false">Releases</button>
+    </nav>
+  </div>
+</header>
+
+<div class="layout">
+<aside class="sidebar-left">
+  <nav class="nav-section">
+    <div class="nav-title mono">Sources</div>
+    <button class="nav-link filter-control" type="button" data-filter="all" aria-pressed="true">All</button>
+    <button class="nav-link filter-control" type="button" data-filter="rss" aria-pressed="false">Blogs</button>
+    <button class="nav-link filter-control" type="button" data-filter="hn" aria-pressed="false">Hacker News</button>
+    <button class="nav-link filter-control" type="button" data-filter="trending" aria-pressed="false">GitHub Trending</button>
+    <button class="nav-link filter-control" type="button" data-filter="release" aria-pressed="false">Releases</button>
+  </nav>
+  <nav class="nav-section">
+    <div class="nav-title mono">Feeds</div>
+    <button class="nav-link filter-control" type="button" data-source="simon-willison" aria-pressed="false">Simon Willison</button>
+    <button class="nav-link filter-control" type="button" data-source="pragmatic-engineer" aria-pressed="false">The Pragmatic Engineer</button>
+    <button class="nav-link filter-control" type="button" data-source="latent-space" aria-pressed="false">Latent Space</button>
+  </nav>
+</aside>
+
+<main class="feed" id="feed">
+
+  <!-- 1. RSS with image, unread -->
+  <article class="card" data-type="rss" data-source="simon-willison">
+    <div class="card-body">
+      <div class="card-head">
+        <svg class="source-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <path d="M4 17 L4 9" /><path d="M9 17 L9 5" /><path d="M14 17 L14 12" />
+        </svg>
+        <span class="source-name">SIMON WILLISON</span>
+        <div class="dot-sep"></div>
+        <span class="timestamp">2h ago</span>
+        <div class="unread-dot" title="Unread"></div>
+      </div>
+      <a class="headline display" href="#">Giving coding agents a persistent memory layer, and why it changes how you prompt them</a>
+      <div class="media">
+        <div class="media-art art-a">
+          <svg class="art-lines" viewBox="0 0 400 225" preserveAspectRatio="none">
+            <path d="M0 180 C 80 120, 140 200, 220 140 S 340 60, 400 100" fill="none" stroke-width="1.5"/>
+            <path d="M0 140 C 100 200, 180 90, 260 150 S 360 180, 400 130" fill="none" stroke-width="1.5"/>
+          </svg>
+        </div>
+      </div>
+      <p class="summary clamped">Most agent frameworks treat every session as a blank slate. I've been experimenting with a small SQLite-backed memory layer that survives between runs, and it changes the way you write instructions almost immediately &mdash; you stop re-explaining project conventions in every prompt.</p>
+      <div class="expand-panel">
+        <div>
+          <div class="expand-content">
+            <p>The interesting failure mode isn't forgetting &mdash; it's <em>confident</em> misremembering, where the agent applies a convention from a different project because nothing distinguishes the two in its context. Namespacing memories per repo root fixed most of it.</p>
+            <p>The rough shape: on session end, summarize decisions into a handful of short entries tagged by file path and topic; on session start, retrieve the ones whose tags overlap the current working set. It's <code>grep</code>, basically, with extra steps.</p>
+          </div>
+        </div>
+      </div>
+      <button class="read-more" type="button" aria-expanded="false">
+        Read more
+        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2.5 4.5 L6 8 L9.5 4.5"/></svg>
+      </button>
+    </div>
+  </article>
+
+  <!-- 2. Hacker News -->
+  <article class="card" data-type="hn">
+    <div class="card-body">
+      <div class="card-head">
+        <svg class="source-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 4 L12 14" /><path d="M7 9 L12 14 L17 9" />
+        </svg>
+        <span class="source-name">HACKER NEWS</span>
+        <div class="dot-sep"></div>
+        <span class="timestamp">3h ago</span>
+      </div>
+      <a class="headline display" href="#">Show HN: A local-first, open-source alternative to Notion, built on CRDTs</a>
+      <p class="summary">Been working on this for eight months solo. Everything syncs peer-to-peer, no server required unless you want one for backup. Would love feedback on the conflict resolution approach for nested blocks.</p>
+      <div class="meta-row">
+        <div class="meta-stat">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19 V5"/><path d="M6 11 L12 5 L18 11"/></svg>
+          342 points
+        </div>
+        <div class="meta-stat">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v12H8l-4 4z"/></svg>
+          187 comments
+        </div>
+        <a class="open-link" href="#">
+          Open
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 L17 7"/><path d="M9 7h8v8"/></svg>
+        </a>
+      </div>
+    </div>
+  </article>
+
+  <!-- 3. GitHub trending -->
+  <article class="card" data-type="trending">
+    <div class="card-body">
+      <div class="card-head">
+        <svg class="source-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="6" cy="6" r="2.3"/><circle cx="6" cy="18" r="2.3"/><circle cx="18" cy="9" r="2.3"/>
+          <path d="M6 8.3 V15.7"/><path d="M6 12 C6 9.5 8 9 10 9 H15.7"/>
+        </svg>
+        <span class="source-name">GITHUB TRENDING</span>
+        <div class="dot-sep"></div>
+        <span class="timestamp">Today</span>
+      </div>
+      <div>
+        <a class="headline repo-line" href="#">flowstack/agent-runtime</a>
+      </div>
+      <p class="summary">A lightweight, dependency-free runtime for orchestrating multi-step LLM agents &mdash; retries, tool-call routing, and structured handoffs between sub-agents in under 2,000 lines.</p>
+      <div class="meta-row">
+        <div class="meta-stat"><span class="lang-dot" style="background:#3178c6"></span>TypeScript</div>
+        <div class="meta-stat">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 L14.9 8.6 L22 9.3 L16.7 14 L18.2 21 L12 17.4 L5.8 21 L7.3 14 L2 9.3 L9.1 8.6 Z"/></svg>
+          4.2k
+        </div>
+        <div class="meta-stat">+312 today</div>
+        <a class="open-link" href="#">
+          Open
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 L17 7"/><path d="M9 7h8v8"/></svg>
+        </a>
+      </div>
+    </div>
+  </article>
+
+  <!-- 4. GitHub release -->
+  <article class="card" data-type="release">
+    <div class="card-body">
+      <div class="card-head">
+        <svg class="source-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 5 L13 5 L20 12 L12 20 L5 13 Z"/><circle cx="9" cy="9" r="1.4" fill="currentColor" stroke="none"/>
+        </svg>
+        <span class="source-name">ANTHROPICS/CLAUDE-CODE</span>
+        <div class="dot-sep"></div>
+        <span class="timestamp">Yesterday</span>
+      </div>
+      <span class="tag-badge">v2.4.0</span>
+      <a class="headline display" href="#">Background agents, and a faster startup path for large monorepos</a>
+      <ul class="changelog">
+        <li>Background agents can now run without holding the foreground session open</li>
+        <li>Startup time reduced by ~40% on repos with 10k+ files</li>
+        <li>Fixed a race condition in the file-watcher on network mounts</li>
+      </ul>
+      <div class="expand-panel">
+        <div>
+          <div class="expand-content">
+            <p><strong>Full changelog</strong></p>
+            <ul class="changelog" style="margin:0;">
+              <li>New <code>--background</code> flag detaches a run from the current terminal session</li>
+              <li>Config resolution now caches per-directory instead of walking the tree on every call</li>
+              <li>Deprecated the old <code>.agentrc</code> format in favor of <code>agent.config.json</code> (auto-migrated on first run)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <button class="read-more" type="button" aria-expanded="false">
+        Full changelog
+        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2.5 4.5 L6 8 L9.5 4.5"/></svg>
+      </button>
+    </div>
+  </article>
+
+  <!-- 5. RSS video -->
+  <article class="card" data-type="rss" data-source="latent-space">
+    <div class="card-body">
+      <div class="card-head">
+        <svg class="source-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <path d="M4 17 L4 9" /><path d="M9 17 L9 5" /><path d="M14 17 L14 12" />
+        </svg>
+        <span class="source-name">LATENT SPACE</span>
+        <div class="dot-sep"></div>
+        <span class="timestamp">1d ago</span>
+      </div>
+      <a class="headline display" href="#">How coding agents actually plan multi-step tasks, with the Claude Code team</a>
+      <div class="media">
+        <div class="media-art art-b"></div>
+        <button class="play-scrim" type="button" aria-label="Play video">
+          <span class="play-btn">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5 L19 12 L8 19 Z"/></svg>
+          </span>
+        </button>
+        <span class="duration-badge">38:12</span>
+        <div class="video-player-stub">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 5 L19 12 L8 19 Z"/></svg>
+          Player would mount here
+        </div>
+      </div>
+      <p class="summary">A conversation about planning horizons, when to ask the user versus guess, and why shorter tool loops tend to beat longer ones on ambiguous tasks.</p>
+    </div>
+  </article>
+
+  <!-- 6. RSS text-only -->
+  <article class="card" data-type="rss" data-source="pragmatic-engineer">
+    <div class="card-body">
+      <div class="card-head">
+        <svg class="source-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <path d="M4 17 L4 9" /><path d="M9 17 L9 5" /><path d="M14 17 L14 12" />
+        </svg>
+        <span class="source-name">THE PRAGMATIC ENGINEER</span>
+        <div class="dot-sep"></div>
+        <span class="timestamp">2d ago</span>
+      </div>
+      <a class="headline display" href="#">Inside the eng team that ships to 200M devices a week</a>
+      <p class="summary clamped">A look at how one platform team structures on-call, why they moved off weekly release trains, and what broke the first time they tried trunk-based development at that scale.</p>
+      <div class="expand-panel">
+        <div>
+          <div class="expand-content">
+            <p>The on-call rotation is smaller than you'd expect &mdash; four people, one week each, with a hard rule that no one carries the pager twice in six weeks. That constraint, more than any tooling choice, is what they credit for retention.</p>
+          </div>
+        </div>
+      </div>
+      <button class="read-more" type="button" aria-expanded="false">
+        Read more
+        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2.5 4.5 L6 8 L9.5 4.5"/></svg>
+      </button>
+    </div>
+  </article>
+
+  <!-- 7. GitHub trending #2 -->
+  <article class="card" data-type="trending">
+    <div class="card-body">
+      <div class="card-head">
+        <svg class="source-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="6" cy="6" r="2.3"/><circle cx="6" cy="18" r="2.3"/><circle cx="18" cy="9" r="2.3"/>
+          <path d="M6 8.3 V15.7"/><path d="M6 12 C6 9.5 8 9 10 9 H15.7"/>
+        </svg>
+        <span class="source-name">GITHUB TRENDING</span>
+        <div class="dot-sep"></div>
+        <span class="timestamp">Today</span>
+      </div>
+      <div>
+        <a class="headline repo-line" href="#">openreader/extract</a>
+      </div>
+      <p class="summary">Readability-style article extraction as a single Go binary. No headless browser, no Node dependency &mdash; parses main content and inline images from raw HTML in under 5ms.</p>
+      <div class="meta-row">
+        <div class="meta-stat"><span class="lang-dot" style="background:#00add8"></span>Go</div>
+        <div class="meta-stat">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 L14.9 8.6 L22 9.3 L16.7 14 L18.2 21 L12 17.4 L5.8 21 L7.3 14 L2 9.3 L9.1 8.6 Z"/></svg>
+          1.8k
+        </div>
+        <div class="meta-stat">+96 today</div>
+        <a class="open-link" href="#">
+          Open
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 L17 7"/><path d="M9 7h8v8"/></svg>
+        </a>
+      </div>
+    </div>
+  </article>
+
+  <p class="empty-state" id="emptyState">No items for this filter yet.</p>
+</main>
+
+<aside class="sidebar-right">
+  <div class="widget">
+    <div class="widget-title mono">Trending repos</div>
+    <a class="widget-row" href="#" target="_blank" rel="noopener noreferrer"><span class="widget-rank mono">1</span><span class="widget-label">flowstack/agent-runtime</span><span class="widget-value mono">4.2k</span></a>
+    <a class="widget-row" href="#" target="_blank" rel="noopener noreferrer"><span class="widget-rank mono">2</span><span class="widget-label">openreader/extract</span><span class="widget-value mono">1.8k</span></a>
+    <a class="widget-row" href="#" target="_blank" rel="noopener noreferrer"><span class="widget-rank mono">3</span><span class="widget-label">tinylang/tinylang</span><span class="widget-value mono">1.2k</span></a>
+    <a class="widget-row" href="#" target="_blank" rel="noopener noreferrer"><span class="widget-rank mono">4</span><span class="widget-label">edgekit/edge-cache</span><span class="widget-value mono">980</span></a>
+    <a class="widget-row" href="#" target="_blank" rel="noopener noreferrer"><span class="widget-rank mono">5</span><span class="widget-label">pixelfold/pixelfold</span><span class="widget-value mono">740</span></a>
+  </div>
+  <div class="widget">
+    <div class="widget-title mono">Top on HN</div>
+    <a class="widget-row" href="#" target="_blank" rel="noopener noreferrer"><span class="widget-rank mono">1</span><span class="widget-label">Local-first Notion alternative, built on CRDTs</span><span class="widget-value mono">342</span></a>
+    <a class="widget-row" href="#" target="_blank" rel="noopener noreferrer"><span class="widget-rank mono">2</span><span class="widget-label">Why we moved off Kubernetes for a single Go binary</span><span class="widget-value mono">298</span></a>
+    <a class="widget-row" href="#" target="_blank" rel="noopener noreferrer"><span class="widget-rank mono">3</span><span class="widget-label">The case against microservices, revisited</span><span class="widget-value mono">251</span></a>
+    <a class="widget-row" href="#" target="_blank" rel="noopener noreferrer"><span class="widget-rank mono">4</span><span class="widget-label">Ask HN: favorite terminal note tool in 2026?</span><span class="widget-value mono">210</span></a>
+    <a class="widget-row" href="#" target="_blank" rel="noopener noreferrer"><span class="widget-rank mono">5</span><span class="widget-label">A postmortem on our worst outage this year</span><span class="widget-value mono">188</span></a>
+  </div>
+</aside>
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var toggle = document.getElementById('themeToggle');
+
+    function systemPrefersDark() {
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+
+    function effectiveTheme() {
+      var explicit = root.getAttribute('data-theme');
+      if (explicit) return explicit;
+      return systemPrefersDark() ? 'dark' : 'light';
+    }
+
+    function applyTheme(theme) {
+      root.setAttribute('data-theme', theme);
+      try { localStorage.setItem('wire-theme', theme); } catch (e) {}
+      toggle.setAttribute('aria-pressed', String(theme === 'dark'));
+      toggle.setAttribute('aria-label', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+    }
+
+    var stored = null;
+    try { stored = localStorage.getItem('wire-theme'); } catch (e) {}
+    if (stored) applyTheme(stored);
+    else toggle.setAttribute('aria-pressed', String(effectiveTheme() === 'dark'));
+
+    toggle.addEventListener('click', function () {
+      applyTheme(effectiveTheme() === 'dark' ? 'light' : 'dark');
+    });
+  })();
+
+  (function () {
+    var controls = document.querySelectorAll('.filter-control');
+    var cards = document.querySelectorAll('.card');
+    var emptyState = document.getElementById('emptyState');
+
+    function keyOf(el) {
+      return el.dataset.source ? 'source:' + el.dataset.source : 'type:' + el.dataset.filter;
+    }
+
+    function applyFilter(key) {
+      controls.forEach(function (el) { el.setAttribute('aria-pressed', String(keyOf(el) === key)); });
+      var isSource = key.indexOf('source:') === 0;
+      var value = key.slice(isSource ? 7 : 5);
+      var visibleCount = 0;
+      cards.forEach(function (card) {
+        var match = isSource
+          ? card.dataset.source === value
+          : (value === 'all' || card.dataset.type === value);
+        card.style.display = match ? '' : 'none';
+        if (match) visibleCount++;
+      });
+      emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+
+    controls.forEach(function (el) {
+      el.addEventListener('click', function () { applyFilter(keyOf(el)); });
+    });
+
+    document.querySelectorAll('.read-more').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var panel = btn.previousElementSibling;
+        var summary = panel.previousElementSibling;
+        var expanded = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!expanded));
+        panel.classList.toggle('open', !expanded);
+        if (summary && summary.classList.contains('clamped')) {
+          summary.classList.toggle('clamped', expanded);
+        }
+        btn.childNodes[0].textContent = expanded
+          ? (btn.dataset.labelCollapsed || 'Read more ')
+          : (btn.dataset.labelExpanded || 'Show less ');
+      });
+      btn.dataset.labelCollapsed = btn.childNodes[0].textContent;
+      btn.dataset.labelExpanded = 'Show less ';
+    });
+
+    document.querySelectorAll('.play-scrim').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var media = btn.closest('.media');
+        var stub = media.querySelector('.video-player-stub');
+        stub.classList.add('showing');
+        btn.style.display = 'none';
+        media.querySelector('.duration-badge').style.display = 'none';
+      });
+    });
+  })();
+</script>
+</body>
+</html>
