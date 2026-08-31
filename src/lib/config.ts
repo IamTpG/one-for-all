@@ -40,3 +40,43 @@ export const EXTRACT_CACHE_TTL_MS = 60 * 60 * 1000;
 
 // Per-request timeout for og:image scraping and article extraction (ms).
 export const FETCH_TIMEOUT_MS = 5000;
+
+// Topics for filtering + AI classification. Keyword matching always runs
+// (free); Groq's classification (if configured) adds to these, it never
+// replaces them.
+export const TOPICS: { id: string; label: string; keywords: string[] }[] = [
+  {
+    id: "ai-workflow",
+    label: "How devs work with AI",
+    keywords: ["workflow", "pair program", "vibe coding", "prompt", "spec-driven"],
+  },
+  {
+    id: "ai-tools",
+    label: "AI tools & agents",
+    keywords: ["agent", "copilot", "claude code", "cursor", "harness", "mcp", "coding assistant"],
+  },
+  {
+    id: "ai-updates",
+    label: "AI tool updates",
+    keywords: ["release", "changelog", "launch", "announc", "update", "v1.", "v2."],
+  },
+  {
+    id: "career",
+    label: "Career & industry",
+    keywords: ["career", "hiring", "interview", "promotion", "salary", "layoff", "roadmap", "job market"],
+  },
+];
+
+// Set GROQ_API_KEY (and REDIS_URL) in .env.local to enable AI summaries and
+// classification. Without both, the feed falls back to source-provided
+// summaries and keyword-only topics — no error, just less precise.
+export const GROQ_MODEL = "openai/gpt-oss-120b";
+
+// How many not-yet-analyzed items get sent to Groq per aggregation cycle,
+// and how many of those run concurrently. Keeps well under Groq's free-tier
+// 30 req/min limit and bounds how much a background refresh can cost.
+export const AI_BATCH_LIMIT = 8;
+export const AI_CONCURRENCY = 2;
+
+// How long an item's AI-generated summary/topics stay cached in Redis (s).
+export const AI_CACHE_TTL_SECONDS = 90 * 24 * 60 * 60;

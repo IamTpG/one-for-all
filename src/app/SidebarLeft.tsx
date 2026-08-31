@@ -1,3 +1,4 @@
+import { TOPICS } from "@/lib/config";
 import type { ActiveFilter, SourceType } from "@/lib/types";
 import styles from "./AppShell.module.css";
 
@@ -31,6 +32,20 @@ export default function SidebarLeft({
             onClick={() => onSelect({ kind: "type", value: cat.value })}
           >
             {cat.label}
+          </button>
+        ))}
+      </nav>
+      <nav className={styles.navSection}>
+        <div className={`${styles.navTitle} mono`}>Topics</div>
+        {TOPICS.map((topic) => (
+          <button
+            key={topic.id}
+            className={styles.navLink}
+            type="button"
+            aria-pressed={activeFilter.kind === "topic" && activeFilter.value === topic.id}
+            onClick={() => onSelect({ kind: "topic", value: topic.id })}
+          >
+            {topic.label}
           </button>
         ))}
       </nav>

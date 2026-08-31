@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getFeedItemById } from "@/lib/aggregate";
+import { TOPICS } from "@/lib/config";
 import { extractArticle } from "@/lib/extract";
 import { GithubIcon, HnIcon, ReleaseIcon, RssIcon } from "@/lib/icons";
 import ThemeToggle from "../../ThemeToggle";
@@ -56,6 +57,20 @@ export default async function ArticlePage({
 
         <h1 className={`${styles.headline} display`}>{item.title}</h1>
 
+        {item.topics && item.topics.length > 0 && (
+          <div className={styles.topicRow}>
+            {item.topics.map((topicId) => {
+              const topic = TOPICS.find((t) => t.id === topicId);
+              if (!topic) return null;
+              return (
+                <span key={topicId} className={`${styles.topicPill} mono`}>
+                  {topic.label}
+                </span>
+              );
+            })}
+          </div>
+        )}
+
         {item.videoEmbedHtml ? (
           <div className={styles.videoEmbed} dangerouslySetInnerHTML={{ __html: item.videoEmbedHtml }} />
         ) : (
@@ -69,7 +84,12 @@ export default async function ArticlePage({
           <div className={styles.body} dangerouslySetInnerHTML={{ __html: contentHtml }} />
         ) : (
           <div className={styles.body}>
-            {item.summary && <p>{item.summary}</p>}
+            {item.summary && (
+              <div className={styles.summaryRow}>
+                {item.aiSummary && <span className={`${styles.aiBadge} mono`}>AI</span>}
+                <p>{item.summary}</p>
+              </div>
+            )}
             <p className={styles.fallbackNote}>
               Couldn&apos;t load the full article for this one.
             </p>

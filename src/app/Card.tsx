@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { TOPICS } from "@/lib/config";
 import type { FeedItem } from "@/lib/types";
 import {
   ChevronIcon,
@@ -76,6 +77,20 @@ export default function Card({ item }: { item: FeedItem }) {
           {item.title}
         </a>
 
+        {item.topics && item.topics.length > 0 && (
+          <div className={styles.topicRow}>
+            {item.topics.map((topicId) => {
+              const topic = TOPICS.find((t) => t.id === topicId);
+              if (!topic) return null;
+              return (
+                <span key={topicId} className={`${styles.topicPill} mono`}>
+                  {topic.label}
+                </span>
+              );
+            })}
+          </div>
+        )}
+
         {item.videoEmbedHtml ? (
           <div className={styles.media}>
             {videoShown ? (
@@ -109,7 +124,12 @@ export default function Card({ item }: { item: FeedItem }) {
           )
         )}
 
-        {item.summary && <p className={`${styles.summary} ${styles.clamped}`}>{item.summary}</p>}
+        {item.summary && (
+          <div className={styles.summaryRow}>
+            {item.aiSummary && <span className={`${styles.aiBadge} mono`}>AI</span>}
+            <p className={`${styles.summary} ${styles.clamped}`}>{item.summary}</p>
+          </div>
+        )}
 
         {canReadMore && (
           <Link href={`/article/${encodeURIComponent(item.id)}`} className={styles.readMore}>

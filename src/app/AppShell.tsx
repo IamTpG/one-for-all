@@ -46,6 +46,9 @@ export default function AppShell({
     if (activeFilter.kind === "source") {
       return items.filter((item) => item.sourceId === activeFilter.value);
     }
+    if (activeFilter.kind === "topic") {
+      return items.filter((item) => item.topics?.includes(activeFilter.value));
+    }
     if (activeFilter.value === "all") return items;
     return items.filter((item) => item.sourceType === activeFilter.value);
   }, [items, activeFilter]);
