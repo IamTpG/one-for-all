@@ -67,3 +67,29 @@ export async function setCachedAnalysis(
     console.error(`[redis] failed to cache analysis for ${id}:`, err);
   }
 }
+
+export async function getJson<T>(key: string): Promise<T | null> {
+  const redis = getClient();
+  if (!redis) return null;
+
+  try {
+    const raw = await redis.get(key);
+    return raw ? (JSON.parse(raw) as T) : null;
+  } catch (err) {
+    console.error(`[redis] failed to read ${key}:`, err);
+    return null;
+  }
+}
+
+export async function setJson(key: string, value: unknown): Promise<boolean> {
+  const redis = getClient();
+  if (!redis) return false;
+
+  try {
+    await redis.set(key, JSON.stringify(value));
+    return true;
+  } catch (err) {
+    console.error(`[redis] failed to write ${key}:`, err);
+    return false;
+  }
+}

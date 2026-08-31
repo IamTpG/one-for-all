@@ -239,6 +239,146 @@
   }
 }
 
+.settingsError {
+  margin: 0;
+  padding: 0 6px;
+  font-size: 0.78rem;
+  color: #d14343;
+}
+
+.signOutButton {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 6px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.signOutButton:hover {
+  background: var(--surface-sunken);
+  color: var(--text);
+}
+
+.repoSearchInput {
+  width: 100%;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 9px;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+.repoSearchInput::placeholder {
+  color: var(--text-faint);
+}
+.repoSearchInput:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.repoResults {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+.repoWatchedList {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.repoEmptyState {
+  padding: 7px 6px;
+  font-size: 0.8rem;
+  color: var(--text-faint);
+}
+
+.repoRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 6px;
+  border-radius: 8px;
+}
+.repoRow:hover {
+  background: var(--surface-sunken);
+}
+
+.repoRowInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.repoRowName {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.repoRowStars {
+  flex: none;
+  font-size: 0.68rem;
+  color: var(--text-faint);
+}
+
+.repoRowDesc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.repoAddButton {
+  flex: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: none;
+  border-radius: 6px;
+  padding: 4px 9px;
+  cursor: pointer;
+}
+.repoAddButton:disabled {
+  color: var(--text-faint);
+  background: none;
+  cursor: default;
+}
+
+.repoRemoveButton {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--text-faint);
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.repoRemoveButton:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
 /* ---------- Layout / sidebars ---------- */
 
 .layout {

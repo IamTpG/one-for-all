@@ -7,17 +7,18 @@ import { classifyAndSummarize } from "@/lib/groq";
 import { matchKeywordTopics } from "@/lib/keywordTopics";
 import { getCachedAnalyses, setCachedAnalysis } from "@/lib/redis";
 import type { FeedItem } from "@/lib/types";
+import { repoListKey } from "@/lib/watchedRepos";
 
-let cache: { items: FeedItem[]; fetchedAt: number } | null = null;
+let cache: { items: FeedItem[]; fetchedAt: number; key: string } | null = null;
 let refreshing: Promise<void> | null = null;
 
-async function fetchAndMerge(): Promise<FeedItem[]> {
+async function fetchAndMerge(repos: string[]): Promise<FeedItem[]> {
   const [rss, anthropic, hn, trending, releases] = await Promise.all([
     fetchRssItems(),
     fetchAnthropicNews(),
     fetchHnItems(),
     fetchGithubTrending(),
-    fetchGithubReleases(),
+    fetchGithubReleases(repos),
   ]);
 
   return [...rss, ...anthropic, ...hn, ...trending, ...releases].sort(
@@ -76,16 +77,22 @@ async function enrichWithTopicsAndSummaries(items: FeedItem[]): Promise<FeedItem
   return enriched;
 }
 
-async function refresh(): Promise<void> {
-  const merged = await fetchAndMerge();
+async function refresh(repos: string[]): Promise<void> {
+  const merged = await fetchAndMerge(repos);
   const items = await enrichWithTopicsAndSummaries(merged);
-  cache = { items, fetchedAt: Date.now() };
+  cache = { items, fetchedAt: Date.now(), key: repoListKey(repos) };
 }
 
-export async function getAggregatedFeed(): Promise<{ items: FeedItem[]; fetchedAt: number }> {
-  if (!cache) {
-    // Cold start: nothing to serve yet, this request has to wait.
-    await refresh();
+export async function getAggregatedFeed(
+  repos: string[]
+): Promise<{ items: FeedItem[]; fetchedAt: number }> {
+  const key = repoListKey(repos);
+
+  if (!cache || cache.key !== key) {
+    // Cold start, or the watched-repo list changed since the last fetch:
+    // either way the cached items don't reflect what's being asked for, so
+    // this request has to wait for a fresh one.
+    await refresh(repos);
     return cache!;
   }
 
@@ -94,7 +101,7 @@ export async function getAggregatedFeed(): Promise<{ items: FeedItem[]; fetchedA
     // Stale-while-revalidate: serve what we have immediately, refresh in
     // the background so the AI calls in enrichWithTopicsAndSummaries never
     // add latency to a real request.
-    refreshing = refresh()
+    refreshing = refresh(repos)
       .catch((err) => console.error("[aggregate] background refresh failed:", err))
       .finally(() => {
         refreshing = null;
@@ -104,7 +111,7 @@ export async function getAggregatedFeed(): Promise<{ items: FeedItem[]; fetchedA
   return cache;
 }
 
-export async function getFeedItemById(id: string): Promise<FeedItem | null> {
-  const { items } = await getAggregatedFeed();
+export async function getFeedItemById(id: string, repos: string[]): Promise<FeedItem | null> {
+  const { items } = await getAggregatedFeed(repos);
   return items.find((item) => item.id === id) ?? null;
 }

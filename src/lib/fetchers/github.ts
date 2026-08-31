@@ -1,16 +1,12 @@
 import { marked } from "marked";
-import {
-  GITHUB_TRENDING_LIMIT,
-  RELEASES_PER_REPO,
-  WATCHED_REPOS,
-} from "@/lib/config";
+import { GITHUB_TRENDING_LIMIT, RELEASES_PER_REPO } from "@/lib/config";
 import type { FeedItem } from "@/lib/types";
 import { sanitizeArticleHtml } from "@/lib/sanitize";
 import { slugify } from "@/lib/slug";
 
 // Optional: set GITHUB_TOKEN in .env.local to raise the unauthenticated
 // GitHub API rate limit (60 req/hr) if you watch a lot of repos.
-function githubHeaders(): HeadersInit {
+export function githubHeaders(): HeadersInit {
   const headers: HeadersInit = { Accept: "application/vnd.github+json" };
   if (process.env.GITHUB_TOKEN) {
     headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
@@ -18,7 +14,7 @@ function githubHeaders(): HeadersInit {
   return headers;
 }
 
-async function assertGithubOk(res: Response, what: string): Promise<void> {
+export async function assertGithubOk(res: Response, what: string): Promise<void> {
   if (res.ok) return;
   const remaining = res.headers.get("x-ratelimit-remaining");
   if (res.status === 403 && remaining === "0") {
@@ -112,7 +108,7 @@ async function fetchReleasesForRepo(repo: string): Promise<FeedItem[]> {
   }
 }
 
-export async function fetchGithubReleases(): Promise<FeedItem[]> {
-  const results = await Promise.all(WATCHED_REPOS.map(fetchReleasesForRepo));
+export async function fetchGithubReleases(repos: string[]): Promise<FeedItem[]> {
+  const results = await Promise.all(repos.map(fetchReleasesForRepo));
   return results.flat();
 }

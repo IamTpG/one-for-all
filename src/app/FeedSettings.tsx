@@ -2,21 +2,26 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { logoutAction } from "./actions/owner";
+import { setDisabledFeedsAction } from "./actions/settings";
 import { GearIcon } from "@/lib/icons";
-import { setDisabledFeedsCookie } from "@/lib/cookies";
 import type { SettingsGroup } from "@/lib/types";
 import styles from "./AppShell.module.css";
+import WatchedReposEditor from "./WatchedReposEditor";
 
 export default function FeedSettings({
   groups,
   disabledFeeds,
+  watchedRepos,
 }: {
   groups: SettingsGroup[];
   disabledFeeds: string[];
+  watchedRepos: string[];
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [disabled, setDisabled] = useState<Set<string>>(() => new Set(disabledFeeds));
+  const [error, setError] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -30,12 +35,20 @@ export default function FeedSettings({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
-  function toggle(sourceId: string) {
+  async function toggle(sourceId: string) {
+    const previous = disabled;
     const next = new Set(disabled);
     if (next.has(sourceId)) next.delete(sourceId);
     else next.add(sourceId);
     setDisabled(next);
-    setDisabledFeedsCookie(Array.from(next));
+    setError(false);
+
+    const result = await setDisabledFeedsAction(Array.from(next));
+    if (!result.ok) {
+      setDisabled(previous);
+      setError(true);
+      return;
+    }
     router.refresh();
   }
 
@@ -70,6 +83,13 @@ export default function FeedSettings({
               ))}
             </div>
           ))}
+          {error && <p className={styles.settingsError}>Couldn&apos;t save — try again.</p>}
+          <WatchedReposEditor initialRepos={watchedRepos} />
+          <form action={logoutAction} className={styles.settingsGroup}>
+            <button type="submit" className={styles.signOutButton}>
+              Sign out
+            </button>
+          </form>
         </div>
       )}
     </div>

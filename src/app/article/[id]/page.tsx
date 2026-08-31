@@ -3,6 +3,7 @@ import { getFeedItemById } from "@/lib/aggregate";
 import { TOPICS } from "@/lib/config";
 import { extractArticle } from "@/lib/extract";
 import { GithubIcon, HnIcon, ReleaseIcon, RssIcon } from "@/lib/icons";
+import { getSiteSettings } from "@/lib/siteSettings";
 import ThemeToggle from "../../ThemeToggle";
 import BackButton from "./BackButton";
 import styles from "./Article.module.css";
@@ -20,7 +21,8 @@ export default async function ArticlePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const item = await getFeedItemById(decodeURIComponent(id));
+  const { watchedRepos } = await getSiteSettings();
+  const item = await getFeedItemById(decodeURIComponent(id), watchedRepos);
   if (!item) notFound();
 
   const contentHtml =

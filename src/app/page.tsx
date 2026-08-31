@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
 import { getAggregatedFeed } from "@/lib/aggregate";
-import { CUSTOM_BLOG_SOURCES, RSS_FEEDS, WATCHED_REPOS } from "@/lib/config";
+import { CUSTOM_BLOG_SOURCES, RSS_FEEDS } from "@/lib/config";
+import { isOwnerRequest, OWNER_COOKIE_NAME } from "@/lib/ownerAuth";
+import { getSiteSettings } from "@/lib/siteSettings";
 import { slugify } from "@/lib/slug";
 import type { SettingsGroup } from "@/lib/types";
 import AppShell from "./AppShell";
@@ -8,12 +10,13 @@ import AppShell from "./AppShell";
 export const revalidate = 0; // aggregate.ts handles its own caching
 
 export default async function Home() {
-  const { items: allItems, fetchedAt } = await getAggregatedFeed();
-
   const cookieStore = await cookies();
-  const disabledFeeds = (cookieStore.get("wire-disabled-feeds")?.value ?? "")
-    .split(",")
-    .filter(Boolean);
+  const isOwner = isOwnerRequest(cookieStore.get(OWNER_COOKIE_NAME)?.value);
+
+  const { disabledFeeds, watchedRepos } = await getSiteSettings();
+
+  const { items: allItems, fetchedAt } = await getAggregatedFeed(watchedRepos);
+
   const disabledSet = new Set(disabledFeeds);
   const items = allItems.filter((item) => !disabledSet.has(item.sourceId));
 
@@ -40,7 +43,7 @@ export default async function Home() {
     },
     {
       title: "Releases",
-      sources: WATCHED_REPOS.map((repo) => ({
+      sources: watchedRepos.map((repo) => ({
         name: repo,
         sourceId: slugify(`${repo}-releases`),
       })),
@@ -53,6 +56,8 @@ export default async function Home() {
       feeds={feeds}
       settingsGroups={settingsGroups}
       disabledFeeds={disabledFeeds}
+      watchedRepos={watchedRepos}
+      isOwner={isOwner}
       trendingRepos={trendingRepos}
       topHn={topHn}
       fetchedAt={fetchedAt}

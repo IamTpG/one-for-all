@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { LockIcon } from "@/lib/icons";
 import type { ActiveFilter, FeedItem, SettingsGroup } from "@/lib/types";
 import Card from "./Card";
 import FeedSettings from "./FeedSettings";
@@ -23,6 +25,8 @@ export default function AppShell({
   feeds,
   settingsGroups,
   disabledFeeds,
+  watchedRepos,
+  isOwner,
   trendingRepos,
   topHn,
   fetchedAt,
@@ -31,6 +35,8 @@ export default function AppShell({
   feeds: { name: string; sourceId: string }[];
   settingsGroups: SettingsGroup[];
   disabledFeeds: string[];
+  watchedRepos: string[];
+  isOwner: boolean;
   trendingRepos: FeedItem[];
   topHn: FeedItem[];
   fetchedAt: number;
@@ -111,7 +117,17 @@ export default function AppShell({
               <span className={styles.liveDot} aria-hidden="true" />
               {items.length} items · updated {timeAgo(now, fetchedAt)}
             </span>
-            <FeedSettings groups={settingsGroups} disabledFeeds={disabledFeeds} />
+            {isOwner ? (
+              <FeedSettings
+                groups={settingsGroups}
+                disabledFeeds={disabledFeeds}
+                watchedRepos={watchedRepos}
+              />
+            ) : (
+              <Link href="/owner-login" className={styles.themeToggle} aria-label="Owner sign-in">
+                <LockIcon />
+              </Link>
+            )}
             <ThemeToggle />
           </div>
         </div>
