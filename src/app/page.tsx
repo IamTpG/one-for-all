@@ -1,24 +1,23 @@
 import { cookies } from "next/headers";
-import { getAggregatedFeed } from "@/lib/aggregate";
-import { CUSTOM_BLOG_SOURCES, RSS_FEEDS } from "@/lib/config";
 import { isOwnerRequest, OWNER_COOKIE_NAME } from "@/lib/ownerAuth";
+import { buildFeedsList } from "@/lib/settingsGroups";
 import { getSiteSettings } from "@/lib/siteSettings";
-import { slugify } from "@/lib/slug";
-import type { SettingsGroup } from "@/lib/types";
+import { filterByWatchedRepos, getLastFetchAt, getStoredItems } from "@/lib/store";
 import AppShell from "./AppShell";
 
-export const revalidate = 0; // aggregate.ts handles its own caching
+export const revalidate = 0; // reads the persistent store directly, always fresh
 
 export default async function Home() {
   const cookieStore = await cookies();
   const isOwner = isOwnerRequest(cookieStore.get(OWNER_COOKIE_NAME)?.value);
 
   const { disabledFeeds, watchedRepos } = await getSiteSettings();
-
-  const { items: allItems, fetchedAt } = await getAggregatedFeed(watchedRepos);
+  const [allItems, fetchedAt] = await Promise.all([getStoredItems(), getLastFetchAt()]);
 
   const disabledSet = new Set(disabledFeeds);
-  const items = allItems.filter((item) => !disabledSet.has(item.sourceId));
+  const items = filterByWatchedRepos(allItems, watchedRepos).filter(
+    (item) => !disabledSet.has(item.sourceId)
+  );
 
   const trendingRepos = items
     .filter((item) => item.sourceType === "github-trending")
@@ -29,34 +28,10 @@ export default async function Home() {
     .sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
     .slice(0, 5);
 
-  const feeds = [
-    ...RSS_FEEDS.map((feed) => ({ name: feed.name, sourceId: slugify(feed.name) })),
-    ...CUSTOM_BLOG_SOURCES,
-  ];
-
-  const settingsGroups: SettingsGroup[] = [
-    { title: "Blogs", sources: feeds },
-    { title: "Hacker News", sources: [{ name: "Hacker News", sourceId: "hacker-news" }] },
-    {
-      title: "GitHub Trending",
-      sources: [{ name: "GitHub Trending", sourceId: "github-trending" }],
-    },
-    {
-      title: "Releases",
-      sources: watchedRepos.map((repo) => ({
-        name: repo,
-        sourceId: slugify(`${repo}-releases`),
-      })),
-    },
-  ];
-
   return (
     <AppShell
       items={items}
-      feeds={feeds}
-      settingsGroups={settingsGroups}
-      disabledFeeds={disabledFeeds}
-      watchedRepos={watchedRepos}
+      feeds={buildFeedsList()}
       isOwner={isOwner}
       trendingRepos={trendingRepos}
       topHn={topHn}

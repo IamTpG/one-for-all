@@ -38,3 +38,15 @@ export function verifySecret(candidate: string): boolean {
   const b = createHash("sha256").update(secret).digest();
   return timingSafeEqual(a, b);
 }
+
+// Machine-to-machine auth for the cron endpoint — a cron trigger (Vercel
+// Cron, or an external pinger on tiers/platforms without sub-daily cron)
+// isn't a browser request with cookies, so it authenticates with a bearer
+// header compared against CRON_SECRET instead.
+export function isCronRequest(authHeader: string | null): boolean {
+  const secret = process.env.CRON_SECRET;
+  if (!secret || !authHeader) return false;
+  const expected = `Bearer ${secret}`;
+  if (authHeader.length !== expected.length) return false;
+  return timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected));
+}

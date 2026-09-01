@@ -97,3 +97,69 @@ export async function setJson(key: string, value: unknown, ttlSeconds?: number):
     return false;
   }
 }
+
+export async function getHashAll<T>(key: string): Promise<Map<string, T>> {
+  const results = new Map<string, T>();
+  const redis = getClient();
+  if (!redis) return results;
+
+  try {
+    const raw = await redis.hgetall(key);
+    for (const [field, value] of Object.entries(raw)) {
+      try {
+        results.set(field, JSON.parse(value) as T);
+      } catch {
+        // corrupt entry — ignore, treat as missing
+      }
+    }
+  } catch (err) {
+    console.error(`[redis] failed to read hash ${key}:`, err);
+  }
+
+  return results;
+}
+
+export async function setHashFields(key: string, fields: Record<string, unknown>): Promise<boolean> {
+  const redis = getClient();
+  if (!redis || Object.keys(fields).length === 0) return false;
+
+  try {
+    const flat: string[] = [];
+    for (const [field, value] of Object.entries(fields)) {
+      flat.push(field, JSON.stringify(value));
+    }
+    await redis.hset(key, ...flat);
+    return true;
+  } catch (err) {
+    console.error(`[redis] failed to write hash ${key}:`, err);
+    return false;
+  }
+}
+
+export async function deleteHashFields(key: string, fields: string[]): Promise<boolean> {
+  const redis = getClient();
+  if (!redis || fields.length === 0) return false;
+
+  try {
+    await redis.hdel(key, ...fields);
+    return true;
+  } catch (err) {
+    console.error(`[redis] failed to delete from hash ${key}:`, err);
+    return false;
+  }
+}
+
+// Atomic "claim this slot" check — used so two near-simultaneous cron
+// invocations can't both decide a scheduled fetch is due and run it twice.
+export async function setIfNotExists(key: string, ttlSeconds: number): Promise<boolean> {
+  const redis = getClient();
+  if (!redis) return false;
+
+  try {
+    const result = await redis.set(key, "1", "EX", ttlSeconds, "NX");
+    return result === "OK";
+  } catch (err) {
+    console.error(`[redis] failed to claim ${key}:`, err);
+    return false;
+  }
+}

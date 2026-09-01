@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { setWatchedReposAction } from "./actions/settings";
 import type { RepoSearchResult } from "./api/repos/search/route";
-import styles from "./AppShell.module.css";
+import styles from "./SettingsControls.module.css";
 
 export default function WatchedReposEditor({ initialRepos }: { initialRepos: string[] }) {
   const router = useRouter();

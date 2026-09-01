@@ -1,5 +1,4 @@
 import { marked } from "marked";
-import { GITHUB_TRENDING_LIMIT, RELEASES_PER_REPO } from "@/lib/config";
 import type { FeedItem } from "@/lib/types";
 import { sanitizeArticleHtml } from "@/lib/sanitize";
 import { slugify } from "@/lib/slug";
@@ -47,13 +46,13 @@ type GithubRelease = {
 
 // GitHub has no official "trending" API, so this approximates it with repos
 // created in the last week sorted by stars.
-export async function fetchGithubTrending(): Promise<FeedItem[]> {
+export async function fetchGithubTrending(limit: number): Promise<FeedItem[]> {
   try {
     const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
       .toISOString()
       .slice(0, 10);
     const res = await fetch(
-      `https://api.github.com/search/repositories?q=created:>${since}&sort=stars&order=desc&per_page=${GITHUB_TRENDING_LIMIT}`,
+      `https://api.github.com/search/repositories?q=created:>${since}&sort=stars&order=desc&per_page=${limit}`,
       { headers: githubHeaders(), cache: "no-store" }
     );
     await assertGithubOk(res, "GitHub search API");
@@ -76,10 +75,10 @@ export async function fetchGithubTrending(): Promise<FeedItem[]> {
   }
 }
 
-async function fetchReleasesForRepo(repo: string): Promise<FeedItem[]> {
+async function fetchReleasesForRepo(repo: string, limit: number): Promise<FeedItem[]> {
   try {
     const res = await fetch(
-      `https://api.github.com/repos/${repo}/releases?per_page=${RELEASES_PER_REPO}`,
+      `https://api.github.com/repos/${repo}/releases?per_page=${limit}`,
       { headers: githubHeaders(), cache: "no-store" }
     );
     await assertGithubOk(res, `GitHub releases API (${repo})`);
@@ -108,7 +107,7 @@ async function fetchReleasesForRepo(repo: string): Promise<FeedItem[]> {
   }
 }
 
-export async function fetchGithubReleases(repos: string[]): Promise<FeedItem[]> {
-  const results = await Promise.all(repos.map(fetchReleasesForRepo));
+export async function fetchGithubReleases(repos: string[], perRepoLimit: number): Promise<FeedItem[]> {
+  const results = await Promise.all(repos.map((repo) => fetchReleasesForRepo(repo, perRepoLimit)));
   return results.flat();
 }

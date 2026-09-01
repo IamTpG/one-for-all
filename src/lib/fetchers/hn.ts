@@ -1,4 +1,3 @@
-import { HN_STORY_LIMIT } from "@/lib/config";
 import type { FeedItem } from "@/lib/types";
 import { fetchOgImage } from "@/lib/ogimage";
 
@@ -33,14 +32,14 @@ async function toFeedItem(item: HnItem): Promise<FeedItem> {
   return base;
 }
 
-export async function fetchHnItems(): Promise<FeedItem[]> {
+export async function fetchHnItems(limit: number): Promise<FeedItem[]> {
   try {
     const idsRes = await fetch(
       "https://hacker-news.firebaseio.com/v0/topstories.json",
       { cache: "no-store" }
     );
     const ids: number[] = await idsRes.json();
-    const topIds = ids.slice(0, HN_STORY_LIMIT);
+    const topIds = ids.slice(0, limit);
 
     const rawItems = await Promise.all(
       topIds.map(async (id) => {

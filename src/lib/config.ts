@@ -28,12 +28,17 @@ export const WATCHED_REPOS: string[] = [
   "Aider-AI/aider",
 ];
 
-export const HN_STORY_LIMIT = 15;
-export const GITHUB_TRENDING_LIMIT = 10;
-export const RELEASES_PER_REPO = 2;
+// Defaults for the per-source item limits — overridable per-owner via the
+// settings page (see siteSettings.ts); these are just the fallback values.
+export const DEFAULT_RSS_ITEM_LIMIT = 20;
+export const DEFAULT_HN_ITEM_LIMIT = 25;
+export const DEFAULT_GITHUB_TRENDING_LIMIT = 10;
+export const DEFAULT_RELEASES_PER_REPO = 2;
+export const DEFAULT_ANTHROPIC_ITEM_LIMIT = 15;
 
-// How long fetched results are cached in-memory before re-fetching (ms).
-export const CACHE_TTL_MS = 10 * 60 * 1000;
+// Default rolling retention window (days) for the persistent item store —
+// also overridable via the settings page.
+export const DEFAULT_RETENTION_DAYS = 3;
 
 // How long on-demand article extractions are cached in-memory (ms).
 export const EXTRACT_CACHE_TTL_MS = 60 * 60 * 1000;
@@ -72,10 +77,14 @@ export const TOPICS: { id: string; label: string; keywords: string[] }[] = [
 // summaries and keyword-only topics — no error, just less precise.
 export const GROQ_MODEL = "openai/gpt-oss-120b";
 
-// How many not-yet-analyzed items get sent to Groq per aggregation cycle,
-// and how many of those run concurrently. Keeps well under Groq's free-tier
-// 30 req/min limit and bounds how much a background refresh can cost.
-export const AI_BATCH_LIMIT = 8;
+// How many not-yet-analyzed items get sent to Groq per backfill tick, and
+// how many of those run concurrently. Each call costs up to ~1,500 tokens
+// worst case (input + output), and Groq's free tier caps at 8,000 TPM — a
+// burst of 8 (~12,000 tokens worst case) already sits above that ceiling,
+// which is fine, since it's absorbed by requestCompletion's single retry
+// with backoff, but going higher would make hitting that retry path (and
+// the item just waiting for the next tick) more frequent, not less.
+export const AI_BACKFILL_BATCH_SIZE = 8;
 export const AI_CONCURRENCY = 2;
 
 // How long an item's AI-generated summary/topics stay cached in Redis (s).

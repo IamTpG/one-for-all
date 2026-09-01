@@ -17,7 +17,7 @@ const TITLE_RE = /__title[^"]*">([^<]+)</;
 const DATE_RE = /__date[^"]*"[^>]*>([^<]+)</;
 const BODY_RE = /__body[^"]*">([^<]+)</;
 
-export async function fetchAnthropicNews(): Promise<FeedItem[]> {
+export async function fetchAnthropicNews(limit: number): Promise<FeedItem[]> {
   try {
     const res = await fetchWithTimeout(NEWS_URL);
     if (!res.ok) throw new Error(`Anthropic news page returned ${res.status}`);
@@ -52,7 +52,7 @@ export async function fetchAnthropicNews(): Promise<FeedItem[]> {
       });
     }
 
-    return items.slice(0, 15);
+    return items.slice(0, limit);
   } catch (err) {
     console.error("[anthropic] failed to fetch news:", err);
     return [];

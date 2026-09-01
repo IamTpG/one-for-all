@@ -1,11 +1,11 @@
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
-import { getFeedItemById } from "@/lib/aggregate";
 import { TOPICS } from "@/lib/config";
 import { extractArticle } from "@/lib/extract";
 import { GithubIcon, HnIcon, ReleaseIcon, RssIcon } from "@/lib/icons";
 import { LANGUAGE_COOKIE, parseLanguageCookie, resolveLocalized, VI_NOT_READY_MESSAGE } from "@/lib/language";
 import { getSiteSettings } from "@/lib/siteSettings";
+import { getStoredItemById } from "@/lib/store";
 import { getArticleTranslation } from "@/lib/translate";
 import LanguageToggle from "../../LanguageToggle";
 import ThemeToggle from "../../ThemeToggle";
@@ -26,7 +26,7 @@ export default async function ArticlePage({
 }) {
   const { id } = await params;
   const { watchedRepos } = await getSiteSettings();
-  const item = await getFeedItemById(decodeURIComponent(id), watchedRepos);
+  const item = await getStoredItemById(decodeURIComponent(id), watchedRepos);
   if (!item) notFound();
 
   const cookieStore = await cookies();

@@ -2,10 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { LockIcon } from "@/lib/icons";
-import type { ActiveFilter, FeedItem, SettingsGroup } from "@/lib/types";
+import { GearIcon, LockIcon } from "@/lib/icons";
+import type { ActiveFilter, FeedItem } from "@/lib/types";
 import Card from "./Card";
-import FeedSettings from "./FeedSettings";
 import LanguageToggle from "./LanguageToggle";
 import SidebarLeft from "./SidebarLeft";
 import SidebarRight from "./SidebarRight";
@@ -24,9 +23,6 @@ function timeAgo(now: number, then: number): string {
 export default function AppShell({
   items,
   feeds,
-  settingsGroups,
-  disabledFeeds,
-  watchedRepos,
   isOwner,
   trendingRepos,
   topHn,
@@ -34,19 +30,18 @@ export default function AppShell({
 }: {
   items: FeedItem[];
   feeds: { name: string; sourceId: string }[];
-  settingsGroups: SettingsGroup[];
-  disabledFeeds: string[];
-  watchedRepos: string[];
   isOwner: boolean;
   trendingRepos: FeedItem[];
   topHn: FeedItem[];
-  fetchedAt: number;
+  fetchedAt: number | null;
 }) {
   const [activeFilter, setActiveFilter] = useState<ActiveFilter>({ kind: "type", value: "all" });
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   // Starts equal to fetchedAt so the first client render matches the server
-  // render exactly (both show "just now"); ticks forward after mount.
-  const [now, setNow] = useState(fetchedAt);
+  // render exactly (both show "just now"); ticks forward after mount. No
+  // fetch has ever run yet if fetchedAt is null (a fresh store) — "now"
+  // just doesn't matter in that case since the header shows a fixed string.
+  const [now, setNow] = useState(() => fetchedAt ?? Date.now());
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   // The order you're currently scrolling through, frozen independently of
@@ -144,14 +139,13 @@ export default function AppShell({
           <div className={styles.headerRight}>
             <span className={`${styles.feedMeta} mono`}>
               <span className={styles.liveDot} aria-hidden="true" />
-              {items.length} items · updated {timeAgo(now, fetchedAt)}
+              {items.length} items ·{" "}
+              {fetchedAt === null ? "not fetched yet" : `updated ${timeAgo(now, fetchedAt)}`}
             </span>
             {isOwner ? (
-              <FeedSettings
-                groups={settingsGroups}
-                disabledFeeds={disabledFeeds}
-                watchedRepos={watchedRepos}
-              />
+              <Link href="/settings" className={styles.themeToggle} aria-label="Settings">
+                <GearIcon />
+              </Link>
             ) : (
               <Link href="/owner-login" className={styles.themeToggle} aria-label="Owner sign-in">
                 <LockIcon />

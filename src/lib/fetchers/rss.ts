@@ -24,12 +24,12 @@ async function enrichItem(item: FeedItem, rawContent: string | undefined): Promi
   return item;
 }
 
-async function fetchOneFeed(name: string, url: string): Promise<FeedItem[]> {
+async function fetchOneFeed(name: string, url: string, limit: number): Promise<FeedItem[]> {
   try {
     const feed = await parser.parseURL(url);
     const sourceId = slugify(name);
 
-    const items = (feed.items ?? []).slice(0, 15).map((item, idx) => {
+    const items = (feed.items ?? []).slice(0, limit).map((item, idx) => {
       const rawContent = item.content;
       const base: FeedItem = {
         id: `rss:${url}:${item.guid ?? item.link ?? idx}`,
@@ -60,9 +60,9 @@ function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, "").trim().slice(0, 280);
 }
 
-export async function fetchRssItems(): Promise<FeedItem[]> {
+export async function fetchRssItems(limitPerFeed: number): Promise<FeedItem[]> {
   const results = await Promise.all(
-    RSS_FEEDS.map((feed) => fetchOneFeed(feed.name, feed.url))
+    RSS_FEEDS.map((feed) => fetchOneFeed(feed.name, feed.url, limitPerFeed))
   );
   return results.flat();
 }
