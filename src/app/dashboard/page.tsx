@@ -90,7 +90,7 @@ export default async function DashboardPage() {
     ...recentRuns.flatMap((run) =>
       run.sources
         .filter((source) => !source.ok)
-        .map((source) => ({ ts: run.ts, label: source.label, message: source.error ?? "Unknown error" }))
+        .map((source) => ({ ts: run.ts, label: source.label, message: source.error || "Unknown error" }))
     ),
     ...groqFailures.map((failure) => ({
       ts: failure.ts,
@@ -204,7 +204,7 @@ export default async function DashboardPage() {
                             {source.ok ? "ok" : "fail"}
                           </span>
                         </td>
-                        <td className={styles.errorMessage}>{source.error ?? "—"}</td>
+                        <td className={styles.errorMessage}>{source.error || "—"}</td>
                       </tr>
                     ))}
                   </tbody>
