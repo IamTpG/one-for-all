@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runFetchCycle } from "@/lib/fetchCycle";
 import { isCronRequest } from "@/lib/ownerAuth";
-import { isWithinSlot, slotDateKey } from "@/lib/schedule";
+import { latestDueSlot, slotDateKey } from "@/lib/schedule";
 import { getSiteSettings } from "@/lib/siteSettings";
 import { markSlotRan, runAiBackfillTick } from "@/lib/store";
-
-const SCHEDULE_TOLERANCE_MINUTES = 10;
 
 // Verify this against your actual Vercel plan's serverless timeout ceiling
 // before deploying — this route is designed to stay well under it either
@@ -15,11 +13,13 @@ const SCHEDULE_TOLERANCE_MINUTES = 10;
 export const maxDuration = 60;
 
 // Hit every ~5 minutes (see vercel.json). Two independent, bounded jobs
-// per invocation: (1) if now is within a configured fetch time, run one
-// full fetch cycle — guarded so two near-simultaneous invocations can't
-// double-fire; (2) always process one bounded batch of pending Vietnamese
-// translations, regardless of whether a fetch just happened. This is what
-// keeps "translate while fetching" true in spirit without ever needing one
+// per invocation: (1) run one full fetch cycle if the latest due slot
+// hasn't run yet — guarded so two near-simultaneous invocations can't
+// double-fire, and so downtime through a slot only catches up on that one
+// most-recent slot rather than replaying every slot missed meanwhile;
+// (2) always process one bounded batch of pending Vietnamese translations,
+// regardless of whether a fetch just happened. This is what keeps
+// "translate while fetching" true in spirit without ever needing one
 // invocation to do a large, slow, synchronous amount of AI work.
 export async function GET(request: NextRequest) {
   if (!isCronRequest(request.headers.get("authorization"))) {
@@ -30,12 +30,10 @@ export async function GET(request: NextRequest) {
   const now = new Date();
 
   let fetchResult: { fetched: number } | null = null;
-  for (const slot of settings.fetchTimesUtc) {
-    if (!isWithinSlot(now, slot, SCHEDULE_TOLERANCE_MINUTES)) continue;
+  const slot = latestDueSlot(now, settings.fetchTimesUtc);
+  if (slot) {
     const claimed = await markSlotRan(slotDateKey(now, slot), slot);
-    if (!claimed) continue; // already ran, or another invocation just claimed it
-    fetchResult = await runFetchCycle(settings);
-    break;
+    if (claimed) fetchResult = await runFetchCycle(settings);
   }
 
   const backfill = await runAiBackfillTick();

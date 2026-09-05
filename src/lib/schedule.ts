@@ -26,14 +26,25 @@ export function utcToIct(hhmmUtc: string): string {
 export const DEFAULT_FETCH_TIMES_ICT = ["08:30", "12:30", "20:30"];
 export const DEFAULT_FETCH_TIMES_UTC = DEFAULT_FETCH_TIMES_ICT.map(ictToUtc);
 
-// True when `now` is at or up to `toleranceMinutes` after `slotUtc` (today's
-// occurrence of it). Wraps correctly across midnight so a slot just before
-// 00:00 UTC still matches a check that lands just after it.
-export function isWithinSlot(nowUtc: Date, slotUtc: string, toleranceMinutes: number): boolean {
+// Minutes elapsed since the most recent occurrence of `slotUtc` at or before
+// `nowUtc` — 0 if the slot is right now, just under 1440 if its last
+// occurrence was almost a full day ago. Wraps correctly across midnight.
+function minutesSincePassed(nowUtc: Date, slotUtc: string): number {
   const nowMinutes = nowUtc.getUTCHours() * 60 + nowUtc.getUTCMinutes();
   const slotMinutes = parseHHMM(slotUtc);
-  const diff = (((nowMinutes - slotMinutes) % 1440) + 1440) % 1440;
-  return diff <= toleranceMinutes;
+  return (((nowMinutes - slotMinutes) % 1440) + 1440) % 1440;
+}
+
+// The slot whose most recent occurrence is closest to now — i.e. the latest
+// slot that's currently due. Ticking on this (guarded by markSlotRan) is
+// what lets the cron catch up on exactly one fetch after downtime: if the
+// server was down through one or more scheduled times, the next tick only
+// runs the most recent of them, never replays the ones further back.
+export function latestDueSlot(nowUtc: Date, slotsUtc: string[]): string | null {
+  if (slotsUtc.length === 0) return null;
+  return slotsUtc.reduce((latest, slot) =>
+    minutesSincePassed(nowUtc, slot) < minutesSincePassed(nowUtc, latest) ? slot : latest
+  );
 }
 
 // The UTC calendar date this occurrence of the slot belongs to — used as
