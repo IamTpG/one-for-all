@@ -14,6 +14,24 @@ export function githubHeaders(): HeadersInit {
   return headers;
 }
 
+// GitHub exempts this endpoint from every rate limit it reports on — free
+// to call as often as needed, so the dashboard can show a live number
+// instead of a stale snapshot from whenever a Search API call last happened.
+export async function fetchGithubSearchRateLimit(): Promise<{ remaining: number; limit: number } | null> {
+  try {
+    const res = await fetch("https://api.github.com/rate_limit", {
+      headers: githubHeaders(),
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const data: { resources: { search: { remaining: number; limit: number } } } = await res.json();
+    return { remaining: data.resources.search.remaining, limit: data.resources.search.limit };
+  } catch (err) {
+    console.error("[github] failed to fetch rate limit:", err);
+    return null;
+  }
+}
+
 export async function assertGithubOk(res: Response, what: string): Promise<void> {
   if (res.ok) return;
   const remaining = res.headers.get("x-ratelimit-remaining");
@@ -73,14 +91,7 @@ export async function fetchGithubTrending(limit: number): Promise<FetchSourceRes
       publishedAt: repo.created_at,
     }));
 
-    const remaining = res.headers.get("x-ratelimit-remaining");
-    const rateLimit = res.headers.get("x-ratelimit-limit");
-    const meta =
-      remaining !== null && rateLimit !== null
-        ? { rateLimitRemaining: Number(remaining), rateLimitLimit: Number(rateLimit) }
-        : undefined;
-
-    return [{ sourceId, label, items, ok: true, meta }];
+    return [{ sourceId, label, items, ok: true }];
   } catch (err) {
     console.error("[github] failed to fetch trending repos:", err);
     return [{ sourceId, label, items: [], ok: false, error: errorMessage(err) }];

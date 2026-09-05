@@ -18,7 +18,6 @@ export type FetchRunSourceResult = {
   count: number;
   ok: boolean;
   error?: string;
-  meta?: Record<string, string | number>;
 };
 
 export type FetchRunRecord = {

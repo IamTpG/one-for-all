@@ -38,7 +38,6 @@ export type FetchSourceResult = {
   items: FeedItem[];
   ok: boolean;
   error?: string;
-  meta?: Record<string, string | number>;
 };
 
 export type AiAnalysis = {

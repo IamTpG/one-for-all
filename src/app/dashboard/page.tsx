@@ -11,6 +11,7 @@ import {
   pingRedis,
   type FetchRunRecord,
 } from "@/lib/dashboardStats";
+import { fetchGithubSearchRateLimit } from "@/lib/fetchers/github";
 import { isOwnerRequest, OWNER_COOKIE_NAME } from "@/lib/ownerAuth";
 import { nextScheduledSlot, utcToIct } from "@/lib/schedule";
 import { getSiteSettings } from "@/lib/siteSettings";
@@ -56,6 +57,7 @@ export default async function DashboardPage() {
     toggleStats,
     storedItems,
     redisUp,
+    githubSearchRateLimit,
   ] = await Promise.all([
     getSiteSettings(),
     getRecentRuns(),
@@ -67,6 +69,7 @@ export default async function DashboardPage() {
     getLanguageToggleStats(),
     getStoredItems(),
     pingRedis(),
+    fetchGithubSearchRateLimit(),
   ]);
 
   const nextDue = nextScheduledSlot(new Date(), settings.fetchTimesUtc);
@@ -98,7 +101,6 @@ export default async function DashboardPage() {
     .sort((a, b) => b.count - a.count)
     .slice(0, 10);
 
-  const githubMeta = latestRun?.sources.find((source) => source.sourceId === "github-trending")?.meta;
   const lastBackfillTick = backfillHistory[0] ?? null;
   const backfillFailureTotal = backfillHistory.reduce((sum, tick) => sum + tick.failureCount, 0);
 
@@ -346,9 +348,11 @@ export default async function DashboardPage() {
             </div>
             <div className={styles.statTile}>
               <span className={styles.statValue}>
-                {githubMeta ? `${githubMeta.rateLimitRemaining} / ${githubMeta.rateLimitLimit}` : "—"}
+                {githubSearchRateLimit
+                  ? `${githubSearchRateLimit.remaining} / ${githubSearchRateLimit.limit}`
+                  : "—"}
               </span>
-              <span className={styles.statLabel}>GitHub API rate limit</span>
+              <span className={styles.statLabel}>GitHub API rate limit (live)</span>
             </div>
           </div>
         </section>
