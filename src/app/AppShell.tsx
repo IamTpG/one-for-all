@@ -2,13 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { GearIcon, LockIcon } from "@/lib/icons";
+import { ChartIcon, GearIcon, LockIcon } from "@/lib/icons";
 import type { ActiveFilter, FeedItem } from "@/lib/types";
 import Card from "./Card";
 import LanguageToggle from "./LanguageToggle";
 import SidebarLeft from "./SidebarLeft";
 import SidebarRight from "./SidebarRight";
 import ThemeToggle from "./ThemeToggle";
+import ViewTracker from "./ViewTracker";
 import styles from "./AppShell.module.css";
 
 const PAGE_SIZE = 15;
@@ -120,6 +121,7 @@ export default function AppShell({
 
   return (
     <>
+      <ViewTracker type="home" />
       <header className={styles.topbar}>
         <div className={styles.topbarInner}>
           <div className={styles.brand}>
@@ -142,6 +144,11 @@ export default function AppShell({
               {items.length} items ·{" "}
               {fetchedAt === null ? "not fetched yet" : `updated ${timeAgo(now, fetchedAt)}`}
             </span>
+            {isOwner && (
+              <Link href="/dashboard" className={styles.themeToggle} aria-label="Dashboard">
+                <ChartIcon />
+              </Link>
+            )}
             {isOwner ? (
               <Link href="/settings" className={styles.themeToggle} aria-label="Settings">
                 <GearIcon />

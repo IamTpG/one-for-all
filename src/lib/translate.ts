@@ -1,4 +1,5 @@
 import { AI_CACHE_TTL_SECONDS, TRANSLATE_MAX_CHARS } from "@/lib/config";
+import { recordGroqFailure } from "@/lib/dashboardStats";
 import { translateArticleHtml } from "@/lib/groq";
 import { getJson, setJson } from "@/lib/redis";
 
@@ -11,7 +12,10 @@ export async function getArticleTranslation(itemId: string, html: string): Promi
   const cached = await getJson<string>(KEY_PREFIX + itemId);
   if (cached) return cached;
 
-  const translated = await translateArticleHtml(itemId, html.slice(0, TRANSLATE_MAX_CHARS));
+  const { data: translated, error } = await translateArticleHtml(itemId, html.slice(0, TRANSLATE_MAX_CHARS));
+  if (error) {
+    await recordGroqFailure({ ts: Date.now(), stage: "translate", itemId, message: error });
+  }
   if (!translated) return null;
 
   await setJson(KEY_PREFIX + itemId, translated, AI_CACHE_TTL_SECONDS);

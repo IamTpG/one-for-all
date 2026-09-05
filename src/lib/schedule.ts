@@ -47,6 +47,19 @@ export function latestDueSlot(nowUtc: Date, slotsUtc: string[]): string | null {
   );
 }
 
+// The slot whose next occurrence is soonest, and how many minutes until
+// it's due — display-only, for the dashboard's "next scheduled fetch" tile.
+export function nextScheduledSlot(
+  nowUtc: Date,
+  slotsUtc: string[]
+): { slotUtc: string; minutesUntil: number } | null {
+  if (slotsUtc.length === 0) return null;
+  const minutesUntil = (slot: string) => (1440 - minutesSincePassed(nowUtc, slot)) % 1440 || 1440;
+  return slotsUtc
+    .map((slotUtc) => ({ slotUtc, minutesUntil: minutesUntil(slotUtc) }))
+    .reduce((a, b) => (b.minutesUntil < a.minutesUntil ? b : a));
+}
+
 // The UTC calendar date this occurrence of the slot belongs to — used as
 // part of the "has this slot already run" marker key. Rolls back to the
 // previous day when a late-evening slot is being matched just after

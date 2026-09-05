@@ -114,6 +114,18 @@ export function LockIcon({ className }: { className?: string }) {
   );
 }
 
+export function ChartIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 20 V4" />
+      <path d="M4 20 H20" />
+      <path d="M8 16 V11" />
+      <path d="M12.5 16 V7" />
+      <path d="M17 16 V13" />
+    </svg>
+  );
+}
+
 export function GearIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">

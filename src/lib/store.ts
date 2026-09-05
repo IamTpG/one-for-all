@@ -1,4 +1,5 @@
 import { AI_BACKFILL_BATCH_SIZE, AI_CACHE_TTL_SECONDS, AI_CONCURRENCY } from "@/lib/config";
+import { recordBackfillTick, recordGroqFailure } from "@/lib/dashboardStats";
 import { classifyAndSummarize } from "@/lib/groq";
 import { matchKeywordTopics } from "@/lib/keywordTopics";
 import {
@@ -126,6 +127,17 @@ async function withConcurrency<T>(
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
 }
 
+function itemsNeedingAi(stored: Map<string, StoredItem>): [string, StoredItem][] {
+  return Array.from(stored.entries()).filter(([, item]) => !item.titleVi || !item.summaryVi);
+}
+
+// Count of items still missing a Vietnamese translation, for the dashboard
+// backlog stat — same filter runAiBackfillTick uses, without the batch slice.
+export async function getAiBacklogSize(): Promise<number> {
+  const stored = await getHashAll<StoredItem>(ITEMS_KEY);
+  return itemsNeedingAi(stored).length;
+}
+
 // Processes one bounded batch of stored items still missing a Vietnamese
 // translation. Decoupled entirely from fetching — driven by the cron tick,
 // so translation keeps progressing between scheduled fetches instead of
@@ -134,15 +146,15 @@ export async function runAiBackfillTick(
   batchSize: number = AI_BACKFILL_BATCH_SIZE
 ): Promise<{ processed: number }> {
   const stored = await getHashAll<StoredItem>(ITEMS_KEY);
-  const needsAi = Array.from(stored.entries())
-    .filter(([, item]) => !item.titleVi || !item.summaryVi)
-    .slice(0, batchSize);
+  const needsAi = itemsNeedingAi(stored).slice(0, batchSize);
 
   if (needsAi.length === 0) return { processed: 0 };
 
   const updates: Record<string, StoredItem> = {};
+  const failures: { itemId: string; message: string }[] = [];
   await withConcurrency(needsAi, AI_CONCURRENCY, async ([id, item]) => {
-    const result = await classifyAndSummarize(item);
+    const { data: result, error } = await classifyAndSummarize(item);
+    if (error) failures.push({ itemId: id, message: error });
     if (!result) return;
     await setCachedAnalysis(id, result, AI_CACHE_TTL_SECONDS);
     updates[id] = {
@@ -156,6 +168,13 @@ export async function runAiBackfillTick(
   });
 
   if (Object.keys(updates).length > 0) await setHashFields(ITEMS_KEY, updates);
+
+  const ts = Date.now();
+  await Promise.all([
+    recordBackfillTick({ ts, processed: Object.keys(updates).length, failureCount: failures.length }),
+    ...failures.map((f) => recordGroqFailure({ ts, stage: "classify" as const, ...f })),
+  ]);
+
   return { processed: Object.keys(updates).length };
 }
 

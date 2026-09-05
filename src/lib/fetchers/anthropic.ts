@@ -1,5 +1,6 @@
+import { errorMessage } from "@/lib/errors";
 import { fetchWithTimeout } from "@/lib/http";
-import type { FeedItem } from "@/lib/types";
+import type { FeedItem, FetchSourceResult } from "@/lib/types";
 
 const BASE_URL = "https://www.anthropic.com";
 const NEWS_URL = `${BASE_URL}/news`;
@@ -17,7 +18,9 @@ const TITLE_RE = /__title[^"]*">([^<]+)</;
 const DATE_RE = /__date[^"]*"[^>]*>([^<]+)</;
 const BODY_RE = /__body[^"]*">([^<]+)</;
 
-export async function fetchAnthropicNews(limit: number): Promise<FeedItem[]> {
+export async function fetchAnthropicNews(limit: number): Promise<FetchSourceResult[]> {
+  const sourceId = "anthropic";
+  const label = "Anthropic";
   try {
     const res = await fetchWithTimeout(NEWS_URL);
     if (!res.ok) throw new Error(`Anthropic news page returned ${res.status}`);
@@ -52,9 +55,9 @@ export async function fetchAnthropicNews(limit: number): Promise<FeedItem[]> {
       });
     }
 
-    return items.slice(0, limit);
+    return [{ sourceId, label, items: items.slice(0, limit), ok: true }];
   } catch (err) {
     console.error("[anthropic] failed to fetch news:", err);
-    return [];
+    return [{ sourceId, label, items: [], ok: false, error: errorMessage(err) }];
   }
 }

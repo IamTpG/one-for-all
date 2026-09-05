@@ -163,3 +163,63 @@ export async function setIfNotExists(key: string, ttlSeconds: number): Promise<b
     return false;
   }
 }
+
+// Pushes one entry onto a capped history list — LPUSH+LTRIM in a single
+// pipeline so two near-simultaneous writers (a scheduled tick and a manual
+// "Fetch now", say) can't race each other the way a getJson/setJson
+// read-modify-write on a single array blob could.
+export async function pushCapped(key: string, entry: unknown, maxLen: number): Promise<void> {
+  const redis = getClient();
+  if (!redis) return;
+
+  try {
+    await redis.multi().lpush(key, JSON.stringify(entry)).ltrim(key, 0, maxLen - 1).exec();
+  } catch (err) {
+    console.error(`[redis] failed to push to ${key}:`, err);
+  }
+}
+
+export async function getCappedList<T>(key: string, count?: number): Promise<T[]> {
+  const redis = getClient();
+  if (!redis) return [];
+
+  try {
+    const raw = await redis.lrange(key, 0, count ? count - 1 : -1);
+    return raw.flatMap((entry) => {
+      try {
+        return [JSON.parse(entry) as T];
+      } catch {
+        return [];
+      }
+    });
+  } catch (err) {
+    console.error(`[redis] failed to read list ${key}:`, err);
+    return [];
+  }
+}
+
+// Atomic counter increment — for view/toggle counts, so concurrent
+// increments never read-modify-write and lose a count.
+export async function incrHashField(key: string, field: string, by = 1): Promise<number | null> {
+  const redis = getClient();
+  if (!redis) return null;
+
+  try {
+    return await redis.hincrby(key, field, by);
+  } catch (err) {
+    console.error(`[redis] failed to increment ${key}.${field}:`, err);
+    return null;
+  }
+}
+
+export async function pingRedis(): Promise<boolean> {
+  const redis = getClient();
+  if (!redis) return false;
+
+  try {
+    return (await redis.ping()) === "PONG";
+  } catch (err) {
+    console.error("[redis] ping failed:", err);
+    return false;
+  }
+}

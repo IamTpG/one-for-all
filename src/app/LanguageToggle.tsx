@@ -17,6 +17,7 @@ export default function LanguageToggle() {
     // languages are already present in the data they were rendered with.
     setLanguage(next);
     document.cookie = `${LANGUAGE_COOKIE}=${next}; path=/; max-age=${ONE_YEAR_SECONDS}`;
+    navigator.sendBeacon?.("/api/views", JSON.stringify({ type: "toggle", lang: next }));
     // Re-runs the server tree so an already-open article's body picks up
     // its (server-side, cookie-gated) translation.
     router.refresh();

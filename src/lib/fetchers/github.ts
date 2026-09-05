@@ -1,5 +1,6 @@
 import { marked } from "marked";
-import type { FeedItem } from "@/lib/types";
+import { errorMessage } from "@/lib/errors";
+import type { FeedItem, FetchSourceResult } from "@/lib/types";
 import { sanitizeArticleHtml } from "@/lib/sanitize";
 import { slugify } from "@/lib/slug";
 
@@ -46,7 +47,9 @@ type GithubRelease = {
 
 // GitHub has no official "trending" API, so this approximates it with repos
 // created in the last week sorted by stars.
-export async function fetchGithubTrending(limit: number): Promise<FeedItem[]> {
+export async function fetchGithubTrending(limit: number): Promise<FetchSourceResult[]> {
+  const sourceId = "github-trending";
+  const label = "GitHub Trending";
   try {
     const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
       .toISOString()
@@ -58,7 +61,7 @@ export async function fetchGithubTrending(limit: number): Promise<FeedItem[]> {
     await assertGithubOk(res, "GitHub search API");
     const data: { items: GithubRepo[] } = await res.json();
 
-    return data.items.map((repo) => ({
+    const items: FeedItem[] = data.items.map((repo) => ({
       id: `gh-trending:${repo.full_name}`,
       source: "GitHub Trending",
       sourceId: "github-trending",
@@ -69,13 +72,24 @@ export async function fetchGithubTrending(limit: number): Promise<FeedItem[]> {
       points: repo.stargazers_count,
       publishedAt: repo.created_at,
     }));
+
+    const remaining = res.headers.get("x-ratelimit-remaining");
+    const rateLimit = res.headers.get("x-ratelimit-limit");
+    const meta =
+      remaining !== null && rateLimit !== null
+        ? { rateLimitRemaining: Number(remaining), rateLimitLimit: Number(rateLimit) }
+        : undefined;
+
+    return [{ sourceId, label, items, ok: true, meta }];
   } catch (err) {
     console.error("[github] failed to fetch trending repos:", err);
-    return [];
+    return [{ sourceId, label, items: [], ok: false, error: errorMessage(err) }];
   }
 }
 
-async function fetchReleasesForRepo(repo: string, limit: number): Promise<FeedItem[]> {
+async function fetchReleasesForRepo(repo: string, limit: number): Promise<FetchSourceResult> {
+  const sourceId = slugify(`${repo}-releases`);
+  const label = `${repo} releases`;
   try {
     const res = await fetch(
       `https://api.github.com/repos/${repo}/releases?per_page=${limit}`,
@@ -84,12 +98,12 @@ async function fetchReleasesForRepo(repo: string, limit: number): Promise<FeedIt
     await assertGithubOk(res, `GitHub releases API (${repo})`);
     const releases: GithubRelease[] = await res.json();
 
-    return releases.map((release) => {
+    const items: FeedItem[] = releases.map((release) => {
       const body = (release.body ?? "").trim();
       return {
         id: `gh-release:${repo}:${release.id}`,
-        source: `${repo} releases`,
-        sourceId: slugify(`${repo}-releases`),
+        source: label,
+        sourceId,
         sourceType: "github-release" as const,
         title: `${repo}: ${release.name || release.tag_name}`,
         url: release.html_url,
@@ -101,13 +115,16 @@ async function fetchReleasesForRepo(repo: string, limit: number): Promise<FeedIt
         publishedAt: release.published_at ?? new Date().toISOString(),
       };
     });
+    return { sourceId, label, items, ok: true };
   } catch (err) {
     console.error(`[github] failed to fetch releases for ${repo}:`, err);
-    return [];
+    return { sourceId, label, items: [], ok: false, error: errorMessage(err) };
   }
 }
 
-export async function fetchGithubReleases(repos: string[], perRepoLimit: number): Promise<FeedItem[]> {
-  const results = await Promise.all(repos.map((repo) => fetchReleasesForRepo(repo, perRepoLimit)));
-  return results.flat();
+export async function fetchGithubReleases(
+  repos: string[],
+  perRepoLimit: number
+): Promise<FetchSourceResult[]> {
+  return Promise.all(repos.map((repo) => fetchReleasesForRepo(repo, perRepoLimit)));
 }

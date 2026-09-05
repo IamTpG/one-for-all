@@ -90,6 +90,13 @@ export const AI_CONCURRENCY = 2;
 // How long an item's AI-generated summary/topics stay cached in Redis (s).
 export const AI_CACHE_TTL_SECONDS = 90 * 24 * 60 * 60;
 
+// How many entries the owner dashboard's capped history lists keep. Small
+// on purpose — this is "is everything working right now," not analytics.
+export const DASHBOARD_RUN_HISTORY_LIMIT = 30;
+export const DASHBOARD_BACKFILL_HISTORY_LIMIT = 50;
+export const DASHBOARD_GROQ_FAILURE_LIMIT = 50;
+export const DASHBOARD_RECENT_FAILURES_DISPLAY_LIMIT = 20;
+
 // Article bodies are capped before translation — very long articles only
 // get their first portion translated rather than chunked and reassembled.
 export const TRANSLATE_MAX_CHARS = 6000;

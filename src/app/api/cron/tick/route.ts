@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
   const slot = latestDueSlot(now, settings.fetchTimesUtc);
   if (slot) {
     const claimed = await markSlotRan(slotDateKey(now, slot), slot);
-    if (claimed) fetchResult = await runFetchCycle(settings);
+    if (claimed) fetchResult = await runFetchCycle(settings, slot);
   }
 
   const backfill = await runAiBackfillTick();

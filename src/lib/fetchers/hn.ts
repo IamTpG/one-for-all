@@ -1,4 +1,5 @@
-import type { FeedItem } from "@/lib/types";
+import { errorMessage } from "@/lib/errors";
+import type { FeedItem, FetchSourceResult } from "@/lib/types";
 import { fetchOgImage } from "@/lib/ogimage";
 
 type HnItem = {
@@ -32,7 +33,9 @@ async function toFeedItem(item: HnItem): Promise<FeedItem> {
   return base;
 }
 
-export async function fetchHnItems(limit: number): Promise<FeedItem[]> {
+export async function fetchHnItems(limit: number): Promise<FetchSourceResult[]> {
+  const sourceId = "hacker-news";
+  const label = "Hacker News";
   try {
     const idsRes = await fetch(
       "https://hacker-news.firebaseio.com/v0/topstories.json",
@@ -51,11 +54,12 @@ export async function fetchHnItems(limit: number): Promise<FeedItem[]> {
       })
     );
 
-    return await Promise.all(
+    const items = await Promise.all(
       rawItems.filter((item) => item && item.title).map(toFeedItem)
     );
+    return [{ sourceId, label, items, ok: true }];
   } catch (err) {
     console.error("[hn] failed to fetch top stories:", err);
-    return [];
+    return [{ sourceId, label, items: [], ok: false, error: errorMessage(err) }];
   }
 }

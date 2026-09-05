@@ -9,6 +9,7 @@ import { getStoredItemById } from "@/lib/store";
 import { getArticleTranslation } from "@/lib/translate";
 import LanguageToggle from "../../LanguageToggle";
 import ThemeToggle from "../../ThemeToggle";
+import ViewTracker from "../../ViewTracker";
 import BackButton from "./BackButton";
 import styles from "./Article.module.css";
 
@@ -58,6 +59,7 @@ export default async function ArticlePage({
 
   return (
     <div className={styles.page}>
+      <ViewTracker type="article" itemId={item.id} />
       <header className={styles.topbar}>
         <div className={styles.topbarInner}>
           <BackButton />

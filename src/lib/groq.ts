@@ -1,7 +1,10 @@
 import Groq, { RateLimitError } from "groq-sdk";
 import { GROQ_MODEL, TOPICS, TRANSLATE_MAX_TOKENS } from "@/lib/config";
+import { errorMessage } from "@/lib/errors";
 import { sanitizeArticleHtml } from "@/lib/sanitize";
 import type { AiAnalysis, FeedItem } from "@/lib/types";
+
+export type GroqResult<T> = { data: T | null; error?: string };
 
 const DEFAULT_RETRY_DELAY_MS = 5000;
 
@@ -74,9 +77,9 @@ async function requestCompletion(
   }
 }
 
-export async function classifyAndSummarize(item: FeedItem): Promise<AiAnalysis | null> {
+export async function classifyAndSummarize(item: FeedItem): Promise<GroqResult<AiAnalysis>> {
   const groq = getClient();
-  if (!groq) return null;
+  if (!groq) return { data: null }; // not configured — not a failure
 
   try {
     const validIds = new Set(TOPICS.map((t) => t.id));
@@ -86,7 +89,7 @@ export async function classifyAndSummarize(item: FeedItem): Promise<AiAnalysis |
       item.id,
       0
     );
-    if (!raw) return null;
+    if (!raw) return { data: null };
 
     const parsed = JSON.parse(raw) as {
       summary?: unknown;
@@ -94,7 +97,7 @@ export async function classifyAndSummarize(item: FeedItem): Promise<AiAnalysis |
       titleVi?: unknown;
       summaryVi?: unknown;
     };
-    if (typeof parsed.summary !== "string" || !parsed.summary.trim()) return null;
+    if (typeof parsed.summary !== "string" || !parsed.summary.trim()) return { data: null };
 
     const topics = Array.isArray(parsed.topics)
       ? parsed.topics.filter((t): t is string => typeof t === "string" && validIds.has(t))
@@ -110,19 +113,19 @@ export async function classifyAndSummarize(item: FeedItem): Promise<AiAnalysis |
     if (typeof parsed.summaryVi === "string" && parsed.summaryVi.trim()) {
       result.summaryVi = parsed.summaryVi.trim();
     }
-    return result;
+    return { data: result };
   } catch (err) {
     console.error(`[groq] failed to classify/summarize ${item.id}:`, err);
-    return null;
+    return { data: null, error: errorMessage(err) };
   }
 }
 
 // Plain-text-in/HTML-out translation of a full article body. Not JSON
 // mode — escaping a whole article inside a JSON string is both wasteful
 // and failure-prone if the response gets truncated mid-string.
-export async function translateArticleHtml(logId: string, html: string): Promise<string | null> {
+export async function translateArticleHtml(logId: string, html: string): Promise<GroqResult<string>> {
   const groq = getClient();
-  if (!groq) return null;
+  if (!groq) return { data: null }; // not configured — not a failure
 
   try {
     const prompt =
@@ -131,16 +134,16 @@ export async function translateArticleHtml(logId: string, html: string): Promise
       "content. Return only the translated HTML, no commentary, no markdown " +
       `code fences.\n\n${html}`;
     const raw = await requestCompletion(groq, { prompt, maxTokens: TRANSLATE_MAX_TOKENS }, logId, 0);
-    if (!raw) return null;
+    if (!raw) return { data: null };
 
     // The model occasionally wraps output in a markdown code fence despite
     // being asked not to — strip it defensively rather than failing.
     const cleaned = raw.trim().replace(/^```(?:html)?\n?/, "").replace(/```$/, "").trim();
-    if (!cleaned) return null;
+    if (!cleaned) return { data: null };
 
-    return sanitizeArticleHtml(cleaned);
+    return { data: sanitizeArticleHtml(cleaned) };
   } catch (err) {
     console.error(`[groq] failed to translate article ${logId}:`, err);
-    return null;
+    return { data: null, error: errorMessage(err) };
   }
 }

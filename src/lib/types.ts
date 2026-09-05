@@ -28,6 +28,19 @@ export type FeedItem = {
   summaryVi?: string;
 };
 
+// What one logical source (a single RSS feed, HN, a single watched repo's
+// releases, ...) produced on one fetch cycle attempt — carries success/
+// failure through to the dashboard instead of swallowing it into a
+// console.error and an empty array.
+export type FetchSourceResult = {
+  sourceId: string;
+  label: string;
+  items: FeedItem[];
+  ok: boolean;
+  error?: string;
+  meta?: Record<string, string | number>;
+};
+
 export type AiAnalysis = {
   summary: string;
   topics: string[];
