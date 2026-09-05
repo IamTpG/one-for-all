@@ -4,6 +4,7 @@ import { DASHBOARD_RECENT_FAILURES_DISPLAY_LIMIT } from "@/lib/config";
 import {
   getBackfillHistory,
   getGroqFailures,
+  getHomeViewsDaily,
   getHomeViewStats,
   getItemViewCounts,
   getLanguageToggleStats,
@@ -19,6 +20,9 @@ import { getAiBacklogSize, getStoredItems } from "@/lib/store";
 import ThemeToggle from "../ThemeToggle";
 import BackButton from "./BackButton";
 import styles from "./Dashboard.module.css";
+import Meter from "./Meter";
+import MostViewedChart from "./MostViewedChart";
+import ViewsLineChart from "./ViewsLineChart";
 
 function formatTs(ts: number): string {
   return new Date(ts).toLocaleString("en-US", {
@@ -58,6 +62,7 @@ export default async function DashboardPage() {
     storedItems,
     redisUp,
     githubSearchRateLimit,
+    homeViewsDaily,
   ] = await Promise.all([
     getSiteSettings(),
     getRecentRuns(),
@@ -70,6 +75,7 @@ export default async function DashboardPage() {
     getStoredItems(),
     pingRedis(),
     fetchGithubSearchRateLimit(),
+    getHomeViewsDaily(),
   ]);
 
   const nextDue = nextScheduledSlot(new Date(), settings.fetchTimesUtc);
@@ -104,6 +110,11 @@ export default async function DashboardPage() {
   const lastBackfillTick = backfillHistory[0] ?? null;
   const backfillFailureTotal = backfillHistory.reduce((sum, tick) => sum + tick.failureCount, 0);
 
+  const sourcesOk = latestRun?.sources.filter((source) => source.ok).length ?? 0;
+  const sourcesTotal = latestRun?.sources.length ?? 0;
+
+  const translatedCount = Math.max(0, storedItems.length - backlogSize);
+
   return (
     <div className={styles.page}>
       <header className={styles.topbar}>
@@ -137,6 +148,16 @@ export default async function DashboardPage() {
               </span>
             </div>
           </div>
+
+          {latestRun && (
+            <Meter
+              label="Latest run — sources succeeded"
+              value={sourcesOk}
+              total={sourcesTotal}
+              displayText={`${sourcesOk} / ${sourcesTotal}`}
+              variant="severity"
+            />
+          )}
 
           <h2 className={`${styles.sectionTitle} mono`}>Configured slots</h2>
           <div className={styles.tableWrap}>
@@ -240,6 +261,13 @@ export default async function DashboardPage() {
             </div>
           </div>
 
+          <Meter
+            label="Items translated"
+            value={translatedCount}
+            total={storedItems.length}
+            displayText={`${translatedCount} / ${storedItems.length}`}
+          />
+
           {backfillHistory.length === 0 ? (
             <p className={styles.emptyState}>No backfill ticks recorded yet.</p>
           ) : (
@@ -311,28 +339,14 @@ export default async function DashboardPage() {
             </div>
           </div>
 
+          <h2 className={`${styles.sectionTitle} mono`}>Home views, last {homeViewsDaily.length} days</h2>
+          <ViewsLineChart data={homeViewsDaily} />
+
           <h2 className={`${styles.sectionTitle} mono`}>Most viewed articles</h2>
           {mostViewed.length === 0 ? (
             <p className={styles.emptyState}>No article views recorded yet.</p>
           ) : (
-            <div className={styles.tableWrap}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Title</th>
-                    <th>Views</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mostViewed.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.title}</td>
-                      <td>{item.count}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <MostViewedChart items={mostViewed} />
           )}
         </section>
 

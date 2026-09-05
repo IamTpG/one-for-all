@@ -2,6 +2,7 @@ import {
   DASHBOARD_BACKFILL_HISTORY_LIMIT,
   DASHBOARD_GROQ_FAILURE_LIMIT,
   DASHBOARD_RUN_HISTORY_LIMIT,
+  DASHBOARD_VIEWS_CHART_DAYS,
 } from "@/lib/config";
 import { getCappedList, getHashAll, incrHashField, pingRedis, pushCapped } from "@/lib/redis";
 
@@ -86,6 +87,23 @@ export async function getHomeViewStats(): Promise<{ total: number; today: number
     total: raw.get("total") ?? 0,
     today: raw.get(todayDateKey()) ?? 0,
   };
+}
+
+// Daily view counts for the last `days` days, oldest first, zero-filled for
+// days with no recorded views — recordHomeView already writes one field per
+// calendar date (alongside "total"), this just reads that back as a series.
+export async function getHomeViewsDaily(
+  days: number = DASHBOARD_VIEWS_CHART_DAYS
+): Promise<{ date: string; count: number }[]> {
+  const raw = await getHashAll<number>(HOME_VIEWS_KEY);
+  const series: { date: string; count: number }[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() - i);
+    const date = d.toISOString().slice(0, 10);
+    series.push({ date, count: raw.get(date) ?? 0 });
+  }
+  return series;
 }
 
 export async function recordItemView(itemId: string): Promise<void> {

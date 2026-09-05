@@ -96,6 +96,7 @@ export const DASHBOARD_RUN_HISTORY_LIMIT = 30;
 export const DASHBOARD_BACKFILL_HISTORY_LIMIT = 50;
 export const DASHBOARD_GROQ_FAILURE_LIMIT = 50;
 export const DASHBOARD_RECENT_FAILURES_DISPLAY_LIMIT = 20;
+export const DASHBOARD_VIEWS_CHART_DAYS = 14;
 
 // Article bodies are capped before translation — very long articles only
 // get their first portion translated rather than chunked and reassembled.

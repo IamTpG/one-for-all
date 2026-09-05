@@ -176,3 +176,158 @@
   color: var(--text-muted);
   font-size: 0.76rem;
 }
+
+/* ---------- Meter / progress bar ---------- */
+
+.meter {
+  padding: 2px 6px 14px;
+}
+
+.meterHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+  font-size: 0.8rem;
+}
+
+.meterLabel {
+  color: var(--text-muted);
+}
+
+.meterValue {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.meterTrack {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.meterFill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+  transition: width 200ms ease;
+}
+
+.meterFillCritical {
+  background: #d14343;
+}
+
+/* ---------- Line chart (Page Views) ---------- */
+
+.chartWrap {
+  position: relative;
+  padding: 4px 6px 8px;
+}
+
+.chartSvg {
+  display: block;
+  width: 100%;
+  height: 160px;
+  touch-action: none;
+}
+
+.chartArea {
+  fill: var(--accent);
+  opacity: 0.1;
+  stroke: none;
+}
+
+.chartLine {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chartCrosshair {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.chartDot {
+  fill: var(--accent);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+.chartEndLabel {
+  fill: var(--text-muted);
+  font-size: 11px;
+  font-family: var(--font-mono), ui-monospace, "SF Mono", Consolas, monospace;
+}
+
+.chartTooltip {
+  position: absolute;
+  top: 2px;
+  transform: translateX(-50%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 5px 8px;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.chartTooltipValue {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.chartTooltipLabel {
+  color: var(--text-faint);
+}
+
+/* ---------- Horizontal bar chart (Most viewed articles) ---------- */
+
+.barChart {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 6px 14px;
+}
+
+.barRow {
+  display: grid;
+  grid-template-columns: minmax(90px, 200px) 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.barLabel {
+  font-size: 0.78rem;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barTrack {
+  height: 14px;
+  border-radius: 4px;
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  background: var(--accent);
+}
+
+.barValue {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  min-width: 22px;
+  text-align: right;
+}
