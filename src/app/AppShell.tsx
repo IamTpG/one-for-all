@@ -73,6 +73,23 @@ export default function AppShell({
     });
   }, [items]);
 
+  // Counts for the left sidebar's "All 142" / per-type / per-topic /
+  // per-feed badges — computed off the full item set, not the current
+  // filter, so a count never changes just because you clicked a filter.
+  const sidebarCounts = useMemo(() => {
+    const byType: Record<string, number> = { all: items.length };
+    const byTopic: Record<string, number> = {};
+    const bySource: Record<string, number> = {};
+    for (const item of items) {
+      byType[item.sourceType] = (byType[item.sourceType] ?? 0) + 1;
+      bySource[item.sourceId] = (bySource[item.sourceId] ?? 0) + 1;
+      for (const topicId of item.topics ?? []) {
+        byTopic[topicId] = (byTopic[topicId] ?? 0) + 1;
+      }
+    }
+    return { byType, byTopic, bySource };
+  }, [items]);
+
   const filteredItems = useMemo(() => {
     if (activeFilter.kind === "source") {
       return stableItems.filter((item) => item.sourceId === activeFilter.value);
@@ -121,23 +138,29 @@ export default function AppShell({
 
   return (
     <>
+      <a href="#main-feed" className={styles.skipLink}>
+        Skip to content
+      </a>
       <ViewTracker type="home" />
       <header className={styles.topbar}>
         <div className={styles.topbarInner}>
-          <div className={styles.brand}>
-            <span className={styles.brandIconChip}>
-              <svg className={styles.brandMark} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M4 17 L4 9" />
-                <path d="M9 17 L9 5" />
-                <path d="M14 17 L14 12" />
-                <path d="M19 17 L19 7" />
-              </svg>
-            </span>
+          {/* Plain <a>, not next/link's <Link> — Link would soft-navigate
+              and no-op since we're already on "/", whereas a real anchor
+              always triggers a full browser reload, refetching everything
+              fresh (new items, reset scroll/pagination state). */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          <a href="/" className={styles.brand}>
+            <svg className={styles.brandMark} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M4 17 L4 9" />
+              <path d="M9 17 L9 5" />
+              <path d="M14 17 L14 12" />
+              <path d="M19 17 L19 7" />
+            </svg>
             <div className={styles.brandText}>
               <h1 className={`${styles.brandTitle} display`}>Wire</h1>
               <span className={`${styles.brandTagline} mono`}>AI · DEV · GITHUB</span>
             </div>
-          </div>
+          </a>
           <div className={styles.headerRight}>
             <span className={`${styles.feedMeta} mono`}>
               <span className={styles.liveDot} aria-hidden="true" />
@@ -165,9 +188,14 @@ export default function AppShell({
       </header>
 
       <div className={styles.layout}>
-        <SidebarLeft feeds={feeds} activeFilter={activeFilter} onSelect={handleFilterChange} />
+        <SidebarLeft
+          feeds={feeds}
+          activeFilter={activeFilter}
+          onSelect={handleFilterChange}
+          counts={sidebarCounts}
+        />
 
-        <main className={styles.feed}>
+        <main id="main-feed" className={styles.feed}>
           {visibleItems.length === 0 && (
             <p className={styles.emptyState}>No items for this filter yet.</p>
           )}

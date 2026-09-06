@@ -10,14 +10,22 @@ const CATEGORIES: { label: string; value: SourceType | "all" }[] = [
   { label: "Releases", value: "github-release" },
 ];
 
+export type SidebarCounts = {
+  byType: Record<string, number>;
+  byTopic: Record<string, number>;
+  bySource: Record<string, number>;
+};
+
 export default function SidebarLeft({
   feeds,
   activeFilter,
   onSelect,
+  counts,
 }: {
   feeds: { name: string; sourceId: string }[];
   activeFilter: ActiveFilter;
   onSelect: (filter: ActiveFilter) => void;
+  counts: SidebarCounts;
 }) {
   return (
     <aside className={styles.sidebarLeft}>
@@ -31,7 +39,8 @@ export default function SidebarLeft({
             aria-pressed={activeFilter.kind === "type" && activeFilter.value === cat.value}
             onClick={() => onSelect({ kind: "type", value: cat.value })}
           >
-            {cat.label}
+            <span>{cat.label}</span>
+            <span className={styles.navCount}>{counts.byType[cat.value] ?? 0}</span>
           </button>
         ))}
       </nav>
@@ -45,12 +54,13 @@ export default function SidebarLeft({
             aria-pressed={activeFilter.kind === "topic" && activeFilter.value === topic.id}
             onClick={() => onSelect({ kind: "topic", value: topic.id })}
           >
-            {topic.label}
+            <span>{topic.label}</span>
+            <span className={styles.navCount}>{counts.byTopic[topic.id] ?? 0}</span>
           </button>
         ))}
       </nav>
       {feeds.length > 0 && (
-        <nav className={`${styles.navSection} ${styles.navSectionScroll}`}>
+        <nav className={styles.navSection}>
           <div className={`${styles.navTitle} mono`}>Feeds</div>
           {feeds.map((feed) => (
             <button
@@ -60,7 +70,8 @@ export default function SidebarLeft({
               aria-pressed={activeFilter.kind === "source" && activeFilter.value === feed.sourceId}
               onClick={() => onSelect({ kind: "source", value: feed.sourceId })}
             >
-              {feed.name}
+              <span>{feed.name}</span>
+              <span className={styles.navCount}>{counts.bySource[feed.sourceId] ?? 0}</span>
             </button>
           ))}
         </nav>
