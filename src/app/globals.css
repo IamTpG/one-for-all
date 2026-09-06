@@ -1,48 +1,94 @@
+/* "Frosted" theme — translucent glass surfaces over a soft gradient wash.
+   --surface/--surface-sunken are semi-transparent on purpose: components
+   that already do `background: var(--surface)` become glass for free once
+   paired with --glass-blur. --surface-solid/--surface-sunken-solid and
+   --glass-blur:none are the prefers-reduced-transparency fallback below. */
 :root {
-  --bg: #f5f6f8;
-  --surface: #ffffff;
-  --surface-sunken: #eceef2;
-  --border: #dde1e7;
-  --text: #12161c;
-  --text-muted: #5b6472;
-  --text-faint: #8891a0;
-  --accent: #c8720a;
-  --accent-ink: #ffffff;
-  --accent-soft: #fcecd9;
-  --focus-ring: #c8720a;
-  --shadow: 0 1px 2px rgba(18, 22, 28, 0.04), 0 1px 1px rgba(18, 22, 28, 0.03);
+  /* Without this, native form controls (number-input spinners, the
+     time-input clock icon, checkboxes, scrollbars) render with the
+     browser's default light assumption regardless of our own theme —
+     which is exactly why they looked mismatched against a dark input. */
+  color-scheme: light;
+  --bg:
+    radial-gradient(circle at 15% 10%, rgba(255, 214, 214, 0.35), transparent 45%),
+    radial-gradient(circle at 85% 15%, rgba(200, 225, 255, 0.35), transparent 45%),
+    radial-gradient(circle at 50% 90%, rgba(210, 255, 235, 0.3), transparent 50%),
+    #eef1f5;
+  --surface: rgba(255, 255, 255, 0.72);
+  --surface-sunken: rgba(255, 255, 255, 0.55);
+  --surface-solid: #f5f7fa;
+  --surface-sunken-solid: #e7ebef;
+  /* A white-tinted border on an already-light background was nearly
+     invisible — glass edges need a dark-tinted hairline in light mode,
+     not the same white tint that works in dark mode. */
+  --border: rgba(15, 23, 35, 0.16);
+  --text: #12161e;
+  --text-muted: #454c58;
+  --text-faint: #6b7280;
+  --accent: #1fb8c4;
+  --accent-ink: #042224;
+  --accent-soft: rgba(31, 184, 196, 0.14);
+  --focus-ring: #1fb8c4;
+  --danger: #d14343;
+  --shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 10px 28px rgba(20, 30, 45, 0.18);
+  --glass-blur: blur(16px) saturate(160%);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #10131a;
-    --surface: #171b24;
-    --surface-sunken: #1d222c;
-    --border: #2a2f3b;
-    --text: #e7e9ee;
-    --text-muted: #9ba3b2;
-    --text-faint: #6b7382;
-    --accent: #e2a93b;
-    --accent-ink: #1a1305;
-    --accent-soft: rgba(226, 169, 59, 0.14);
-    --focus-ring: #e2a93b;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(0, 0, 0, 0.2);
+    color-scheme: dark;
+    --bg:
+      radial-gradient(circle at 15% 10%, rgba(120, 40, 90, 0.35), transparent 45%),
+      radial-gradient(circle at 85% 15%, rgba(40, 70, 130, 0.35), transparent 45%),
+      radial-gradient(circle at 50% 90%, rgba(20, 100, 90, 0.3), transparent 50%),
+      #0e1016;
+    --surface: rgba(24, 28, 38, 0.72);
+    --surface-sunken: rgba(24, 28, 38, 0.55);
+    --surface-solid: #171a22;
+    --surface-sunken-solid: #1c202a;
+    --border: rgba(255, 255, 255, 0.16);
+    --text: #f1f3f7;
+    --text-muted: #b7bfcc;
+    --text-faint: #8890a0;
+    --accent: #4fd8e0;
+    --accent-ink: #03181a;
+    --accent-soft: rgba(79, 216, 224, 0.16);
+    --focus-ring: #4fd8e0;
+    --shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 12px 30px rgba(0, 0, 0, 0.5);
   }
 }
 
 :root[data-theme="dark"] {
-  --bg: #10131a;
-  --surface: #171b24;
-  --surface-sunken: #1d222c;
-  --border: #2a2f3b;
-  --text: #e7e9ee;
-  --text-muted: #9ba3b2;
-  --text-faint: #6b7382;
-  --accent: #e2a93b;
-  --accent-ink: #1a1305;
-  --accent-soft: rgba(226, 169, 59, 0.14);
-  --focus-ring: #e2a93b;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(0, 0, 0, 0.2);
+  color-scheme: dark;
+  --bg:
+    radial-gradient(circle at 15% 10%, rgba(120, 40, 90, 0.35), transparent 45%),
+    radial-gradient(circle at 85% 15%, rgba(40, 70, 130, 0.35), transparent 45%),
+    radial-gradient(circle at 50% 90%, rgba(20, 100, 90, 0.3), transparent 50%),
+    #0e1016;
+  --surface: rgba(24, 28, 38, 0.72);
+  --surface-sunken: rgba(24, 28, 38, 0.55);
+  --surface-solid: #171a22;
+  --surface-sunken-solid: #1c202a;
+  --border: rgba(255, 255, 255, 0.16);
+  --text: #f1f3f7;
+  --text-muted: #b7bfcc;
+  --text-faint: #8890a0;
+  --accent: #4fd8e0;
+  --accent-ink: #03181a;
+  --accent-soft: rgba(79, 216, 224, 0.16);
+  --focus-ring: #4fd8e0;
+  --shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Accessibility fallback: one rule, no per-component duplication. Every
+   surface that pairs `background: var(--surface)` with
+   `backdrop-filter: var(--glass-blur)` becomes opaque and unblurred here. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --surface: var(--surface-solid);
+    --surface-sunken: var(--surface-sunken-solid);
+    --glass-blur: none;
+  }
 }
 
 * {
@@ -60,6 +106,13 @@ body {
   max-width: 100vw;
   color: var(--text);
   background: var(--bg);
+  /* Without this, the gradient's percentage positions (e.g. "50% 90%")
+     resolve against the full scrollable document height, not the
+     viewport — on a tall feed that puts most of the wash far below the
+     fold, so scrolling reveals disjointed fragments of it instead of a
+     consistent ambient background. Fixed attachment locks it to the
+     viewport regardless of document/content height. */
+  background-attachment: fixed;
   font-family: var(--font-body), "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
