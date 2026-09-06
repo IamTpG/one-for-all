@@ -90,7 +90,7 @@
   margin: 0;
   padding: 0 6px;
   font-size: 0.78rem;
-  color: #d14343;
+  color: var(--danger);
 }
 
 .signOutButton {
@@ -257,7 +257,10 @@
 }
 
 .timeInput {
-  width: 100px;
+  /* Wide enough for a 12-hour "08:30 AM"-style render plus the clock
+     icon — some browsers/locales render type="time" in 12-hour format
+     regardless of the underlying 24-hour value, and 100px clipped it. */
+  width: 132px;
   text-align: center;
 }
 
@@ -272,9 +275,13 @@
   color: var(--accent-ink);
   background: var(--accent);
   cursor: pointer;
+  transition: filter 150ms ease, transform 100ms ease;
 }
 .saveButton:hover {
   filter: brightness(1.05);
+}
+.saveButton:active {
+  transform: scale(0.98);
 }
 .saveButton:disabled {
   opacity: 0.6;
