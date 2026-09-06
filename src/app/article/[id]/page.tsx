@@ -8,9 +8,9 @@ import { getSiteSettings } from "@/lib/siteSettings";
 import { getStoredItemById } from "@/lib/store";
 import { getArticleTranslation } from "@/lib/translate";
 import LanguageToggle from "../../LanguageToggle";
+import PageHeader from "../../PageHeader";
 import ThemeToggle from "../../ThemeToggle";
 import ViewTracker from "../../ViewTracker";
-import BackButton from "./BackButton";
 import styles from "./Article.module.css";
 
 const ICONS = {
@@ -60,15 +60,7 @@ export default async function ArticlePage({
   return (
     <div className={styles.page}>
       <ViewTracker type="article" itemId={item.id} />
-      <header className={styles.topbar}>
-        <div className={styles.topbarInner}>
-          <BackButton />
-          <div className={styles.topbarActions}>
-            <LanguageToggle />
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
+      <PageHeader tagline="AI · DEV · GITHUB" actions={<><LanguageToggle /><ThemeToggle /></>} />
 
       <main className={styles.article}>
         <div className={styles.meta}>
