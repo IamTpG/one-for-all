@@ -29,7 +29,7 @@ export default function OwnerLoginPage() {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.backIcon}>
           <path d="M15 18 L9 12 L15 6" />
         </svg>
-        <span className="mono">Wire</span>
+        <span className="mono">OneForAll</span>
       </button>
       <form className={styles.card} action={formAction}>
         <h1 className={`${styles.title} display`}>Owner sign-in</h1>

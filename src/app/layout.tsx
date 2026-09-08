@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { Be_Vietnam_Pro, Noto_Sans, IBM_Plex_Mono } from "next/font/google";
+import { Lexend, Plus_Jakarta_Sans, IBM_Plex_Mono } from "next/font/google";
 import { LANGUAGE_COOKIE, parseLanguageCookie } from "@/lib/language";
 import { LanguageProvider } from "./LanguageProvider";
 import "./globals.css";
 
-const beVietnamPro = Be_Vietnam_Pro({
+const lexend = Lexend({
   variable: "--font-display",
   subsets: ["latin", "vietnamese"],
-  weight: ["500", "600", "700", "800"],
+  weight: ["500", "600", "700"],
 });
 
-const notoSans = Noto_Sans({
+const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-body",
   subsets: ["latin", "vietnamese"],
   weight: ["400", "500", "600"],
@@ -24,7 +24,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Wire",
+  title: "OneForAll",
   description: "Personal aggregator for dev/AI blogs, Hacker News, and GitHub activity",
 };
 
@@ -44,7 +44,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${beVietnamPro.variable} ${notoSans.variable} ${ibmPlexMono.variable}`}
+      className={`${lexend.variable} ${plusJakartaSans.variable} ${ibmPlexMono.variable}`}
       suppressHydrationWarning
     >
       <head>

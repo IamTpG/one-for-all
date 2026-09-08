@@ -4,10 +4,10 @@ import { isOwnerRequest, OWNER_COOKIE_NAME } from "@/lib/ownerAuth";
 import { buildSettingsGroups } from "@/lib/settingsGroups";
 import { getSiteSettings } from "@/lib/siteSettings";
 import { logoutAction } from "../actions/owner";
+import PageHeader from "../PageHeader";
 import ThemeToggle from "../ThemeToggle";
 import WatchedReposEditor from "../WatchedReposEditor";
 import controls from "../SettingsControls.module.css";
-import BackButton from "./BackButton";
 import FetchLimitsEditor from "./FetchLimitsEditor";
 import FetchNowButton from "./FetchNowButton";
 import ScheduleEditor from "./ScheduleEditor";
@@ -25,13 +25,7 @@ export default async function SettingsPage() {
 
   return (
     <div className={styles.page}>
-      <header className={styles.topbar}>
-        <div className={styles.topbarInner}>
-          <BackButton />
-          <h1 className={`${styles.title} display`}>Settings</h1>
-          <ThemeToggle />
-        </div>
-      </header>
+      <PageHeader tagline="SETTINGS" actions={<ThemeToggle />} />
 
       <main className={styles.content}>
         <section className={styles.section}>

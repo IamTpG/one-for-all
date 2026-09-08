@@ -25,13 +25,13 @@ export default function LanguageToggle() {
 
   return (
     <button
-      className={styles.themeToggle}
+      className={styles.langToggle}
       type="button"
       onClick={toggle}
       aria-pressed={language === "vi"}
       aria-label={language === "vi" ? "Switch to English" : "Switch to Vietnamese"}
     >
-      <span className="mono">{language === "vi" ? "VI" : "EN"}</span>
+      {language === "vi" ? "VI" : "EN"}
     </button>
   );
 }

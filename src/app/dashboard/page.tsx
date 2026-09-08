@@ -17,8 +17,8 @@ import { isOwnerRequest, OWNER_COOKIE_NAME } from "@/lib/ownerAuth";
 import { nextScheduledSlot, utcToIct } from "@/lib/schedule";
 import { getSiteSettings } from "@/lib/siteSettings";
 import { getAiBacklogSize, getStoredItems } from "@/lib/store";
+import PageHeader from "../PageHeader";
 import ThemeToggle from "../ThemeToggle";
-import BackButton from "./BackButton";
 import styles from "./Dashboard.module.css";
 import Meter from "./Meter";
 import MostViewedChart from "./MostViewedChart";
@@ -117,13 +117,7 @@ export default async function DashboardPage() {
 
   return (
     <div className={styles.page}>
-      <header className={styles.topbar}>
-        <div className={styles.topbarInner}>
-          <BackButton />
-          <h1 className={`${styles.title} display`}>Dashboard</h1>
-          <ThemeToggle />
-        </div>
-      </header>
+      <PageHeader tagline="DASHBOARD" actions={<ThemeToggle />} />
 
       <main className={styles.content}>
         <section className={styles.section}>
