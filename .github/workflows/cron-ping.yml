@@ -1,0 +1,24 @@
+name: Cron ping
+
+# Vercel's Hobby plan only fires its own Cron Jobs once a day, but this app
+# wants to check for a due fetch slot (and drain a bit of the AI-translation
+# backfill queue) much more often than that — see src/app/api/cron/tick and
+# the DEFAULT_FETCH_TIMES_ICT schedule in src/lib/schedule.ts. This workflow
+# pings that endpoint on a schedule GitHub runs for free, independent of
+# Vercel's plan limits. GitHub's own scheduled-workflow cadence isn't exact
+# either (it can lag by several minutes under load), which is fine — the
+# endpoint's own "latest due slot" logic already tolerates irregular timing.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hit /api/cron/tick
+        run: |
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ vars.APP_URL }}/api/cron/tick"
