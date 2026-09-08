@@ -74,6 +74,19 @@
   color: var(--accent);
 }
 
+/* Visual "this goes back" cue on every page except home (PageHeader.tsx
+   only) — home's brand block isn't a back control, so it never gets one. */
+.backChevron {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--text-faint);
+  transition: transform 150ms ease;
+}
+.brandButton:hover .backChevron {
+  transform: translateX(-2px);
+}
+
 .brandText {
   display: flex;
   flex-direction: column;

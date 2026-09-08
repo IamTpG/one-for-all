@@ -8,7 +8,7 @@ import styles from "./AppShell.module.css";
 // reusing the same AppShell.module.css classes) and owner-login (no
 // header at all). The brand block replaces the old separate "back" link —
 // clicking it goes back, styled identically to home's non-interactive
-// brand mark + "Wire" + tagline.
+// brand mark + "OneForAll" + tagline.
 export default function PageHeader({
   tagline,
   actions,
@@ -33,7 +33,10 @@ export default function PageHeader({
   return (
     <header className={styles.topbar}>
       <div className={styles.topbarInner}>
-        <button type="button" onClick={handleClick} className={styles.brandButton} aria-label="Back to Wire">
+        <button type="button" onClick={handleClick} className={styles.brandButton} aria-label="Back to OneForAll">
+          <svg className={styles.backChevron} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M15 18 L9 12 L15 6" />
+          </svg>
           <svg className={styles.brandMark} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <path d="M4 17 L4 9" />
             <path d="M9 17 L9 5" />
@@ -41,7 +44,7 @@ export default function PageHeader({
             <path d="M19 17 L19 7" />
           </svg>
           <span className={styles.brandText}>
-            <span className={`${styles.brandTitle} display`}>Wire</span>
+            <span className={`${styles.brandTitle} display`}>OneForAll</span>
             <span className={`${styles.brandTagline} mono`}>{tagline}</span>
           </span>
         </button>
