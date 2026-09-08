@@ -157,7 +157,7 @@ export default function AppShell({
               <path d="M19 17 L19 7" />
             </svg>
             <div className={styles.brandText}>
-              <h1 className={`${styles.brandTitle} display`}>Wire</h1>
+              <h1 className={`${styles.brandTitle} display`}>OneForAll</h1>
               <span className={`${styles.brandTagline} mono`}>AI · DEV · GITHUB</span>
             </div>
           </a>

@@ -7,7 +7,7 @@ export default function NotFound() {
       <span className={`${styles.code} mono`}>404</span>
       <p className={`${styles.message} display`}>This page doesn&apos;t exist.</p>
       <Link href="/" className={styles.link}>
-        Back to Wire
+        Back to OneForAll
       </Link>
     </div>
   );

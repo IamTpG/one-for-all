@@ -24,7 +24,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Wire",
+  title: "OneForAll",
   description: "Personal aggregator for dev/AI blogs, Hacker News, and GitHub activity",
 };
 
