@@ -1,0 +1,2 @@
+# Separate Cloudflare Worker package, deployed with wrangler, not part of the Vercel build.
+cloudflare/
