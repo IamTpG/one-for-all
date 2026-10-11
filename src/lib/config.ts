@@ -90,6 +90,20 @@ export const AI_CONCURRENCY = 2;
 // How long an item's AI-generated summary/topics stay cached in Redis (s).
 export const AI_CACHE_TTL_SECONDS = 90 * 24 * 60 * 60;
 
+// Groq limits for GROQ_MODEL on this account (Groq console > Limits). Used only
+// to draw the dashboard's usage charts and meters — nothing enforces them;
+// Groq itself rejects calls over the limit. Update if the account's limits change.
+export const GROQ_LIMITS = {
+  requestsPerMinute: 30,
+  tokensPerMinute: 8_000,
+  requestsPerDay: 1_000,
+  tokensPerDay: 200_000,
+};
+
+// How long per-minute Groq usage buckets are kept (the dashboard charts at
+// most the last 24h, so a day or two of slack is plenty).
+export const GROQ_USAGE_RETENTION_DAYS = 3;
+
 // How many entries the owner dashboard's capped history lists keep. Small
 // on purpose — this is "is everything working right now," not analytics.
 export const DASHBOARD_RUN_HISTORY_LIMIT = 30;

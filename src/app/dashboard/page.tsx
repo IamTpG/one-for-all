@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { DASHBOARD_RECENT_FAILURES_DISPLAY_LIMIT } from "@/lib/config";
+import { DASHBOARD_RECENT_FAILURES_DISPLAY_LIMIT, GROQ_LIMITS } from "@/lib/config";
 import {
   getBackfillHistory,
   getGroqFailures,
@@ -17,11 +17,13 @@ import { isOwnerRequest, OWNER_COOKIE_NAME } from "@/lib/ownerAuth";
 import { nextScheduledSlot, utcToIct } from "@/lib/schedule";
 import { getSiteSettings } from "@/lib/siteSettings";
 import { getAiBacklogSize, getStoredItems } from "@/lib/store";
+import { getGroqUsage } from "@/lib/usage";
 import PageHeader from "../PageHeader";
 import ThemeToggle from "../ThemeToggle";
 import styles from "./Dashboard.module.css";
 import Meter from "./Meter";
 import MostViewedChart from "./MostViewedChart";
+import UsageChart from "./UsageChart";
 import ViewsLineChart from "./ViewsLineChart";
 
 function formatTs(ts: number): string {
@@ -63,6 +65,7 @@ export default async function DashboardPage() {
     redisUp,
     githubSearchRateLimit,
     homeViewsDaily,
+    groqUsage,
   ] = await Promise.all([
     getSiteSettings(),
     getRecentRuns(),
@@ -76,6 +79,7 @@ export default async function DashboardPage() {
     pingRedis(),
     fetchGithubSearchRateLimit(),
     getHomeViewsDaily(),
+    getGroqUsage(),
   ]);
 
   const nextDue = nextScheduledSlot(new Date(), settings.fetchTimesUtc);
@@ -286,6 +290,56 @@ export default async function DashboardPage() {
               </table>
             </div>
           )}
+        </section>
+
+        <section className={styles.section}>
+          <h2 className={`${styles.sectionTitle} mono`}>Groq Usage</h2>
+          <Meter
+            label="Tokens today (UTC)"
+            value={groqUsage.today.tokens}
+            total={GROQ_LIMITS.tokensPerDay}
+            displayText={`${groqUsage.today.tokens.toLocaleString("en-US")} / ${GROQ_LIMITS.tokensPerDay.toLocaleString("en-US")}`}
+          />
+          <Meter
+            label="Requests today (UTC)"
+            value={groqUsage.today.requests}
+            total={GROQ_LIMITS.requestsPerDay}
+            displayText={`${groqUsage.today.requests.toLocaleString("en-US")} / ${GROQ_LIMITS.requestsPerDay.toLocaleString("en-US")}`}
+          />
+          <div className={styles.statGrid}>
+            <div className={styles.statTile}>
+              <span className={styles.statValue}>{groqUsage.rate?.remainingRequests ?? "—"}</span>
+              <span className={styles.statLabel}>Requests left today (per Groq)</span>
+            </div>
+            <div className={styles.statTile}>
+              <span className={styles.statValue}>{groqUsage.rate?.remainingTokens ?? "—"}</span>
+              <span className={styles.statLabel}>Tokens left this minute (per Groq)</span>
+            </div>
+            <div className={styles.statTile}>
+              <span className={styles.statValue}>{groqUsage.rate ? formatTs(groqUsage.rate.ts) : "—"}</span>
+              <span className={styles.statLabel}>Last Groq call</span>
+            </div>
+          </div>
+          <UsageChart
+            mode="requests"
+            title="Requests"
+            points={groqUsage.points}
+            nowMs={groqUsage.nowMs}
+            limitPerMinute={GROQ_LIMITS.requestsPerMinute}
+            limitLabel={`Rate limit ${GROQ_LIMITS.requestsPerMinute}/min`}
+          />
+          <UsageChart
+            mode="tokens"
+            title="Total tokens"
+            points={groqUsage.points}
+            nowMs={groqUsage.nowMs}
+            limitPerMinute={GROQ_LIMITS.tokensPerMinute}
+            limitLabel={`Rate limit ${GROQ_LIMITS.tokensPerMinute.toLocaleString("en-US")}/min`}
+          />
+          <p className={styles.emptyState}>
+            Counted by this app from Groq responses since this feature was deployed; other projects sharing the
+            same Groq organization are not included. Daily totals use the UTC day.
+          </p>
         </section>
 
         <section className={styles.section}>

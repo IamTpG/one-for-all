@@ -212,6 +212,27 @@ export async function incrHashField(key: string, field: string, by = 1): Promise
   }
 }
 
+// Several HINCRBYs on one hash plus a TTL refresh, in a single round trip —
+// for per-minute usage buckets, where each call bumps a few counters at once.
+export async function incrHashFields(
+  key: string,
+  increments: Record<string, number>,
+  ttlSeconds: number
+): Promise<void> {
+  const redis = getClient();
+  if (!redis) return;
+
+  try {
+    const pipeline = redis.multi();
+    for (const [field, by] of Object.entries(increments)) {
+      if (by !== 0) pipeline.hincrby(key, field, by);
+    }
+    await pipeline.expire(key, ttlSeconds).exec();
+  } catch (err) {
+    console.error(`[redis] failed to increment fields on ${key}:`, err);
+  }
+}
+
 export async function pingRedis(): Promise<boolean> {
   const redis = getClient();
   if (!redis) return false;

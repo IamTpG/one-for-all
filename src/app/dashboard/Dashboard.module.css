@@ -290,3 +290,129 @@
   min-width: 22px;
   text-align: right;
 }
+
+/* ---------- Usage charts (Groq requests / tokens per minute) ---------- */
+
+.usageChart {
+  padding: 4px 6px 14px;
+}
+
+.usageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 2px 4px;
+}
+
+.usageTitle {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.rangeButtons {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.rangeButton {
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.72rem;
+  padding: 3px 9px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.rangeButtonActive {
+  background: var(--accent-soft);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.usageLegend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  padding: 0 2px 4px;
+  font-size: 0.7rem;
+  color: var(--text-faint);
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legendSwatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+}
+
+.legendDash {
+  width: 14px;
+  border-top: 2px dashed var(--danger);
+}
+
+.legendNote {
+  margin-left: auto;
+}
+
+.usageChartWrap {
+  position: relative;
+}
+
+.usageSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: none;
+}
+
+.usageGrid {
+  stroke: var(--border);
+  stroke-width: 1;
+  opacity: 0.5;
+}
+
+.usageAxisLabel {
+  fill: var(--text-faint);
+  font-size: 9px;
+  font-family: var(--font-mono), ui-monospace, "SF Mono", Consolas, monospace;
+}
+
+.usageHoverBand {
+  fill: var(--accent-soft);
+}
+
+.usageBarPrimary {
+  fill: var(--accent);
+  background: var(--accent);
+}
+
+.usageBarSecondary {
+  fill: var(--text-faint);
+  background: var(--text-faint);
+  opacity: 0.7;
+}
+
+.usageLimitLine {
+  stroke: var(--danger);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+}
+
+.usageLimitLabel {
+  fill: var(--danger);
+  font-size: 9px;
+  font-family: var(--font-mono), ui-monospace, "SF Mono", Consolas, monospace;
+}
