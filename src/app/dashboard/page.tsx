@@ -17,12 +17,14 @@ import { isOwnerRequest, OWNER_COOKIE_NAME } from "@/lib/ownerAuth";
 import { nextScheduledSlot, utcToIct } from "@/lib/schedule";
 import { getSiteSettings } from "@/lib/siteSettings";
 import { getAiBacklogSize, getStoredItems } from "@/lib/store";
+import { getUpstashUsage } from "@/lib/upstashUsage";
 import { getGroqUsage } from "@/lib/usage";
 import PageHeader from "../PageHeader";
 import ThemeToggle from "../ThemeToggle";
 import styles from "./Dashboard.module.css";
 import Meter from "./Meter";
 import MostViewedChart from "./MostViewedChart";
+import UpstashSection from "./UpstashSection";
 import UsageChart from "./UsageChart";
 import ViewsLineChart from "./ViewsLineChart";
 
@@ -66,6 +68,7 @@ export default async function DashboardPage() {
     githubSearchRateLimit,
     homeViewsDaily,
     groqUsage,
+    upstashUsage,
   ] = await Promise.all([
     getSiteSettings(),
     getRecentRuns(),
@@ -80,6 +83,7 @@ export default async function DashboardPage() {
     fetchGithubSearchRateLimit(),
     getHomeViewsDaily(),
     getGroqUsage(),
+    getUpstashUsage(),
   ]);
 
   const nextDue = nextScheduledSlot(new Date(), settings.fetchTimesUtc);
@@ -341,6 +345,8 @@ export default async function DashboardPage() {
             same Groq organization are not included. Daily totals use the UTC day.
           </p>
         </section>
+
+        <UpstashSection result={upstashUsage} />
 
         <section className={styles.section}>
           <h2 className={`${styles.sectionTitle} mono`}>Recent Failures</h2>

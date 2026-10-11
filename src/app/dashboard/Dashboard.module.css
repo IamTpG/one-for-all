@@ -416,3 +416,33 @@
   font-size: 9px;
   font-family: var(--font-mono), ui-monospace, "SF Mono", Consolas, monospace;
 }
+
+/* ---------- Line series (Upstash charts) ---------- */
+
+.seriesLinePrimary,
+.seriesLineSecondary {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.seriesLinePrimary {
+  stroke: var(--accent);
+}
+
+.seriesLineSecondary {
+  stroke: var(--text-faint);
+}
+
+.seriesDotPrimary {
+  fill: var(--accent);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+.seriesDotSecondary {
+  fill: var(--text-faint);
+  stroke: var(--surface);
+  stroke-width: 2;
+}

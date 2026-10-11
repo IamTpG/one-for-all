@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { formatAxis, formatCount, formatTime, ictParts, niceMax } from "@/lib/chartUtils";
 import type { GroqUsagePoint } from "@/lib/usage";
 import styles from "./Dashboard.module.css";
 
@@ -24,41 +25,7 @@ const PAD_BOTTOM = 22;
 const PLOT_WIDTH = WIDTH - PAD_LEFT - PAD_RIGHT;
 const PLOT_HEIGHT = HEIGHT - PAD_TOP - PAD_BOTTOM;
 
-// The app shows times in fixed UTC+7 everywhere (see lib/schedule.ts).
-const ICT_OFFSET_MS = 7 * 60 * 60 * 1000;
-
 type Bucket = { t: number; req: number; input: number; output: number };
-
-function ictParts(t: number): { hh: string; mm: string; minuteOfDay: number } {
-  const d = new Date(t + ICT_OFFSET_MS);
-  const h = d.getUTCHours();
-  const m = d.getUTCMinutes();
-  return { hh: String(h).padStart(2, "0"), mm: String(m).padStart(2, "0"), minuteOfDay: h * 60 + m };
-}
-
-function formatTime(t: number): string {
-  const { hh, mm } = ictParts(t);
-  return `${hh}:${mm}`;
-}
-
-function formatCount(n: number): string {
-  return n.toLocaleString("en-US");
-}
-
-function formatAxis(n: number): string {
-  return n >= 1000 ? `${n / 1000}k` : String(n);
-}
-
-// Rounds a max up to 1/2/5 × 10^k so the axis ticks land on round numbers.
-function niceMax(value: number): { max: number; step: number } {
-  const target = Math.max(value, 1);
-  const rough = target / 4;
-  const magnitude = Math.pow(10, Math.floor(Math.log10(rough)));
-  const normalized = rough / magnitude;
-  const stepBase = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
-  const step = Math.max(1, stepBase * magnitude);
-  return { max: Math.ceil(target / step) * step, step };
-}
 
 type Props = {
   mode: "requests" | "tokens";
@@ -100,7 +67,7 @@ export default function UsageChart({ mode, title, points, nowMs, limitPerMinute,
   const valueOf = (b: Bucket) => (mode === "requests" ? b.req : b.input + b.output);
   const limit = limitPerMinute * bucketMinutes;
   const dataMax = Math.max(0, ...buckets.map(valueOf));
-  const { max: yMax, step } = niceMax(Math.max(limit, dataMax) * 1.05);
+  const { max: yMax, step } = niceMax(Math.max(limit, dataMax) * 1.05, 1);
   const isEmpty = dataMax === 0;
 
   const slot = PLOT_WIDTH / bucketCount;
