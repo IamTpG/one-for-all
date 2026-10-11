@@ -1,0 +1,24 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "oneforall-cron",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+
+  // Nothing here serves HTTP — this Worker only runs on its cron schedule —
+  // so don't expose a public *.workers.dev URL for it.
+  "workers_dev": false,
+  "preview_urls": false,
+
+  // Every 10 minutes. The tick endpoint decides for itself whether a fetch
+  // slot is due and how much translation backlog to drain.
+  "triggers": { "crons": ["*/10 * * * *"] },
+
+  "observability": { "enabled": true },
+
+  "vars": {
+    // Base URL of the Vercel deployment, no trailing slash.
+    "APP_URL": "https://oneforall-news.vercel.app"
+  }
+  // Secret (not stored here): CRON_SECRET — same value as on Vercel.
+  //   npx wrangler secret put CRON_SECRET
+}
