@@ -2,6 +2,7 @@ import Groq, { RateLimitError } from "groq-sdk";
 import { GROQ_MODEL, TOPICS, TRANSLATE_MAX_TOKENS } from "@/lib/config";
 import { errorMessage } from "@/lib/errors";
 import { sanitizeArticleHtml } from "@/lib/sanitize";
+import { recordGroqCall } from "@/lib/usage";
 import type { AiAnalysis, FeedItem } from "@/lib/types";
 
 export type GroqResult<T> = { data: T | null; error?: string };
@@ -53,7 +54,8 @@ async function requestCompletion(
   attempt: number
 ): Promise<string | null> {
   try {
-    const completion = await groq.chat.completions.create({
+    const { data: completion, response } = await groq.chat.completions
+      .create({
       model: GROQ_MODEL,
       messages: [{ role: "user", content: prompt }],
       ...(jsonMode ? { response_format: { type: "json_object" as const } } : {}),
@@ -63,7 +65,9 @@ async function requestCompletion(
       // keeps that short, and max_tokens has headroom for the answer itself.
       reasoning_effort: "low",
       max_tokens: maxTokens,
-    });
+      })
+      .withResponse();
+    await recordGroqCall(completion.usage, response.headers);
     return completion.choices[0]?.message?.content ?? null;
   } catch (err) {
     if (err instanceof RateLimitError && attempt === 0) {

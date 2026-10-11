@@ -90,6 +90,30 @@ export const AI_CONCURRENCY = 2;
 // How long an item's AI-generated summary/topics stay cached in Redis (s).
 export const AI_CACHE_TTL_SECONDS = 90 * 24 * 60 * 60;
 
+// Groq limits for GROQ_MODEL on this account (Groq console > Limits). Used only
+// to draw the dashboard's usage charts and meters — nothing enforces them;
+// Groq itself rejects calls over the limit. Update if the account's limits change.
+export const GROQ_LIMITS = {
+  requestsPerMinute: 30,
+  tokensPerMinute: 8_000,
+  requestsPerDay: 1_000,
+  tokensPerDay: 200_000,
+};
+
+// Upstash Redis free-plan limits (Upstash console > database > Details). Used
+// only to draw the dashboard's usage meters — Upstash itself enforces them.
+// The console shows the storage limit as "238.42 MB", which is 250,000,000
+// bytes; the bandwidth limit is shown as "10 GB" (taken here as 10 GiB).
+export const UPSTASH_LIMITS = {
+  dataSizeBytes: 250_000_000,
+  bandwidthBytesPerMonth: 10 * 1024 ** 3,
+  commandsPerSecond: 10_000,
+};
+
+// How long per-minute Groq usage buckets are kept (the dashboard charts at
+// most the last 24h, so a day or two of slack is plenty).
+export const GROQ_USAGE_RETENTION_DAYS = 3;
+
 // How many entries the owner dashboard's capped history lists keep. Small
 // on purpose — this is "is everything working right now," not analytics.
 export const DASHBOARD_RUN_HISTORY_LIMIT = 30;
