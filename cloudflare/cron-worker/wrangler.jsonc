@@ -17,7 +17,7 @@
 
   "vars": {
     // Base URL of the Vercel deployment, no trailing slash.
-    "APP_URL": "https://your-app.vercel.app"
+    "APP_URL": "https://oneforall-news.vercel.app"
   }
   // Secret (not stored here): CRON_SECRET — same value as on Vercel.
   //   npx wrangler secret put CRON_SECRET
