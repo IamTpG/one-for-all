@@ -190,22 +190,36 @@ export default function AppShell({
     return () => clearTimeout(timeout);
   }, [pendingScrollY, visibleItems.length]);
 
-  // Keep the saved position current. The meaningful save is the one that
-  // runs as this cleanup during the real unmount (navigating to an
-  // article) — the closure then holds the last-committed visibleCount and
-  // activeFilter, which is exactly what should be restored on the way back.
+  // Persist the position for the next mount (coming back from an article,
+  // or a reload). Written only on unmount / pagehide, never on every state
+  // change: the write feeds getHomeStateSnapshot above, so saving while
+  // mounted makes the snapshot change under a live component, which
+  // "restores" the stale state, which changes visibleCount/filter, which
+  // saves again — an infinite loop (React error #185). The latest values
+  // are mirrored into a ref so the one-time cleanup doesn't capture stale
+  // ones.
+  const latestHomeStateRef = useRef({ visibleCount, filter: activeFilter });
   useEffect(() => {
-    return () => {
+    latestHomeStateRef.current = { visibleCount, filter: activeFilter };
+  });
+
+  useEffect(() => {
+    function save() {
       try {
         sessionStorage.setItem(
           HOME_STATE_KEY,
-          JSON.stringify({ visibleCount, filter: activeFilter, scrollY: window.scrollY } satisfies SavedHomeState)
+          JSON.stringify({ ...latestHomeStateRef.current, scrollY: window.scrollY } satisfies SavedHomeState)
         );
       } catch {
         // Private browsing / storage full — nothing to fall back to.
       }
+    }
+    window.addEventListener("pagehide", save);
+    return () => {
+      window.removeEventListener("pagehide", save);
+      save();
     };
-  }, [visibleCount, activeFilter]);
+  }, []);
 
   useEffect(() => {
     const tick = () => setNow(Date.now());
