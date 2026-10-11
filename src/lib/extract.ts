@@ -1,4 +1,4 @@
-import { JSDOM } from "jsdom";
+import { parseHTML } from "linkedom";
 import { Readability } from "@mozilla/readability";
 import { EXTRACT_CACHE_TTL_MS } from "@/lib/config";
 import { fetchWithTimeout } from "@/lib/http";
@@ -17,8 +17,13 @@ export async function extractArticle(url: string): Promise<string | null> {
     if (!res.ok) return null;
     const html = await res.text();
 
-    const dom = new JSDOM(html, { url });
-    const article = new Readability(dom.window.document).parse();
+    const { document } = parseHTML(html);
+    // linkedom has no notion of the page URL; Readability needs these to turn
+    // relative links and image paths into absolute ones.
+    for (const prop of ["baseURI", "documentURI"]) {
+      Object.defineProperty(document, prop, { value: url, configurable: true });
+    }
+    const article = new Readability(document as unknown as Document).parse();
     if (!article?.content) return null;
 
     const sanitized = sanitizeArticleHtml(article.content);
