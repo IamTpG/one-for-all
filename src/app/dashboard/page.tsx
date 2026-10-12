@@ -9,6 +9,8 @@ import {
   getItemViewCounts,
   getLanguageToggleStats,
   getRecentRuns,
+  getRecentTicks,
+  getTickStats,
   pingRedis,
   type FetchRunRecord,
 } from "@/lib/dashboardStats";
@@ -35,6 +37,15 @@ function formatTs(ts: number): string {
     hour: "numeric",
     minute: "2-digit",
   });
+}
+
+function formatAgo(ts: number): string {
+  const minutes = Math.max(0, Math.round((Date.now() - ts) / 60000));
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 48) return `${hours}h ${minutes % 60}m ago`;
+  return `${Math.floor(hours / 24)}d ago`;
 }
 
 function formatDuration(ms: number): string {
@@ -69,6 +80,8 @@ export default async function DashboardPage() {
     homeViewsDaily,
     groqUsage,
     upstashUsage,
+    recentTicks,
+    tickStats,
   ] = await Promise.all([
     getSiteSettings(),
     getRecentRuns(),
@@ -84,6 +97,8 @@ export default async function DashboardPage() {
     getHomeViewsDaily(),
     getGroqUsage(),
     getUpstashUsage(),
+    getRecentTicks(),
+    getTickStats(),
   ]);
 
   const nextDue = nextScheduledSlot(new Date(), settings.fetchTimesUtc);
@@ -114,6 +129,11 @@ export default async function DashboardPage() {
     .map(([id, count]) => ({ id, count, title: titleById.get(id) ?? id }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 10);
+
+  const lastTick = recentTicks[0] ?? null;
+  const longestTickMs = recentTicks.reduce((max, tick) => Math.max(max, tick.durationMs), 0);
+  // storedItems is sorted newest-first by publish date.
+  const newestItem = storedItems[0] ?? null;
 
   const lastBackfillTick = backfillHistory[0] ?? null;
   const backfillFailureTotal = backfillHistory.reduce((sum, tick) => sum + tick.failureCount, 0);
@@ -148,6 +168,32 @@ export default async function DashboardPage() {
               <span className={styles.statLabel}>
                 Items fetched {latestRun ? `in ${formatDuration(latestRun.durationMs)}` : ""}
               </span>
+            </div>
+            <div className={styles.statTile}>
+              <span className={styles.statValue}>
+                {latestRun?.newItems === undefined ? "—" : latestRun.newItems}
+              </span>
+              <span className={styles.statLabel}>New items in last run</span>
+            </div>
+            <div className={styles.statTile}>
+              <span className={styles.statValue}>
+                {newestItem ? formatAgo(new Date(newestItem.publishedAt).getTime()) : "—"}
+              </span>
+              <span className={styles.statLabel}>Newest item published</span>
+            </div>
+            <div className={styles.statTile}>
+              <span className={styles.statValue}>{lastTick ? formatAgo(lastTick.ts) : "never"}</span>
+              <span className={styles.statLabel}>Last cron tick</span>
+            </div>
+            <div className={styles.statTile}>
+              <span className={styles.statValue}>
+                {tickStats.ticksToday} / {tickStats.expectedSoFar}
+              </span>
+              <span className={styles.statLabel}>Ticks today (UTC) / expected so far</span>
+            </div>
+            <div className={styles.statTile}>
+              <span className={styles.statValue}>{recentTicks.length > 0 ? formatDuration(longestTickMs) : "—"}</span>
+              <span className={styles.statLabel}>Longest of last {recentTicks.length} ticks (limit 60s)</span>
             </div>
           </div>
 
@@ -227,6 +273,7 @@ export default async function DashboardPage() {
                     <th>Slot</th>
                     <th>Duration</th>
                     <th>Total</th>
+                    <th>New</th>
                     <th>Failures</th>
                   </tr>
                 </thead>
@@ -237,7 +284,38 @@ export default async function DashboardPage() {
                       <td>{run.slot ? `${utcToIct(run.slot)} ICT` : "manual"}</td>
                       <td>{formatDuration(run.durationMs)}</td>
                       <td>{run.totalFetched}</td>
+                      <td>{run.newItems ?? "—"}</td>
                       <td>{run.sources.filter((s) => !s.ok).length}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <h2 className={`${styles.sectionTitle} mono`}>Recent cron ticks</h2>
+          {recentTicks.length === 0 ? (
+            <p className={styles.emptyState}>No cron ticks recorded yet.</p>
+          ) : (
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Duration</th>
+                    <th>Fetched</th>
+                    <th>Translated</th>
+                    <th>Groq 429s</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentTicks.slice(0, 20).map((tick) => (
+                    <tr key={tick.ts}>
+                      <td>{formatTs(tick.ts)}</td>
+                      <td>{formatDuration(tick.durationMs)}</td>
+                      <td>{tick.fetched ?? "—"}</td>
+                      <td>{tick.backfillProcessed}</td>
+                      <td>{tick.groq429}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -322,6 +400,10 @@ export default async function DashboardPage() {
             <div className={styles.statTile}>
               <span className={styles.statValue}>{groqUsage.rate ? formatTs(groqUsage.rate.ts) : "—"}</span>
               <span className={styles.statLabel}>Last Groq call</span>
+            </div>
+            <div className={styles.statTile}>
+              <span className={styles.statValue}>{groqUsage.today.rateLimited}</span>
+              <span className={styles.statLabel}>Rate-limited (429) today</span>
             </div>
           </div>
           <UsageChart
