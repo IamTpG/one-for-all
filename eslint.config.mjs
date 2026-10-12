@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Separate package with its own tooling (Cloudflare cron Worker).
     "cloudflare/**",
+    // Vendored Bklit chart source (see src/components/charts/VENDORED.md): not ours to lint.
+    "src/components/charts/**",
   ]),
 ]);
 

@@ -1,0 +1,118 @@
+/*
+ * Tailwind for the dashboard only — new components use it, the existing ones
+ * keep their CSS Modules (see Dashboard.module.css).
+ *
+ * Imported from src/app/dashboard/layout.tsx, so it ships with /dashboard
+ * routes only. Preflight is deliberately NOT imported: it would reset
+ * headings, buttons, lists... for the old CSS-Modules components that rely on
+ * their defaults. Existing (unlayered) styles also always beat these layers.
+ *
+ * Everything below maps Tailwind / Bklit tokens onto the app's own tokens in
+ * src/app/globals.css, so light / dark / system theming needs no duplicates.
+ * `shadcn add` rewrites this file; after running it, restore this content.
+ */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+/* The app themes via [data-theme] (or prefers-color-scheme when unset), not a .dark class. */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme="light"]), :root:not([data-theme="light"]) *) {
+      @slot;
+    }
+  }
+}
+
+@theme inline {
+  /* Our own names, for new components */
+  --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-line: var(--border);
+  --color-ink: var(--text);
+  --color-ink-muted: var(--text-muted);
+  --color-ink-faint: var(--text-faint);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+
+  /* Names the vendored Bklit charts use */
+  --color-foreground: var(--text);
+  --color-background: var(--surface-solid);
+  --color-muted: var(--surface-sunken);
+  --color-muted-foreground: var(--text-faint);
+  --color-chart-label: var(--chart-label);
+  --color-chart-tooltip-background: var(--chart-tooltip-background);
+  --color-chart-tooltip-foreground: var(--chart-tooltip-foreground);
+  --color-chart-tooltip-muted: var(--chart-tooltip-muted);
+}
+
+/* Today's card look (.section in Dashboard.module.css) as a utility. */
+@utility glass {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+:root {
+  /* shadcn-style names read directly via var() by a few vendored components */
+  --foreground: var(--text);
+  --background: var(--surface-solid);
+  --muted-foreground: var(--text-faint);
+
+  --chart-background: transparent;
+  --chart-foreground: var(--text);
+  --chart-foreground-muted: var(--text-faint);
+  --chart-label: var(--text-faint);
+  --chart-line-primary: var(--accent);
+  --chart-line-secondary: var(--text-faint);
+  --chart-crosshair: var(--border);
+  --chart-grid: var(--border);
+  --chart-brush-border: var(--border);
+  --chart-indicator-color: var(--accent);
+  --chart-indicator-secondary-color: var(--text-faint);
+
+  --chart-tooltip-background: var(--surface-solid);
+  --chart-tooltip-foreground: var(--text);
+  --chart-tooltip-muted: var(--text-faint);
+  --chart-marker-background: var(--surface-solid);
+  --chart-marker-border: var(--border);
+  --chart-marker-foreground: var(--text);
+
+  /* Series colours: the first follows the accent, the rest are fixed hues. */
+  --chart-1: var(--accent);
+  --chart-2: #6d7be8;
+  --chart-3: #e8923a;
+  --chart-4: #d65d93;
+  --chart-5: #7fb53b;
+
+  /* Sequential scale for heatmaps (lowest -> highest) */
+  --chart-scale-01: color-mix(in srgb, var(--accent) 14%, transparent);
+  --chart-scale-02: color-mix(in srgb, var(--accent) 34%, transparent);
+  --chart-scale-03: color-mix(in srgb, var(--accent) 56%, transparent);
+  --chart-scale-04: color-mix(in srgb, var(--accent) 78%, transparent);
+  --chart-scale-05: var(--accent);
+  --chart-scale-pattern-color: var(--surface-sunken);
+}
+
+:root[data-theme="dark"] {
+  --chart-2: #8f9bff;
+  --chart-3: #f2a65a;
+  --chart-4: #ee7fb0;
+  --chart-5: #97cc5c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --chart-2: #8f9bff;
+    --chart-3: #f2a65a;
+    --chart-4: #ee7fb0;
+    --chart-5: #97cc5c;
+  }
+}
