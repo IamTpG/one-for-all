@@ -38,6 +38,8 @@
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
   --color-danger: var(--danger);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
 
   /* Names the vendored Bklit charts use */
   --color-foreground: var(--text);
@@ -65,6 +67,9 @@
   --foreground: var(--text);
   --background: var(--surface-solid);
   --muted-foreground: var(--text-faint);
+
+  --ok: #2f9e62;
+  --warn: #c98a0b;
 
   --chart-background: transparent;
   --chart-foreground: var(--text);
@@ -102,6 +107,8 @@
 }
 
 :root[data-theme="dark"] {
+  --ok: #4cc58a;
+  --warn: #e6b34a;
   --chart-2: #8f9bff;
   --chart-3: #f2a65a;
   --chart-4: #ee7fb0;
@@ -110,6 +117,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+    --ok: #4cc58a;
+    --warn: #e6b34a;
     --chart-2: #8f9bff;
     --chart-3: #f2a65a;
     --chart-4: #ee7fb0;

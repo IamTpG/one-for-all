@@ -124,6 +124,25 @@ export const CRON_TICK_INTERVAL_MINUTES = 10;
 export const DASHBOARD_TICK_HISTORY_LIMIT = 50;
 export const DASHBOARD_TICK_COUNT_RETENTION_DAYS = 3;
 
+// When the dashboard's status banner turns amber ("warn") or red ("bad").
+// Percentages are of a limit; minutes/ms are ages or durations.
+export const DASHBOARD_THRESHOLDS = {
+  // Age of the newest cron tick (the cron fires every CRON_TICK_INTERVAL_MINUTES).
+  tickAgeMinutes: { warn: 25, bad: 60 },
+  // How long a due fetch slot may go without a recorded run.
+  fetchOverdueMinutes: { warn: 30, bad: 180 },
+  // Items waiting for translation, ignored for a while right after a fetch
+  // (a fresh fetch is expected to leave a queue that drains over a few ticks).
+  backlogItems: { warn: 50, bad: 150 },
+  backlogGraceMinutesAfterFetch: 120,
+  // Share of the last fetch's sources that failed (any failure warns).
+  sourcesFailedShare: { bad: 0.5 },
+  groqTokensPercent: { warn: 70, bad: 90 },
+  upstashBandwidthPercent: { warn: 70, bad: 90 },
+  // Longest of the recent ticks, against the 60s function limit.
+  tickDurationMs: { warn: 40_000, bad: 55_000 },
+};
+
 // How many entries the owner dashboard's capped history lists keep. Small
 // on purpose — this is "is everything working right now," not analytics.
 export const DASHBOARD_RUN_HISTORY_LIMIT = 30;
