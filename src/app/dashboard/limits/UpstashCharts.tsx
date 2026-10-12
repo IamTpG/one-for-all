@@ -1,6 +1,6 @@
 "use client";
 
-import { curveMonotoneX } from "@visx/curve";
+import { curveLinear, curveMonotoneX } from "@visx/curve";
 import { useMemo } from "react";
 import { Area } from "@/components/charts/area";
 import { ComposedChart } from "@/components/charts/composed-chart";
@@ -16,11 +16,6 @@ import type { MinutePoint, UpstashUsage } from "@/lib/upstashUsage";
 import { CHART_MARGIN, ictTime, LIMIT_VISIBLE_RATIO, utcDay } from "./chartBits";
 
 type Limits = { dataSizeBytes: number; bandwidthBytesPerMonth: number; commandsPerSecond: number };
-
-function daysInMonth(ms: number): number {
-  const d = new Date(ms);
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate();
-}
 
 // Rows for a per-minute chart: one row per timestamp, one field per named series.
 function minuteRows(series: Record<string, MinutePoint[]>): Record<string, unknown>[] {
@@ -46,7 +41,6 @@ function ChartBlock({ title, note, children }: { title: string; note: string; ch
 }
 
 const MARGIN_LEFT_WIDE = { ...CHART_MARGIN, left: 60 };
-const MARGIN_BOTH_WIDE = { ...CHART_MARGIN, left: 60, right: 64 };
 
 export default function UpstashCharts({ data, limits }: { data: UpstashUsage; limits: Limits }) {
   const bandwidthRows = useMemo(() => {
@@ -58,7 +52,7 @@ export default function UpstashCharts({ data, limits }: { data: UpstashUsage; li
       date: new Date(d.t),
       perDay: d.value,
       monthToDate: base + daily.slice(0, i + 1).reduce((sum, day) => sum + day.value, 0),
-      budget: limits.bandwidthBytesPerMonth / daysInMonth(d.t),
+      monthLimit: limits.bandwidthBytesPerMonth,
     }));
   }, [data.bandwidth, limits.bandwidthBytesPerMonth]);
 
@@ -73,9 +67,9 @@ export default function UpstashCharts({ data, limits }: { data: UpstashUsage; li
   );
   const latencyRows = useMemo(() => minuteRows({ mean: data.latency.mean, p99: data.latency.p99 }), [data.latency]);
 
-  const maxPerDay = Math.max(0, ...bandwidthRows.map((r) => r.perDay));
-  const budget = bandwidthRows[0]?.budget ?? 0;
-  const showBudget = budget > 0 && maxPerDay >= budget * LIMIT_VISIBLE_RATIO;
+  // The whole month's allowance, drawn once month-to-date gets near it.
+  const maxMonthToDate = Math.max(0, ...bandwidthRows.map((r) => r.monthToDate));
+  const showMonthLimit = maxMonthToDate >= limits.bandwidthBytesPerMonth * LIMIT_VISIBLE_RATIO;
   const maxSize = Math.max(0, ...sizeRows.map((r) => r.size));
   const showSizeLimit = maxSize >= limits.dataSizeBytes * LIMIT_VISIBLE_RATIO;
   const maxThroughput = Math.max(0, ...throughputRows.map((r) => Number(r.read ?? 0) + Number(r.write ?? 0)));
@@ -86,29 +80,42 @@ export default function UpstashCharts({ data, limits }: { data: UpstashUsage; li
   return (
     <div className="flex flex-col gap-5">
       <DateLabelFormatProvider value={utcDay}>
-        <ChartBlock
-          title="Bandwidth per day"
-          note={`${showBudget ? "Dashed line: even daily share of the monthly limit · " : ""}Right axis: month to date · UTC days, the last bar is today so far`}
-        >
-          <ComposedChart data={bandwidthRows} xDataKey="date" aspectRatio="3 / 1" margin={MARGIN_BOTH_WIDE} barGap={0} maxBarSize={36}>
-            <Grid horizontal />
-            <SeriesBar dataKey="perDay" fill="var(--chart-1)" radius={3} />
-            {showBudget && (
-              <Line dataKey="budget" stroke="var(--danger)" strokeWidth={1.5} dashFromIndex={0} dashArray="6,4" showHighlight={false} />
-            )}
-            <Line dataKey="monthToDate" yAxisId="right" stroke="var(--chart-3)" curve={curveMonotoneX} />
-            <XAxis />
-            <YAxis numTicks={4} formatValue={formatBytes} />
-            <YAxis yAxisId="right" orientation="right" numTicks={4} formatValue={formatBytes} />
-            <ChartTooltip
-              showCrosshair={false}
-              rows={(p) => [
-                { color: "var(--chart-1)", label: "That day", value: formatBytes(Number(p.perDay)) },
-                { color: "var(--chart-3)", label: "Month to date", value: formatBytes(Number(p.monthToDate)) },
-              ]}
-            />
-          </ComposedChart>
-        </ChartBlock>
+        <div className="grid gap-5 lg:grid-cols-2">
+          <ChartBlock title="Bandwidth per day" note="UTC days, the last bar is today so far">
+            <ComposedChart data={bandwidthRows} xDataKey="date" aspectRatio="2 / 1" margin={MARGIN_LEFT_WIDE} barGap={0} maxBarSize={36}>
+              <Grid horizontal />
+              <SeriesBar dataKey="perDay" fill="var(--chart-1)" radius={3} />
+              <XAxis />
+              <YAxis numTicks={4} formatValue={formatBytes} />
+              <ChartTooltip
+                showCrosshair={false}
+                rows={(p) => [{ color: "var(--chart-1)", label: "That day", value: formatBytes(Number(p.perDay)) }]}
+              />
+            </ComposedChart>
+          </ChartBlock>
+
+          <ChartBlock
+            title="Month to date vs limit"
+            note={`Cumulative bandwidth this month${showMonthLimit ? ", dashed = monthly limit" : "; the monthly limit line appears once usage reaches 5% of it"} · UTC days`}
+          >
+            <ComposedChart data={bandwidthRows} xDataKey="date" aspectRatio="2 / 1" margin={MARGIN_LEFT_WIDE}>
+              <Grid horizontal />
+              <Area dataKey="monthToDate" stroke="var(--chart-3)" fill="var(--chart-3)" curve={curveLinear} />
+              {showMonthLimit && (
+                <Line dataKey="monthLimit" stroke="var(--danger)" strokeWidth={1.5} dashFromIndex={0} dashArray="6,4" showHighlight={false} />
+              )}
+              <XAxis />
+              <YAxis numTicks={4} formatValue={formatBytes} />
+              <ChartTooltip
+                showDots={!showMonthLimit}
+                rows={(p) => [
+                  { color: "var(--chart-3)", label: "Month to date", value: formatBytes(Number(p.monthToDate)) },
+                  ...(showMonthLimit ? [{ color: "var(--danger)", label: "Monthly limit", value: formatBytes(Number(p.monthLimit)) }] : []),
+                ]}
+              />
+            </ComposedChart>
+          </ChartBlock>
+        </div>
       </DateLabelFormatProvider>
 
       <div className="grid gap-5 lg:grid-cols-2">
@@ -122,7 +129,10 @@ export default function UpstashCharts({ data, limits }: { data: UpstashUsage; li
               )}
               <XAxis numTicks={5} />
               <YAxis numTicks={4} formatValue={formatBytes} />
-              <ChartTooltip rows={(p) => [{ color: "var(--chart-line-primary)", label: "Data size", value: formatBytes(Number(p.size)) }]} />
+              <ChartTooltip
+                showDots={!showSizeLimit}
+                rows={(p) => [{ color: "var(--chart-line-primary)", label: "Data size", value: formatBytes(Number(p.size)) }]}
+              />
             </ComposedChart>
           </ChartBlock>
         </DateLabelFormatProvider>
@@ -152,6 +162,7 @@ export default function UpstashCharts({ data, limits }: { data: UpstashUsage; li
             <XAxis numTicks={6} />
             <YAxis numTicks={4} />
             <ChartTooltip
+              showDots={!showThroughputLimit}
               rows={(p) => [
                 { color: "var(--chart-1)", label: "Read", value: perSec(p.read) },
                 { color: "var(--chart-2)", label: "Write", value: perSec(p.write) },

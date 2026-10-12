@@ -28,7 +28,7 @@ export default function ViewsAreaChart({ points }: { points: ViewsPoint[] }) {
 
   return (
     <DateLabelFormatProvider value={formatUtcDay}>
-      <AreaChart data={data} xDataKey="date" aspectRatio="3 / 1" margin={{ top: 16, right: 16, bottom: 28, left: 36 }}>
+      <AreaChart data={data} xDataKey="date" aspectRatio="3 / 1" margin={{ top: 16, right: 16, bottom: 40, left: 36 }}>
         <Grid horizontal />
         <Area dataKey="views" curve={curveMonotoneX} />
         <XAxis numTicks={5} />

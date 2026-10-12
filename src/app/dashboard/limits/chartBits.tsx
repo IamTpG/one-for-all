@@ -10,7 +10,7 @@ export const ictTime = (date: Date) => formatTime(date.getTime());
 const utcDayFmt = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 export const utcDay = (date: Date) => utcDayFmt.format(date);
 
-export const CHART_MARGIN = { top: 16, right: 16, bottom: 28, left: 48 };
+export const CHART_MARGIN = { top: 16, right: 16, bottom: 40, left: 48 };
 
 // A limit line only appears once the data reaches this share of the limit;
 // below that it just flattens the data against the floor.

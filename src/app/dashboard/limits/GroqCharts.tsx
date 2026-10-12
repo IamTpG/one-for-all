@@ -74,62 +74,66 @@ export default function GroqCharts({ points, nowMs, requestsPerMinute, tokensPer
 
   return (
     <DateLabelFormatProvider value={ictTime}>
-      <div className="flex flex-col gap-4">
-        <div>
-          <div className="mb-1 flex items-center justify-between gap-2 px-1">
-            <h3 className="text-sm font-bold text-ink">Requests</h3>
-            <RangeToggle value={range} onChange={setRange} />
-          </div>
-          <ComposedChart data={data} xDataKey="date" aspectRatio="3 / 1" margin={CHART_MARGIN} barGap={0} maxBarSize={barWidth}>
-            <Grid horizontal />
-            <SeriesBar dataKey="requests" fill="var(--chart-1)" radius={2} />
-            {showRequestsLimit && (
-              <Line dataKey="requestsLimit" stroke="var(--danger)" strokeWidth={1.5} dashFromIndex={0} dashArray="6,4" showHighlight={false} />
-            )}
-            <RateLimitMarkers dataKey="limited" />
-            <XAxis numTicks={6} />
-            <YAxis numTicks={4} />
-            <ChartTooltip
-              showCrosshair={false}
-              rows={(p) => [
-                { color: "var(--chart-1)", label: "Requests", value: formatCount(Number(p.requests)) },
-                ...(Number(p.limited) > 0
-                  ? [{ color: "var(--danger)", label: "Rate-limited (429)", value: formatCount(Number(p.limited)) }]
-                  : []),
-              ]}
-            />
-          </ComposedChart>
-          <p className="px-1 pt-1 text-xs text-ink-faint">
-            {limitNote(showRequestsLimit, `rate limit ${requestsPerMinute}/min`)}
-            {hasData ? "Red dots: minutes with a 429 · " : "No Groq calls in this period · "}
-            {note}
-          </p>
+      <div className="flex flex-col gap-3">
+        <div className="flex justify-end px-1">
+          <RangeToggle value={range} onChange={setRange} />
         </div>
+        <div className="grid gap-5 lg:grid-cols-2">
+          <div className="min-w-0">
+            <h3 className="mb-1 px-1 text-sm font-bold text-ink">Requests</h3>
+            <ComposedChart data={data} xDataKey="date" aspectRatio="2 / 1" margin={CHART_MARGIN} barGap={0} maxBarSize={barWidth}>
+              <Grid horizontal />
+              <SeriesBar dataKey="requests" fill="var(--chart-1)" radius={2} />
+              {showRequestsLimit && (
+                <Line dataKey="requestsLimit" stroke="var(--danger)" strokeWidth={1.5} dashFromIndex={0} dashArray="6,4" showHighlight={false} />
+              )}
+              <RateLimitMarkers dataKey="limited" />
+              <XAxis numTicks={6} />
+              <YAxis numTicks={4} />
+              <ChartTooltip
+                showCrosshair={false}
+                showDots={false}
+                rows={(p) => [
+                  { color: "var(--chart-1)", label: "Requests", value: formatCount(Number(p.requests)) },
+                  ...(Number(p.limited) > 0
+                    ? [{ color: "var(--danger)", label: "Rate-limited (429)", value: formatCount(Number(p.limited)) }]
+                    : []),
+                ]}
+              />
+            </ComposedChart>
+            <p className="px-1 pt-1 text-xs text-ink-faint">
+              {limitNote(showRequestsLimit, `rate limit ${requestsPerMinute}/min`)}
+              {hasData ? "Red dots: minutes with a 429 · " : "No Groq calls in this period · "}
+              {note}
+            </p>
+          </div>
 
-        <div>
-          <h3 className="mb-1 px-1 text-sm font-bold text-ink">Total tokens</h3>
-          <ComposedChart data={data} xDataKey="date" aspectRatio="3 / 1" margin={CHART_MARGIN} barGap={0} maxBarSize={barWidth} stacked>
-            <Grid horizontal />
-            <SeriesBar dataKey="input" fill="var(--chart-1)" />
-            <SeriesBar dataKey="output" fill="var(--chart-2)" radius={2} />
-            {showTokensLimit && (
-              <Line dataKey="tokensLimit" stroke="var(--danger)" strokeWidth={1.5} dashFromIndex={0} dashArray="6,4" showHighlight={false} />
-            )}
-            <XAxis numTicks={6} />
-            <YAxis numTicks={4} />
-            <ChartTooltip
-              showCrosshair={false}
-              rows={(p) => [
-                { color: "var(--chart-1)", label: "Input", value: formatCount(Number(p.input)) },
-                { color: "var(--chart-2)", label: "Output", value: formatCount(Number(p.output)) },
-                { color: "var(--text-faint)", label: "Total", value: formatCount(Number(p.input) + Number(p.output)) },
-              ]}
-            />
-          </ComposedChart>
-          <p className="px-1 pt-1 text-xs text-ink-faint">
-            {limitNote(showTokensLimit, `rate limit ${formatCount(tokensPerMinute)}/min`)}
-            Input and output tokens · {note}
-          </p>
+          <div className="min-w-0">
+            <h3 className="mb-1 px-1 text-sm font-bold text-ink">Total tokens</h3>
+            <ComposedChart data={data} xDataKey="date" aspectRatio="2 / 1" margin={CHART_MARGIN} barGap={0} maxBarSize={barWidth} stacked>
+              <Grid horizontal />
+              <SeriesBar dataKey="input" fill="var(--chart-1)" />
+              <SeriesBar dataKey="output" fill="var(--chart-2)" radius={2} />
+              {showTokensLimit && (
+                <Line dataKey="tokensLimit" stroke="var(--danger)" strokeWidth={1.5} dashFromIndex={0} dashArray="6,4" showHighlight={false} />
+              )}
+              <XAxis numTicks={6} />
+              <YAxis numTicks={4} />
+              <ChartTooltip
+                showCrosshair={false}
+                showDots={false}
+                rows={(p) => [
+                  { color: "var(--chart-1)", label: "Input", value: formatCount(Number(p.input)) },
+                  { color: "var(--chart-2)", label: "Output", value: formatCount(Number(p.output)) },
+                  { color: "var(--text-faint)", label: "Total", value: formatCount(Number(p.input) + Number(p.output)) },
+                ]}
+              />
+            </ComposedChart>
+            <p className="px-1 pt-1 text-xs text-ink-faint">
+              {limitNote(showTokensLimit, `rate limit ${formatCount(tokensPerMinute)}/min`)}
+              Input and output tokens · {note}
+            </p>
+          </div>
         </div>
       </div>
     </DateLabelFormatProvider>

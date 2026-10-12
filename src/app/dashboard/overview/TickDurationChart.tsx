@@ -36,7 +36,7 @@ export default function TickDurationChart({ ticks, limitSeconds }: { ticks: Tick
 
   return (
     <DateLabelFormatProvider value={ictTime}>
-      <LineChart data={data} xDataKey="date" aspectRatio="3 / 1" margin={{ top: 16, right: 16, bottom: 28, left: 44 }}>
+      <LineChart data={data} xDataKey="date" aspectRatio="3 / 1" margin={{ top: 16, right: 16, bottom: 40, left: 44 }}>
         <Grid horizontal />
         {showLimit && (
           <Line dataKey="limit" stroke="var(--danger)" strokeWidth={1.5} dashFromIndex={0} dashArray="6,4" showHighlight={false} />
