@@ -1,10 +1,9 @@
-import { DASHBOARD_RECENT_FAILURES_DISPLAY_LIMIT } from "@/lib/config";
 import {
   loadBackfillHistory,
   loadGithubRateLimit,
-  loadGroqFailures,
   loadHomeViewsDaily,
   loadItemViewCounts,
+  loadRecentFailures,
   loadRedisUp,
   loadRuns,
   loadSettings,
@@ -21,13 +20,13 @@ import ViewsLineChart from "../ViewsLineChart";
 // Lower-priority detail, one collapsible card each: failures (open), pipeline
 // history, traffic, system.
 export default async function ActivityTab() {
-  const [settings, runs, ticks, backfill, groqFailures, items, itemViews, homeViewsDaily, redisUp, githubRate] =
+  const [settings, runs, ticks, backfill, recentFailures, items, itemViews, homeViewsDaily, redisUp, githubRate] =
     await Promise.all([
       loadSettings(),
       loadRuns(),
       loadTicks(),
       loadBackfillHistory(),
-      loadGroqFailures(),
+      loadRecentFailures(),
       loadStoredItems(),
       loadItemViewCounts(),
       loadHomeViewsDaily(),
@@ -40,21 +39,6 @@ export default async function ActivityTab() {
     slotUtc,
     run: runs.find((run) => run.slot === slotUtc) ?? null,
   }));
-
-  const recentFailures = [
-    ...runs.flatMap((run) =>
-      run.sources
-        .filter((source) => !source.ok)
-        .map((source) => ({ ts: run.ts, label: source.label, message: source.error || "Unknown error" }))
-    ),
-    ...groqFailures.map((failure) => ({
-      ts: failure.ts,
-      label: `groq:${failure.stage} (${failure.itemId})`,
-      message: failure.message,
-    })),
-  ]
-    .sort((a, b) => b.ts - a.ts)
-    .slice(0, DASHBOARD_RECENT_FAILURES_DISPLAY_LIMIT);
 
   const titleById = new Map(items.map((item) => [item.id, item.title]));
   const mostViewed = Array.from(itemViews.entries())

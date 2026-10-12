@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { GROQ_LIMITS, UPSTASH_LIMITS } from "@/lib/config";
+import { DASHBOARD_RECENT_FAILURES_DISPLAY_LIMIT, GROQ_LIMITS, UPSTASH_LIMITS } from "@/lib/config";
 import {
   getBackfillHistory,
   getGroqFailures,
@@ -39,6 +39,25 @@ export const loadHomeViewsDaily = cache(() => getHomeViewsDaily());
 export const loadItemViewCounts = cache(() => getItemViewCounts());
 export const loadToggleStats = cache(() => getLanguageToggleStats());
 export const loadGithubRateLimit = cache(() => fetchGithubSearchRateLimit());
+
+// Failed sources from the recent fetch runs plus Groq failures, newest first.
+export const loadRecentFailures = cache(async () => {
+  const [runs, groqFailures] = await Promise.all([loadRuns(), loadGroqFailures()]);
+  return [
+    ...runs.flatMap((run) =>
+      run.sources
+        .filter((source) => !source.ok)
+        .map((source) => ({ ts: run.ts, label: source.label, message: source.error || "Unknown error" }))
+    ),
+    ...groqFailures.map((failure) => ({
+      ts: failure.ts,
+      label: `groq:${failure.stage} (${failure.itemId})`,
+      message: failure.message,
+    })),
+  ]
+    .sort((a, b) => b.ts - a.ts)
+    .slice(0, DASHBOARD_RECENT_FAILURES_DISPLAY_LIMIT);
+});
 
 // Items still missing a Vietnamese title or summary — the same rule the
 // backfill tick uses (store.ts itemsNeedingAi), derived from the item list the

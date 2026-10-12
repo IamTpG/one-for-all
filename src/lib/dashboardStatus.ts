@@ -96,7 +96,7 @@ export function evaluateStatus(input: StatusInputs): StatusResult {
     checks.push({
       id: "fetch",
       level,
-      label: input.dueSlot.ran ? `Fetch ${input.dueSlot.label} ok` : `Fetch ${input.dueSlot.label} not run`,
+      label: `Fetch ${input.dueSlot.label} ${input.dueSlot.ran ? "ok" : level === "ok" ? "due" : "not run"}`,
       problem: `the ${input.dueSlot.label} fetch has not run (${ago(overdue)})`,
     });
   }
