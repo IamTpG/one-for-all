@@ -137,13 +137,6 @@ function itemsNeedingAi(stored: Map<string, StoredItem>): [string, StoredItem][]
   return Array.from(stored.entries()).filter(([, item]) => !item.titleVi || !item.summaryVi);
 }
 
-// Count of items still missing a Vietnamese translation, for the dashboard
-// backlog stat — same filter runAiBackfillTick uses, without the batch slice.
-export async function getAiBacklogSize(): Promise<number> {
-  const stored = await getHashAll<StoredItem>(ITEMS_KEY);
-  return itemsNeedingAi(stored).length;
-}
-
 // Processes one bounded batch of stored items still missing a Vietnamese
 // translation. Decoupled entirely from fetching — driven by the cron tick,
 // so translation keeps progressing between scheduled fetches instead of
