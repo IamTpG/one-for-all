@@ -1,12 +1,17 @@
 import {
+  CRON_TICK_INTERVAL_MINUTES,
   DASHBOARD_BACKFILL_HISTORY_LIMIT,
   DASHBOARD_GROQ_FAILURE_LIMIT,
   DASHBOARD_RUN_HISTORY_LIMIT,
+  DASHBOARD_TICK_COUNT_RETENTION_DAYS,
+  DASHBOARD_TICK_HISTORY_LIMIT,
   DASHBOARD_VIEWS_CHART_DAYS,
 } from "@/lib/config";
-import { getCappedList, getHashAll, incrHashField, pingRedis, pushCapped } from "@/lib/redis";
+import { getCappedList, getHashAll, incrHashField, incrHashFields, pingRedis, pushCapped } from "@/lib/redis";
 
 const RUNS_KEY = "wire:runs";
+const TICKS_KEY = "wire:cron:ticks";
+const TICK_COUNT_KEY_PREFIX = "wire:cron:count:";
 const BACKFILL_HISTORY_KEY = "wire:backfill:history";
 const GROQ_FAILURES_KEY = "wire:groq:failures";
 const HOME_VIEWS_KEY = "wire:views:home";
@@ -26,6 +31,8 @@ export type FetchRunRecord = {
   slot: string | null; // null = manual "Fetch now"
   durationMs: number;
   totalFetched: number;
+  // Items not already in the store. Absent on runs recorded before this was tracked.
+  newItems?: number;
   sources: FetchRunSourceResult[];
 };
 
@@ -41,6 +48,48 @@ export type GroqFailureRecord = {
   itemId: string;
   message: string;
 };
+
+// One entry per /api/cron/tick invocation that got past auth. Written when
+// the tick finishes, so a tick killed by the function timeout leaves no
+// record — which shows up as a stale "last tick" on the dashboard.
+export type TickRecord = {
+  ts: number;
+  durationMs: number;
+  fetched: number | null; // null = no fetch slot was due this tick
+  backfillProcessed: number;
+  groq429: number; // rate-limited Groq responses seen during this tick
+};
+
+function utcDayKey(ms: number): string {
+  return new Date(ms).toISOString().slice(0, 10);
+}
+
+export async function recordTick(record: TickRecord): Promise<void> {
+  await Promise.all([
+    pushCapped(TICKS_KEY, record, DASHBOARD_TICK_HISTORY_LIMIT),
+    incrHashFields(
+      TICK_COUNT_KEY_PREFIX + utcDayKey(record.ts),
+      { count: 1 },
+      DASHBOARD_TICK_COUNT_RETENTION_DAYS * 24 * 60 * 60
+    ),
+  ]);
+}
+
+export async function getRecentTicks(limit: number = DASHBOARD_TICK_HISTORY_LIMIT): Promise<TickRecord[]> {
+  return getCappedList<TickRecord>(TICKS_KEY, limit);
+}
+
+// Ticks received so far this UTC day, against how many a steady cron would
+// have delivered by now (the cron fires on the interval, aligned to 00:00 UTC).
+export async function getTickStats(): Promise<{ ticksToday: number; expectedSoFar: number }> {
+  const now = Date.now();
+  const raw = await getHashAll<number>(TICK_COUNT_KEY_PREFIX + utcDayKey(now));
+  const minutesIntoDay = Math.floor((now % (24 * 60 * 60 * 1000)) / 60000);
+  return {
+    ticksToday: raw.get("count") ?? 0,
+    expectedSoFar: Math.floor(minutesIntoDay / CRON_TICK_INTERVAL_MINUTES) + 1,
+  };
+}
 
 export async function recordFetchRun(record: FetchRunRecord): Promise<void> {
   await pushCapped(RUNS_KEY, record, DASHBOARD_RUN_HISTORY_LIMIT);

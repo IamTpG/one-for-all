@@ -2,12 +2,19 @@ import Groq, { RateLimitError } from "groq-sdk";
 import { GROQ_MODEL, TOPICS, TRANSLATE_MAX_TOKENS } from "@/lib/config";
 import { errorMessage } from "@/lib/errors";
 import { sanitizeArticleHtml } from "@/lib/sanitize";
-import { recordGroqCall } from "@/lib/usage";
+import { recordGroq429, recordGroqCall } from "@/lib/usage";
 import type { AiAnalysis, FeedItem } from "@/lib/types";
 
 export type GroqResult<T> = { data: T | null; error?: string };
 
 const DEFAULT_RETRY_DELAY_MS = 5000;
+
+// 429s seen by this server process, so a caller (the cron tick) can report
+// how many happened during its own run by diffing before/after.
+let rateLimitedCount = 0;
+export function getGroqRateLimitedCount(): number {
+  return rateLimitedCount;
+}
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -70,6 +77,10 @@ async function requestCompletion(
     await recordGroqCall(completion.usage, response.headers);
     return completion.choices[0]?.message?.content ?? null;
   } catch (err) {
+    if (err instanceof RateLimitError) {
+      rateLimitedCount++;
+      await recordGroq429();
+    }
     if (err instanceof RateLimitError && attempt === 0) {
       const retryAfter = Number(err.headers?.get?.("retry-after"));
       const delayMs = Number.isFinite(retryAfter) ? retryAfter * 1000 : DEFAULT_RETRY_DELAY_MS;

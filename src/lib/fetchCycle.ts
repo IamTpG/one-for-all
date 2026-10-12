@@ -15,7 +15,7 @@ import { mergeFreshItems } from "@/lib/store";
 export async function runFetchCycle(
   settings: SiteSettings,
   slot: string | null = null
-): Promise<{ fetched: number }> {
+): Promise<{ fetched: number; newItems: number }> {
   const startedAt = Date.now();
   const [rss, anthropic, hn, trending, releases] = await Promise.all([
     fetchRssItems(settings.rssItemLimit),
@@ -27,15 +27,16 @@ export async function runFetchCycle(
 
   const allResults = [...rss, ...anthropic, ...hn, ...trending, ...releases];
   const fresh = allResults.flatMap((result) => result.items);
-  await mergeFreshItems(fresh, settings.retentionDays);
+  const { newItems } = await mergeFreshItems(fresh, settings.retentionDays);
 
   await recordFetchRun({
     ts: startedAt,
     slot,
     durationMs: Date.now() - startedAt,
     totalFetched: fresh.length,
+    newItems,
     sources: allResults.map(({ items, ...rest }) => ({ ...rest, count: items.length })),
   });
 
-  return { fetched: fresh.length };
+  return { fetched: fresh.length, newItems };
 }

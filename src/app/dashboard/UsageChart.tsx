@@ -25,7 +25,7 @@ const PAD_BOTTOM = 22;
 const PLOT_WIDTH = WIDTH - PAD_LEFT - PAD_RIGHT;
 const PLOT_HEIGHT = HEIGHT - PAD_TOP - PAD_BOTTOM;
 
-type Bucket = { t: number; req: number; input: number; output: number };
+type Bucket = { t: number; req: number; input: number; output: number; limited: number };
 
 type Props = {
   mode: "requests" | "tokens";
@@ -53,6 +53,7 @@ export default function UsageChart({ mode, title, points, nowMs, limitPerMinute,
       req: 0,
       input: 0,
       output: 0,
+      limited: 0,
     }));
     for (const p of points) {
       const idx = Math.floor((p.t - start) / bucketMs);
@@ -60,6 +61,7 @@ export default function UsageChart({ mode, title, points, nowMs, limitPerMinute,
       result[idx].req += p.req;
       result[idx].input += p.input;
       result[idx].output += p.output;
+      result[idx].limited += p.limited;
     }
     return result;
   }, [points, nowMs, bucketMs, bucketCount]);
@@ -130,6 +132,11 @@ export default function UsageChart({ mode, title, points, nowMs, limitPerMinute,
         ) : (
           <span className={styles.legendItem}>
             <span className={`${styles.legendSwatch} ${styles.usageBarPrimary}`} /> Requests
+          </span>
+        )}
+        {mode === "requests" && (
+          <span className={styles.legendItem}>
+            <span className={styles.legendLimited} /> Rate-limited (429)
           </span>
         )}
         <span className={styles.legendItem}>
@@ -206,6 +213,19 @@ export default function UsageChart({ mode, title, points, nowMs, limitPerMinute,
             );
           })}
 
+          {mode === "requests" &&
+            buckets.map((b, i) =>
+              b.limited > 0 ? (
+                <circle
+                  key={`limited-${b.t}`}
+                  cx={PAD_LEFT + i * slot + slot / 2}
+                  cy={PAD_TOP + 4}
+                  r={3}
+                  className={styles.usageLimitedMark}
+                />
+              ) : null
+            )}
+
           <line
             x1={PAD_LEFT}
             x2={WIDTH - PAD_RIGHT}
@@ -242,7 +262,12 @@ export default function UsageChart({ mode, title, points, nowMs, limitPerMinute,
               {bucketMinutes > 1 ? `${formatTime(hovered.t)}–${formatTime(hovered.t + bucketMs)}` : formatTime(hovered.t)} ICT
             </div>
             {mode === "requests" ? (
-              <div className={styles.chartTooltipValue}>{formatCount(hovered.req)} requests</div>
+              <>
+                <div className={styles.chartTooltipValue}>{formatCount(hovered.req)} requests</div>
+                {hovered.limited > 0 && (
+                  <div className={styles.chartTooltipLabel}>{formatCount(hovered.limited)} rate-limited (429)</div>
+                )}
+              </>
             ) : (
               <>
                 <div className={styles.chartTooltipValue}>Total {formatCount(hovered.input + hovered.output)}</div>

@@ -114,6 +114,16 @@ export const UPSTASH_LIMITS = {
 // most the last 24h, so a day or two of slack is plenty).
 export const GROQ_USAGE_RETENTION_DAYS = 3;
 
+// How often the Cloudflare cron Worker pings /api/cron/tick — keep in sync
+// with `triggers.crons` in cloudflare/cron-worker/wrangler.jsonc. Only used
+// by the dashboard to work out how many ticks to expect so far today.
+export const CRON_TICK_INTERVAL_MINUTES = 10;
+
+// How many recent ticks the dashboard keeps, and how long the per-day tick
+// counter hash lives.
+export const DASHBOARD_TICK_HISTORY_LIMIT = 50;
+export const DASHBOARD_TICK_COUNT_RETENTION_DAYS = 3;
+
 // How many entries the owner dashboard's capped history lists keep. Small
 // on purpose — this is "is everything working right now," not analytics.
 export const DASHBOARD_RUN_HISTORY_LIMIT = 30;

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { recordTick } from "@/lib/dashboardStats";
 import { runFetchCycle } from "@/lib/fetchCycle";
+import { getGroqRateLimitedCount } from "@/lib/groq";
 import { isCronRequest } from "@/lib/ownerAuth";
 import { latestDueSlot, slotDateKey } from "@/lib/schedule";
 import { getSiteSettings } from "@/lib/siteSettings";
@@ -12,7 +14,7 @@ import { markSlotRan, runAiBackfillTick } from "@/lib/store";
 // what your plan actually allows.
 export const maxDuration = 60;
 
-// Hit every ~5 minutes (see vercel.json). Two independent, bounded jobs
+// Hit every 10 minutes by the Cloudflare cron Worker (cloudflare/cron-worker). Two independent, bounded jobs
 // per invocation: (1) run one full fetch cycle if the latest due slot
 // hasn't run yet — guarded so two near-simultaneous invocations can't
 // double-fire, and so downtime through a slot only catches up on that one
@@ -26,10 +28,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const startedAt = Date.now();
+  const rateLimitedBefore = getGroqRateLimitedCount();
   const settings = await getSiteSettings();
   const now = new Date();
 
-  let fetchResult: { fetched: number } | null = null;
+  let fetchResult: { fetched: number; newItems: number } | null = null;
   const slot = latestDueSlot(now, settings.fetchTimesUtc);
   if (slot) {
     const claimed = await markSlotRan(slotDateKey(now, slot), slot);
@@ -38,5 +42,14 @@ export async function GET(request: NextRequest) {
 
   const backfill = await runAiBackfillTick();
 
-  return NextResponse.json({ fetch: fetchResult, backfillProcessed: backfill.processed });
+  const durationMs = Date.now() - startedAt;
+  await recordTick({
+    ts: startedAt,
+    durationMs,
+    fetched: fetchResult?.fetched ?? null,
+    backfillProcessed: backfill.processed,
+    groq429: getGroqRateLimitedCount() - rateLimitedBefore,
+  });
+
+  return NextResponse.json({ fetch: fetchResult, backfillProcessed: backfill.processed, durationMs });
 }

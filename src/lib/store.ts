@@ -71,7 +71,10 @@ export async function getLastFetchAt(): Promise<number | null> {
 // this cycle's fetch size, not the whole store: items retained purely by
 // the time window (absent from this cycle's fetch) are left untouched, no
 // read-modify-write.
-export async function mergeFreshItems(fresh: FeedItem[], retentionDays: number): Promise<void> {
+export async function mergeFreshItems(
+  fresh: FeedItem[],
+  retentionDays: number
+): Promise<{ newItems: number }> {
   const existing = await getHashAll<StoredItem>(ITEMS_KEY);
   const now = Date.now();
   const retentionMs = retentionDays * 24 * 60 * 60 * 1000;
@@ -82,7 +85,9 @@ export async function mergeFreshItems(fresh: FeedItem[], retentionDays: number):
   const cached = await getCachedAnalyses(fresh.map((item) => item.id));
 
   const toWrite: Record<string, StoredItem> = {};
+  const newIds = new Set<string>();
   for (const item of fresh) {
+    if (!existing.has(item.id)) newIds.add(item.id);
     const keywordTopics = matchKeywordTopics(`${item.title} ${item.summary ?? ""}`);
     const hit = cached.get(item.id);
     const enriched: FeedItem = hit
@@ -111,6 +116,7 @@ export async function mergeFreshItems(fresh: FeedItem[], retentionDays: number):
   if (toDrop.length > 0) await deleteHashFields(ITEMS_KEY, toDrop);
 
   await setJson(LAST_FETCH_KEY, now);
+  return { newItems: newIds.size };
 }
 
 async function withConcurrency<T>(
