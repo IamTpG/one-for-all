@@ -1,0 +1,133 @@
+diff --git a/chart-loading-label.tsx b/chart-loading-label.tsx
+index 73242a0..cc7bcf7 100644
+--- a/chart-loading-label.tsx
++++ b/chart-loading-label.tsx
+@@ -2,7 +2,7 @@
+ 
+ import { motion } from "motion/react";
+ import { cn } from "@/lib/utils";
+-import { ShimmeringText } from "../components/shimmering-text";
++import { ShimmeringText } from "../shimmering-text";
+ import {
+   LINE_LOADING_PULSE_EASE,
+   LOADING_LABEL_EXIT_S,
+diff --git a/chart-stat-flow.tsx b/chart-stat-flow.tsx
+index 1f139fe..c7c5ca9 100644
+--- a/chart-stat-flow.tsx
++++ b/chart-stat-flow.tsx
+@@ -1,7 +1,7 @@
+ "use client";
+ 
+ import NumberFlow from "@number-flow/react";
+-import { type ReactNode, useEffect, useMemo, useState } from "react";
++import { type ReactNode, useMemo, useSyncExternalStore } from "react";
+ import { cn } from "@/lib/utils";
+ 
+ /** Subset of `Intl.NumberFormatOptions` supported by NumberFlow */
+@@ -37,29 +37,33 @@ function formatStatValue(
+   return `${prefix ?? ""}${formatted}${suffix ?? ""}`;
+ }
+ 
+-function useNumberFlowElementReady(): boolean {
+-  const [ready, setReady] = useState(
+-    () =>
+-      typeof customElements !== "undefined" &&
+-      Boolean(customElements.get("number-flow-react"))
+-  );
+-
+-  useEffect(() => {
+-    if (ready) {
+-      return;
+-    }
+-    let cancelled = false;
++function subscribeToNumberFlowElement(onChange: () => void): () => void {
++  let cancelled = false;
++  if (typeof customElements !== "undefined") {
+     customElements.whenDefined("number-flow-react").then(() => {
+       if (!cancelled) {
+-        setReady(true);
++        onChange();
+       }
+     });
+-    return () => {
+-      cancelled = true;
+-    };
+-  }, [ready]);
++  }
++  return () => {
++    cancelled = true;
++  };
++}
+ 
+-  return ready;
++// The server has no custom elements, and by the time the client hydrates the
++// element is already registered, so reading it directly in the first render
++// made the server (plain text) and client (<number-flow-react>) disagree and
++// triggered a hydration error. useSyncExternalStore renders the server
++// snapshot (false) during hydration, then switches once on the client.
++function useNumberFlowElementReady(): boolean {
++  return useSyncExternalStore(
++    subscribeToNumberFlowElement,
++    () =>
++      typeof customElements !== "undefined" &&
++      Boolean(customElements.get("number-flow-react")),
++    () => false
++  );
+ }
+ 
+ export interface ChartStatFlowProps {
+diff --git a/sankey/sankey-node.tsx b/sankey/sankey-node.tsx
+index 0328896..b96be52 100644
+--- a/sankey/sankey-node.tsx
++++ b/sankey/sankey-node.tsx
+@@ -34,6 +34,8 @@ export interface SankeyNodeProps {
+   showLabels?: boolean;
+   /** Show value labels under node names. Default: true */
+   showValueLabels?: boolean;
++  /** Unit shown after the value label. Default: "sessions" (upstream wording) */
++  valueUnit?: string;
+   /**
+    * Label reading direction for outside node labels.
+    * - "horizontal": labels sit left/right of nodes (default).
+@@ -167,6 +169,7 @@ interface AnimatedNodeProps {
+   isLeftSide: boolean;
+   showLabels: boolean;
+   showValueLabels: boolean;
++  valueUnit: string;
+   labelOrientation: SankeyLabelOrientation;
+ }
+ 
+@@ -230,6 +233,7 @@ function AnimatedNode({
+   isLeftSide,
+   showLabels,
+   showValueLabels,
++  valueUnit,
+   labelOrientation,
+ }: AnimatedNodeProps) {
+   const { enterTransition, revealEpoch } = useSankey();
+@@ -296,7 +300,8 @@ function AnimatedNode({
+               opacity={valueOpacity}
+               transition={valueEnter}
+             >
+-              {intFmt(value)} sessions
++              {intFmt(value)}
++              {valueUnit ? ` ${valueUnit}` : ""}
+             </NodeLabel>
+           ) : null}
+         </>
+@@ -311,6 +316,7 @@ export function SankeyNode({
+   fadedOpacity = 0.4,
+   showLabels = true,
+   showValueLabels = true,
++  valueUnit = "sessions",
+   labelOrientation = "horizontal",
+   getNodeColor: getNodeColorProp,
+ }: SankeyNodeProps) {
+@@ -445,6 +451,7 @@ export function SankeyNode({
+             rx={lineCap}
+             showLabels={showLabels}
+             showValueLabels={showValueLabels}
++            valueUnit={valueUnit}
+             totalNodes={nodes.length}
+             value={displayValue}
+             width={nodeWidth}
