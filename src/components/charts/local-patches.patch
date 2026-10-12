@@ -131,3 +131,55 @@ index 0328896..b96be52 100644
              totalNodes={nodes.length}
              value={displayValue}
              width={nodeWidth}
+diff --git a/time-series-chart-shell.tsx b/time-series-chart-shell.tsx
+index 3773599..a51d357 100644
+--- a/time-series-chart-shell.tsx
++++ b/time-series-chart-shell.tsx
+@@ -28,7 +28,7 @@ import {
+ } from "./chart-child-passthrough";
+ import { ChartProvider, type LineConfig, type Margin } from "./chart-context";
+ import { isGradientDefComponent, isPatternDefComponent } from "./chart-defs";
+-import { shortDateFmt } from "./chart-formatters";
++import { useDateLabelFormat } from "./date-label-format";
+ import {
+   type ChartPhase,
+   type ChartStatus,
+@@ -404,9 +404,10 @@ const TimeSeriesChartCore = memo(function TimeSeriesChartCore({
+     scaleLinear({ range: [innerHeight, 0], domain: [0, 100], nice: true })
+   );
+ 
++  const formatDateLabel = useDateLabelFormat();
+   const dateLabels = useMemo(
+-    () => visiblePlotData.map((d) => shortDateFmt.format(xAccessor(d))),
+-    [visiblePlotData, xAccessor]
++    () => visiblePlotData.map((d) => formatDateLabel(xAccessor(d))),
++    [visiblePlotData, xAccessor, formatDateLabel]
+   );
+ 
+   const canInteract = isLoaded && isChartInteractionPhase(chartPhase);
+diff --git a/date-label-format.tsx b/date-label-format.tsx
+new file mode 100644
+index 0000000..cec4271
+--- /dev/null
++++ b/date-label-format.tsx
+@@ -0,0 +1,20 @@
++"use client";
++
++import { createContext, useContext } from "react";
++import { shortDateFmt } from "./chart-formatters";
++
++// Local addition (see local-patches.patch): the time-series charts label the
++// x axis and the tooltip date pill with a fixed "Oct 11" format in the
++// browser's time zone, which is useless for per-minute data. Wrap a chart in
++// <DateLabelFormatProvider value={fn}> to use another format.
++export type DateLabelFormat = (date: Date) => string;
++
++const defaultFormat: DateLabelFormat = (date) => shortDateFmt.format(date);
++
++const DateLabelFormatContext = createContext<DateLabelFormat>(defaultFormat);
++
++export const DateLabelFormatProvider = DateLabelFormatContext.Provider;
++
++export function useDateLabelFormat(): DateLabelFormat {
++  return useContext(DateLabelFormatContext);
++}

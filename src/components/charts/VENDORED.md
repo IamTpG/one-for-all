@@ -22,6 +22,10 @@ updating (from this directory): `patch -p1 < local-patches.patch`.
 - `chart-stat-flow.tsx`: hydration mismatch (server rendered plain text, the
   client's first render used `<number-flow-react>`); readiness now comes from
   `useSyncExternalStore` with a `false` server snapshot.
+- `time-series-chart-shell.tsx` + new `date-label-format.tsx`: the line, area and
+  composed charts label the x axis and tooltip with a fixed "Oct 11" format in the
+  browser's time zone. `DateLabelFormatProvider` (a context) lets a wrapper pass its
+  own formatter, e.g. HH:mm in ICT for per-minute data or a UTC day label.
 - `sankey/sankey-node.tsx`: the value label hard-coded "sessions"; added a
   `valueUnit` prop (default still "sessions").
 
