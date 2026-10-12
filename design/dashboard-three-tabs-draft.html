@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OneForAll dashboard — three-tab draft (charts)</title>
+<style>
+/* Same tokens as src/app/globals.css (Frosted theme). */
+:root {
+  color-scheme: light;
+  --bg:
+    radial-gradient(circle at 15% 10%, rgba(255, 214, 214, 0.35), transparent 45%),
+    radial-gradient(circle at 85% 15%, rgba(200, 225, 255, 0.35), transparent 45%),
+    radial-gradient(circle at 50% 90%, rgba(210, 255, 235, 0.3), transparent 50%),
+    #eef1f5;
+  --surface: rgba(255, 255, 255, 0.72);
+  --surface-sunken: rgba(255, 255, 255, 0.55);
+  --border: rgba(15, 23, 35, 0.16);
+  --text: #12161e;
+  --text-muted: #454c58;
+  --text-faint: #6b7280;
+  --accent: #1fb8c4;
+  --accent-soft: rgba(31, 184, 196, 0.14);
+  --danger: #d14343;
+  --warn: #c98a0b;
+  --ok: #2f9e62;
+  --c2: #6d7be8; --c3: #e8923a; --c4: #d65d93; --c5: #7fb53b;
+  --shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 10px 28px rgba(20, 30, 45, 0.18);
+  --glass-blur: blur(16px) saturate(160%);
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg:
+    radial-gradient(circle at 15% 10%, rgba(120, 40, 90, 0.35), transparent 45%),
+    radial-gradient(circle at 85% 15%, rgba(40, 70, 130, 0.35), transparent 45%),
+    radial-gradient(circle at 50% 90%, rgba(20, 100, 90, 0.3), transparent 50%),
+    #0e1016;
+  --surface: rgba(24, 28, 38, 0.72);
+  --surface-sunken: rgba(24, 28, 38, 0.55);
+  --border: rgba(255, 255, 255, 0.16);
+  --text: #f1f3f7;
+  --text-muted: #b7bfcc;
+  --text-faint: #8890a0;
+  --accent: #4fd8e0;
+  --accent-soft: rgba(79, 216, 224, 0.16);
+  --danger: #ef6b6b;
+  --warn: #e6b34a;
+  --ok: #4cc58a;
+  --c2: #8f9bff; --c3: #f2a65a; --c4: #ee7fb0; --c5: #97cc5c;
+  --shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; color: var(--text); background: var(--bg); background-attachment: fixed; font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.header { max-width: 1100px; margin: 0 auto; padding: 18px 16px 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.brand { font-weight: 800; letter-spacing: -0.01em; }
+.brand small { margin-left: 8px; font-weight: 600; font-size: .7rem; letter-spacing: .1em; color: var(--text-faint); font-family: ui-monospace, Consolas, monospace; }
+.tools { display: flex; gap: 8px; align-items: center; }
+.btn { border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: .75rem; padding: 5px 10px; border-radius: 8px; cursor: pointer; backdrop-filter: var(--glass-blur); }
+main { max-width: 1100px; margin: 0 auto; padding: 12px 16px 48px; display: flex; flex-direction: column; gap: 12px; }
+.draftnote { font-size: .72rem; color: var(--text-faint); }
+
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 10px 14px; border-radius: 16px; border: 1px solid var(--border); background: var(--surface); box-shadow: var(--shadow); backdrop-filter: var(--glass-blur); }
+.banner .verdict { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 25%, transparent); }
+.banner.warn .dot { background: var(--warn); box-shadow: 0 0 0 3px color-mix(in srgb, var(--warn) 25%, transparent); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+.chip { display: inline-flex; gap: 6px; align-items: center; padding: 3px 9px; border-radius: 999px; font-size: .72rem; background: var(--surface-sunken); border: 1px solid var(--border); color: var(--text-muted); }
+.chip i { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); display: inline-block; }
+.chip.warn i { background: var(--warn); } .chip.bad i { background: var(--danger); }
+
+.tabs { display: flex; gap: 4px; padding: 4px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); width: fit-content; backdrop-filter: var(--glass-blur); }
+.tab { border: 0; background: transparent; color: var(--text-muted); font: inherit; font-weight: 600; padding: 7px 16px; border-radius: 10px; cursor: pointer; }
+.tab[aria-selected="true"] { background: var(--accent-soft); color: var(--text); }
+.panel { display: none; flex-direction: column; gap: 12px; }
+.panel.active { display: flex; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; box-shadow: var(--shadow); backdrop-filter: var(--glass-blur); padding: 14px; min-width: 0; }
+.card h2 { margin: 0 0 8px; padding: 0 4px; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--text-faint); }
+.grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.split { display: grid; grid-template-columns: 1.25fr 1fr; gap: 12px; }
+
+/* gauges */
+.gcard { display: flex; flex-direction: column; align-items: center; padding-bottom: 10px; }
+.gcard svg { width: 100%; max-width: 170px; height: auto; }
+.gcard .gname { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-faint); margin-top: -4px; }
+.gcard .gsub { font-size: .72rem; color: var(--text-faint); text-align: center; }
+.gv { font-size: 19px; font-weight: 700; fill: var(--text); font-family: system-ui, sans-serif; }
+.gl { font-size: 8px; fill: var(--text-faint); font-family: system-ui, sans-serif; }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 8px; }
+.tile { background: var(--surface-sunken); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 1px; }
+.tile b { font-size: 1.05rem; } .tile span { font-size: .7rem; color: var(--text-faint); }
+.tile.warn b { color: var(--warn); } .tile.bad b { color: var(--danger); }
+a.more { font-size: .72rem; color: var(--accent); cursor: pointer; text-decoration: underline; }
+
+/* charts */
+.chart { padding: 2px 4px 10px; }
+.chart .hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.chart .ttl { font-weight: 700; font-size: .8rem; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .7rem; color: var(--text-faint); margin-bottom: 4px; }
+.legend .sw { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+.legend .dash { display: inline-block; width: 14px; border-top: 2px dashed var(--danger); margin-right: 5px; vertical-align: middle; }
+.legend .dash2 { display: inline-block; width: 14px; border-top: 2px dashed var(--warn); margin-right: 5px; vertical-align: middle; }
+.legend .note { margin-left: auto; }
+.chart svg, .viz svg { display: block; width: 100%; height: auto; }
+svg text { fill: var(--text-faint); font-size: 9px; font-family: ui-monospace, Consolas, monospace; }
+svg .grid { stroke: var(--border); opacity: .5; }
+svg .limit { stroke: var(--danger); stroke-width: 1.5; stroke-dasharray: 5 4; }
+svg text.limitlbl { fill: var(--danger); }
+.seg { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--border); border-radius: 8px; }
+.seg button { border: 0; background: transparent; color: var(--text-muted); font: inherit; font-size: .72rem; padding: 3px 9px; border-radius: 6px; cursor: pointer; }
+.seg button.on { background: var(--accent-soft); color: var(--text); font-weight: 700; }
+.vizrow { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.vizrow .legendcol { display: flex; flex-direction: column; gap: 5px; font-size: .75rem; min-width: 150px; flex: 1; }
+.vizrow .legendcol div { display: flex; gap: 8px; align-items: center; }
+.vizrow .legendcol i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.vizrow .legendcol .n { margin-left: auto; color: var(--text-faint); font-family: ui-monospace, Consolas, monospace; }
+.hm text { font-size: 8px; }
+.hmleg { display: flex; align-items: center; gap: 4px; font-size: .68rem; color: var(--text-faint); justify-content: flex-end; margin-top: 4px; }
+.hmleg i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+
+details { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; box-shadow: var(--shadow); backdrop-filter: var(--glass-blur); padding: 0 14px; }
+details > summary { cursor: pointer; padding: 12px 4px; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); font-weight: 700; list-style: none; display: flex; justify-content: space-between; }
+details > summary::after { content: "＋"; color: var(--text-faint); } details[open] > summary::after { content: "－"; }
+details .body { padding: 0 4px 14px; display: flex; flex-direction: column; gap: 14px; }
+.sub { font-size: .7rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: .05em; margin: 0 0 6px; }
+table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--border); }
+th { font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-faint); }
+.fail { display: flex; gap: 10px; padding: 6px 4px; border-bottom: 1px solid var(--border); font-size: .78rem; }
+.fail time { color: var(--text-faint); white-space: nowrap; font-family: ui-monospace, Consolas, monospace; }
+.fail b { white-space: nowrap; }
+.hbar { display: grid; grid-template-columns: minmax(120px, 280px) 1fr 36px; gap: 8px; align-items: center; font-size: .75rem; }
+.track { height: 10px; border-radius: 999px; background: var(--surface-sunken); overflow: hidden; border: 1px solid var(--border); }
+.fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 55%, transparent), var(--accent)); }
+
+@media (max-width: 900px) {
+  .grid4 { grid-template-columns: 1fr 1fr; } .grid2, .grid3, .split { grid-template-columns: 1fr; } .chips { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="brand">OneForAll <small>DASHBOARD</small></div>
+  <div class="tools">
+    <span class="draftnote">Draft preview · sample data · hand-drawn SVG standing in for the chart types</span>
+    <button class="btn" id="stateBtn" type="button">State: all OK</button>
+    <button class="btn" id="themeBtn" type="button">Dark</button>
+  </div>
+</div>
+
+<main>
+  <div class="banner" id="banner">
+    <div class="verdict"><span class="dot"></span><span id="verdict">All systems normal</span></div>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="overview" aria-selected="true">Overview</button>
+    <button class="tab" role="tab" data-tab="limits" aria-selected="false">Limits</button>
+    <button class="tab" role="tab" data-tab="activity" aria-selected="false">Activity</button>
+  </div>
+
+  <!-- ============ OVERVIEW ============ -->
+  <section class="panel active" id="panel-overview">
+    <div class="grid4" id="gauges"></div>
+
+    <div class="split">
+      <div class="card">
+        <h2>Pipeline</h2>
+        <div class="vizrow" style="align-items:flex-start">
+          <div class="viz" id="ringHealth" style="width:170px;flex:none"></div>
+          <div class="tiles" id="pipeTiles" style="flex:1;min-width:260px"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Traffic &amp; problems</h2>
+        <div class="tiles" id="trafficTiles"></div>
+        <p class="draftnote" style="margin-top:8px">Failures → <a class="more" data-goto="activity">Activity › Recent failures</a></p>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card"><div class="chart" id="chTick"></div></div>
+      <div class="card"><div class="chart" id="chViewsMini"></div></div>
+    </div>
+  </section>
+
+  <!-- ============ LIMITS ============ -->
+  <section class="panel" id="panel-limits">
+    <div class="card">
+      <h2>Groq</h2>
+      <div class="chart" id="chReq"></div>
+      <div class="chart" id="chTok"></div>
+    </div>
+    <div class="card">
+      <h2>Upstash</h2>
+      <div class="chart" id="chBw"></div>
+      <div class="grid2">
+        <div class="chart" id="chSize"></div>
+        <div class="chart" id="chReqDay"></div>
+      </div>
+      <div class="chart" id="chThru"></div>
+      <div class="chart" id="chLat"></div>
+    </div>
+  </section>
+
+  <!-- ============ ACTIVITY ============ -->
+  <section class="panel" id="panel-activity">
+    <details open id="d-fail">
+      <summary>Recent failures <span style="color:var(--text-faint)">2</span></summary>
+      <div class="body">
+        <div class="fail"><time>Oct 11, 21:48</time><b>groq:classify (hn:4128)</b><span>429 Too Many Requests — rate limit reached for tokens per minute</span></div>
+        <div class="fail"><time>Oct 11, 20:30</time><b>The Verge</b><span>Request timed out after 5000ms</span></div>
+      </div>
+    </details>
+
+    <details open>
+      <summary>Pipeline</summary>
+      <div class="body">
+        <div class="grid2">
+          <div class="viz"><p class="sub">Last fetch — where items ended up (Sankey)</p><div id="sankey"></div></div>
+          <div class="viz"><p class="sub">Last fetch — funnel</p><div id="funnel"></div></div>
+        </div>
+        <div class="viz"><p class="sub">Cron health, last 12 weeks (ticks received / expected per day)</p><div id="hmCron"></div></div>
+        <div>
+          <p class="sub">Recent cron ticks</p>
+          <table><thead><tr><th>Time</th><th>Duration</th><th>Fetched</th><th>Translated</th><th>Groq 429s</th></tr></thead><tbody>
+            <tr><td>Oct 12, 09:10</td><td>1.2s</td><td>—</td><td>0</td><td>0</td></tr>
+            <tr><td>Oct 12, 08:30</td><td>12.4s</td><td>195</td><td>8</td><td>0</td></tr>
+          </tbody></table>
+        </div>
+        <div>
+          <p class="sub">Latest run — per source</p>
+          <table><thead><tr><th>Source</th><th>Items</th><th>Status</th></tr></thead><tbody>
+            <tr><td>Simon Willison</td><td>20</td><td>ok</td></tr><tr><td>Hacker News</td><td>25</td><td>ok</td></tr>
+            <tr><td>The Verge</td><td>0</td><td style="color:var(--danger)">timed out</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+    </details>
+
+    <details open>
+      <summary>Traffic &amp; content</summary>
+      <div class="body">
+        <div class="viz"><p class="sub">Home views, last 26 weeks</p><div id="hmViews"></div></div>
+        <div class="grid3">
+          <div class="viz"><p class="sub">Language toggles</p><div id="dnLang"></div></div>
+          <div class="viz"><p class="sub">Stored items by source</p><div id="dnSource"></div></div>
+          <div class="viz"><p class="sub">Stored items by topic</p><div id="dnTopic"></div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <p class="sub">Most viewed articles</p>
+          <div class="hbar"><span>Claude Code v2.1 release notes</span><div class="track"><div class="fill" style="width:100%"></div></div><span>14</span></div>
+          <div class="hbar"><span>Show HN: a tiny agent harness</span><div class="track"><div class="fill" style="width:64%"></div></div><span>9</span></div>
+          <div class="hbar"><span>Why spec-driven dev works</span><div class="track"><div class="fill" style="width:36%"></div></div><span>5</span></div>
+        </div>
+      </div>
+    </details>
+
+    <details>
+      <summary>System</summary>
+      <div class="body"><div class="tiles">
+        <div class="tile"><b><span class="dot" style="display:inline-block;margin-right:6px"></span>Connected</b><span>Redis</span></div>
+        <div class="tile"><b>4,950 / 5,000</b><span>GitHub API rate limit (live)</span></div>
+      </div></div>
+    </details>
+  </section>
+</main>
+
+<script>
+/* ---------- helpers ---------- */
+const root = document.documentElement;
+const $ = (id) => document.getElementById(id);
+const pad = (n) => String(n).padStart(2, "0");
+const ict = (min) => { const m = ((min % 1440) + 1440) % 1440; return pad(Math.floor(m / 60)) + ":" + pad(m % 60); };
+const rnd = (seed) => { let s = seed; return () => ((s = (s * 16807) % 2147483647) / 2147483647); };
+function bytes(n) { const u = ["B", "KB", "MB", "GB"]; let i = 0; while (n >= 1024 && i < 3) { n /= 1024; i++; } return n.toFixed(n >= 100 || i === 0 ? 0 : n >= 10 ? 1 : 2) + " " + u[i]; }
+function axis(n) { return n >= 1e6 ? +(n / 1e6).toFixed(1) + "M" : n >= 1e3 ? +(n / 1e3).toFixed(1) + "k" : String(+n.toFixed(2)); }
+function niceMax(v) { const t = v > 0 ? v : 1, r = t / 4, m = 10 ** Math.floor(Math.log10(r)), n = r / m, b = n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10, s = b * m; return { max: Math.ceil(t / s) * s, step: s }; }
+const sev = (pct) => (pct >= 90 ? "var(--danger)" : pct >= 70 ? "var(--warn)" : "var(--accent)");
+let uid = 0;
+
+/* monotone cubic path through [x,y] points (smooth, never overshoots) */
+function monotone(p) {
+  const n = p.length; if (n < 2) return n ? `M${p[0][0]} ${p[0][1]}` : ""; const dx = [], m = [], t = [];
+  for (let i = 0; i < n - 1; i++) { dx.push(p[i + 1][0] - p[i][0]); m.push((p[i + 1][1] - p[i][1]) / dx[i]); }
+  t[0] = m[0]; t[n - 1] = m[n - 2]; for (let i = 1; i < n - 1; i++) t[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2;
+  for (let i = 0; i < n - 1; i++) { if (m[i] === 0) { t[i] = t[i + 1] = 0; continue; } const a = t[i] / m[i], b = t[i + 1] / m[i], s = a * a + b * b; if (s > 9) { const k = 3 / Math.sqrt(s); t[i] = k * a * m[i]; t[i + 1] = k * b * m[i]; } }
+  let d = `M${p[0][0].toFixed(1)} ${p[0][1].toFixed(1)}`;
+  for (let i = 0; i < n - 1; i++) { const h = dx[i] / 3; d += ` C${(p[i][0] + h).toFixed(1)} ${(p[i][1] + t[i] * h).toFixed(1)}, ${(p[i + 1][0] - h).toFixed(1)} ${(p[i + 1][1] - t[i + 1] * h).toFixed(1)}, ${p[i + 1][0].toFixed(1)} ${p[i + 1][1].toFixed(1)}`; }
+  return d;
+}
+const straight = (p) => p.map((q, i) => (i ? "L" : "M") + q[0].toFixed(1) + " " + q[1].toFixed(1)).join(" ");
+
+/* ---------- Line / Area / Bar / Stacked bar / Composed (bars + line on a 2nd axis) ---------- */
+const TONE = { a: "var(--accent)", b: "var(--text-faint)", c: "var(--warn)" };
+function chart(el, o) {
+  const W = 600, H = o.h || 200, PL = 46, PR = o.line2 ? 46 : 8, PT = 14, PB = 22, PW = W - PL - PR, PH = H - PT - PB;
+  const n = o.labels.length, slot = PW / n, bw = Math.max(slot * 0.7, 0.8), base = PT + PH;
+  const sums = o.labels.map((_, i) => o.series.reduce((s, x) => s + (x.v[i] || 0), 0));
+  const dmax = Math.max(0, ...(o.kind === "stack" ? sums : o.series.flatMap((s) => s.v)));
+  const showLimit = o.limit && dmax >= o.limit.v * 0.05;
+  const { max, step } = niceMax(Math.max(dmax, showLimit ? o.limit.v : 0) * 1.08);
+  const y = (v) => base - (v / max) * PH, cx = (i) => PL + (i + 0.5) * slot;
+  const af = o.axisFmt || axis;
+  let s = "", defs = "";
+  for (let k = 0; k <= Math.round(max / step); k++) { const v = k * step; s += `<line class="grid" x1="${PL}" x2="${W - PR}" y1="${y(v)}" y2="${y(v)}"/><text x="${PL - 6}" y="${y(v) + 3}" text-anchor="end">${af(v)}</text>`; }
+  let y2 = null;
+  if (o.line2) {
+    const m2 = niceMax(Math.max(...o.line2.v) * 1.05); y2 = (v) => base - (v / m2.max) * PH;
+    for (let k = 0; k <= Math.round(m2.max / m2.step); k++) s += `<text x="${W - PR + 6}" y="${y2(k * m2.step) + 3}" fill="var(--warn)" style="fill:var(--warn)">${(o.line2.axisFmt || axis)(k * m2.step)}</text>`;
+  }
+  if (o.kind === "bar" || o.kind === "stack") {
+    o.labels.forEach((_, i) => { let top = 0; o.series.forEach((se) => { const v = se.v[i]; if (!v || v <= 0) return; const b = o.kind === "stack" ? top : 0; top = b + v; s += `<rect x="${cx(i) - bw / 2}" y="${y(b + v)}" width="${bw}" height="${y(b) - y(b + v)}" rx="${Math.min(3, bw / 2)}" fill="${TONE[se.tone]}" ${se.tone === "b" ? 'opacity=".7"' : ""}/>`; }); });
+  }
+  const drawLine = (v, tone, fy, dashFrom, area, smooth) => {
+    const pts = v.map((val, i) => [cx(i), fy(val)]);
+    const k = dashFrom == null ? pts.length - 1 : dashFrom, path = smooth ? monotone : straight;
+    if (area) { const id = "g" + ++uid; defs += `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${TONE[tone]}" stop-opacity=".38"/><stop offset="1" stop-color="${TONE[tone]}" stop-opacity="0"/></linearGradient>`; s += `<path d="${path(pts)} L${pts[pts.length - 1][0].toFixed(1)} ${base} L${pts[0][0].toFixed(1)} ${base} Z" fill="url(#${id})"/>`; }
+    s += `<path d="${path(pts.slice(0, k + 1))}" fill="none" stroke="${TONE[tone]}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    if (dashFrom != null) s += `<path d="${path(pts.slice(k))}" fill="none" stroke="${TONE[tone]}" stroke-width="2.2" stroke-dasharray="5 4" stroke-linecap="round"/>`;
+    const L = pts[k]; if (L) s += `<circle cx="${L[0]}" cy="${L[1]}" r="3.2" fill="${TONE[tone]}" stroke="var(--surface-solid, #fff)" stroke-width="1.5"/>`;
+  };
+  if (o.kind === "line" || o.kind === "area") o.series.forEach((se, i) => drawLine(se.v, se.tone, y, o.dashFrom, o.kind === "area" && i === 0, o.smooth));
+  if (o.line2) drawLine(o.line2.v, o.line2.tone || "c", y2, o.line2.dashFrom, false, false);
+  if (o.marks) o.marks.forEach((i) => (s += `<circle cx="${cx(i)}" cy="${PT + 4}" r="3" fill="var(--danger)"/>`));
+  if (showLimit) s += `<line class="limit" x1="${PL}" x2="${W - PR}" y1="${y(o.limit.v)}" y2="${y(o.limit.v)}"/><text class="limitlbl" x="${W - PR}" y="${y(o.limit.v) - 4}" text-anchor="end">${af(o.limit.v)}</text>`;
+  o.ticks.forEach((t, i) => { if (t) s += `<text x="${cx(i)}" y="${H - 6}" text-anchor="middle">${t}</text>`; });
+  o.labels.forEach((l, i) => { const f = o.fmt || ((v) => v.toLocaleString()); s += `<rect x="${PL + i * slot}" y="${PT}" width="${slot}" height="${PH}" fill="transparent"><title>${l}\n${o.series.map((x) => x.name + " " + f(x.v[i] ?? 0)).join("\n")}${o.line2 ? "\n" + o.line2.name + " " + (o.line2.fmt || f)(o.line2.v[i]) : ""}${o.series.length > 1 && o.kind !== "line" ? "\nTotal " + f(sums[i]) : ""}</title></rect>`; });
+  const legend = o.series.map((x) => `<span><i class="sw" style="background:${TONE[x.tone]}"></i>${x.name}</span>`).join("") + (o.line2 ? `<span><i class="sw" style="background:${TONE[o.line2.tone || "c"]}"></i>${o.line2.name} (right axis, dashed = projection)</span>` : "") + (o.marks ? `<span><i class="sw" style="background:var(--danger);border-radius:50%"></i>Rate-limited (429)</span>` : "") + (o.limit ? `<span><i class="dash"></i>${o.limit.label}${showLimit ? "" : " (off-scale)"}</span>` : "") + (o.note ? `<span class="note">${o.note}</span>` : "");
+  el.innerHTML = `<div class="hd"><span class="ttl">${o.title}</span>${o.extra || ""}</div><div class="legend">${legend}</div><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.title}"><defs>${defs}</defs>${s}</svg>`;
+}
+
+/* ---------- Gauge: notched 270° arc with the value in the middle ---------- */
+function gauge(el, { pct, center, name, sub }) {
+  const N = 40, cx = 60, cy = 58, r1 = 38, r2 = 49, on = Math.round((Math.min(pct, 100) / 100) * N), col = sev(pct);
+  let s = "";
+  for (let i = 0; i < N; i++) {
+    const a = ((135 + (i / (N - 1)) * 270) * Math.PI) / 180, active = i < on || (pct > 0 && i === 0);
+    s += `<line x1="${(cx + r1 * Math.cos(a)).toFixed(1)}" y1="${(cy + r1 * Math.sin(a)).toFixed(1)}" x2="${(cx + r2 * Math.cos(a)).toFixed(1)}" y2="${(cy + r2 * Math.sin(a)).toFixed(1)}" stroke="${active ? col : "var(--border)"}" stroke-width="2.6" stroke-linecap="round" ${active ? "" : 'opacity=".7"'}/>`;
+  }
+  el.innerHTML = `<svg viewBox="0 0 120 112" role="img" aria-label="${name}">${s}<text class="gv" x="60" y="62" text-anchor="middle">${pct < 1 ? pct.toFixed(2) : Math.round(pct)}%</text><text class="gl" x="60" y="75" text-anchor="middle">${center}</text></svg><div class="gname">${name}</div><div class="gsub">${sub}</div>`;
+}
+
+/* ---------- Ring: concentric progress rings ---------- */
+function ring(el, rings, centerTop, centerBottom) {
+  const cx = 85, cy = 85; let s = "";
+  rings.forEach((r, i) => {
+    const rad = 74 - i * 15, C = 2 * Math.PI * rad, f = Math.min(1, r.value / r.max);
+    s += `<circle cx="${cx}" cy="${cy}" r="${rad}" fill="none" stroke="var(--border)" stroke-width="9" opacity=".6"/><circle cx="${cx}" cy="${cy}" r="${rad}" fill="none" stroke="${r.color}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(f * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 ${cx} ${cy})"><title>${r.label}: ${r.value} / ${r.max}</title></circle>`;
+  });
+  el.innerHTML = `<svg viewBox="0 0 170 170" role="img"><text class="gv" x="${cx}" y="${cy + 2}" text-anchor="middle">${centerTop}</text><text class="gl" x="${cx}" y="${cy + 14}" text-anchor="middle">${centerBottom}</text>${s}</svg><div class="legendcol" style="display:flex;flex-direction:column;gap:3px;font-size:.7rem;margin-top:4px">${rings.map((r) => `<div style="display:flex;gap:6px;align-items:center"><i style="width:8px;height:8px;border-radius:50%;background:${r.color};display:inline-block"></i>${r.label}<span style="margin-left:auto;color:var(--text-faint)">${r.value}/${r.max}</span></div>`).join("")}</div>`;
+}
+
+/* ---------- Donut with total in the middle ---------- */
+const PALETTE = ["var(--accent)", "var(--c2)", "var(--c3)", "var(--c4)", "var(--c5)"];
+function donut(el, items, label) {
+  const total = items.reduce((a, b) => a + b.v, 0), cx = 70, cy = 70, R = 60, r = 38, gap = 0.03; let a0 = -Math.PI / 2, s = "";
+  items.forEach((it, i) => {
+    const a1 = a0 + (it.v / total) * Math.PI * 2, A = a0 + gap / 2, B = a1 - gap / 2, big = B - A > Math.PI ? 1 : 0, p = (a, rr) => `${(cx + rr * Math.cos(a)).toFixed(1)} ${(cy + rr * Math.sin(a)).toFixed(1)}`;
+    s += `<path d="M${p(A, R)} A${R} ${R} 0 ${big} 1 ${p(B, R)} L${p(B, r)} A${r} ${r} 0 ${big} 0 ${p(A, r)} Z" fill="${PALETTE[i % PALETTE.length]}"><title>${it.l}: ${it.v} (${Math.round((it.v / total) * 100)}%)</title></path>`;
+    a0 = a1;
+  });
+  el.innerHTML = `<div class="vizrow"><svg viewBox="0 0 140 140" style="width:130px;flex:none"><text class="gv" x="70" y="72" text-anchor="middle">${total}</text><text class="gl" x="70" y="84" text-anchor="middle">${label}</text>${s}</svg><div class="legendcol">${items.map((it, i) => `<div><i style="background:${PALETTE[i % PALETTE.length]}"></i>${it.l}<span class="n">${it.v}</span></div>`).join("")}</div></div>`;
+}
+
+/* ---------- Heatmap calendar (weeks x 7 days) ---------- */
+function heatmap(el, { weeks, value, ramp, label, end }) {
+  const cell = 11, gap = 3, left = 22, top = 14, Wd = left + weeks * (cell + gap), Ht = top + 7 * (cell + gap); let s = "";
+  const days = ["", "Mon", "", "Wed", "", "Fri", ""];
+  days.forEach((d, r) => { if (d) s += `<text x="0" y="${top + r * (cell + gap) + 9}">${d}</text>`; });
+  for (let w = 0; w < weeks; w++) {
+    for (let d = 0; d < 7; d++) {
+      const idx = w * 7 + d - (weeks * 7 - 1), date = new Date(end.getTime() + idx * 864e5); if (date > end) continue;
+      const v = value(w, d, date), lv = ramp.level(v);
+      s += `<rect x="${left + w * (cell + gap)}" y="${top + d * (cell + gap)}" width="${cell}" height="${cell}" rx="3" fill="${ramp.colors[lv]}"><title>${date.toDateString()}\n${label(v)}</title></rect>`;
+    }
+    const d0 = new Date(end.getTime() + (w * 7 - (weeks * 7 - 1)) * 864e5); if (d0.getDate() <= 7) s += `<text x="${left + w * (cell + gap)}" y="9">${d0.toLocaleString("en-US", { month: "short" })}</text>`;
+  }
+  el.innerHTML = `<svg class="hm" viewBox="0 0 ${Wd} ${Ht}" style="max-height:${Ht * 1.5}px">${s}</svg><div class="hmleg">${ramp.low} ${ramp.colors.map((c) => `<i style="background:${c}"></i>`).join("")} ${ramp.high}</div>`;
+}
+const mix = (p) => `color-mix(in srgb, var(--accent) ${p}%, transparent)`;
+const RAMP_VIEWS = { colors: ["var(--surface-sunken)", mix(28), mix(50), mix(75), "var(--accent)"], level: (v) => (v === 0 ? 0 : v < 4 ? 1 : v < 8 ? 2 : v < 13 ? 3 : 4), low: "Less", high: "More" };
+const RAMP_CRON = { colors: ["var(--surface-sunken)", "var(--danger)", "var(--warn)", mix(55), "var(--accent)"], level: (v) => (v == null ? 0 : v < 0.5 ? 1 : v < 0.9 ? 2 : v < 0.99 ? 3 : 4), low: "Missed ticks", high: "All ticks" };
+
+/* ---------- Funnel: stages narrowing left to right ---------- */
+function funnel(el, stages) {
+  const W = 600, H = 150, n = stages.length, sw = W / n, mid = 56, top = stages[0].v; let s = "", prev = null;
+  stages.forEach((st, i) => {
+    const h = Math.max(10, (st.v / top) * 100), x = i * sw + 6, w = sw - 12, col = PALETTE[0];
+    if (prev) { const x0 = prev.x + prev.w, x1 = x; s += `<path d="M${x0} ${mid - prev.h / 2} C${(x0 + x1) / 2} ${mid - prev.h / 2}, ${(x0 + x1) / 2} ${mid - h / 2}, ${x1} ${mid - h / 2} L${x1} ${mid + h / 2} C${(x0 + x1) / 2} ${mid + h / 2}, ${(x0 + x1) / 2} ${mid + prev.h / 2}, ${x0} ${mid + prev.h / 2} Z" fill="${col}" opacity=".18"/>`; }
+    s += `<rect x="${x}" y="${mid - h / 2}" width="${w}" height="${h}" rx="8" fill="${col}" opacity="${(1 - i * 0.14).toFixed(2)}"><title>${st.l}: ${st.v} (${Math.round((st.v / top) * 100)}%)</title></rect>`;
+    s += `<text x="${x + w / 2}" y="${mid + 76}" text-anchor="middle" style="fill:var(--text);font-size:11px;font-weight:700">${st.v}</text><text x="${x + w / 2}" y="${mid + 89}" text-anchor="middle">${st.l}</text><text x="${x + w / 2}" y="${mid + 101}" text-anchor="middle">${Math.round((st.v / top) * 100)}%</text>`;
+    prev = { x, w, h };
+  });
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H + 20}" role="img" aria-label="Fetch funnel">${s}</svg>`;
+}
+
+/* ---------- Sankey: sources -> new/already stored -> outcome ---------- */
+function sankey(el, nodes, links) {
+  const W = 600, H = 210, nw = 12, pad = 10, cols = [0, 1, 2], xs = [4, (W - nw) / 2, W - nw - 4];
+  const colSum = (c) => nodes.filter((n) => n.col === c).reduce((a, n) => a + n.v, 0), count = (c) => nodes.filter((n) => n.col === c).length;
+  const k = Math.min(...cols.map((c) => (H - 8 - pad * (count(c) - 1)) / colSum(c)));
+  cols.forEach((c) => { let y = 4; nodes.filter((n) => n.col === c).forEach((n) => { n.x = xs[c]; n.y = y; n.h = n.v * k; n.out = 0; n.in = 0; y += n.h + pad; }); });
+  let s = "";
+  links.forEach((l) => { const a = nodes[l.s], b = nodes[l.t], w = l.v * k, y0 = a.y + a.out + w / 2, y1 = b.y + b.in + w / 2, x0 = a.x + nw, x1 = b.x, xm = (x0 + x1) / 2; a.out += w; b.in += w; s += `<path d="M${x0} ${y0.toFixed(1)} C${xm} ${y0.toFixed(1)}, ${xm} ${y1.toFixed(1)}, ${x1} ${y1.toFixed(1)}" fill="none" stroke="${a.color}" stroke-opacity=".32" stroke-width="${Math.max(w, 1).toFixed(1)}"><title>${a.name} → ${b.name}: ${l.v}</title></path>`; });
+  nodes.forEach((n) => { const right = n.col === 2; s += `<rect x="${n.x}" y="${n.y}" width="${nw}" height="${Math.max(n.h, 2)}" rx="3" fill="${n.color}"/><text x="${right ? n.x - 6 : n.x + nw + 6}" y="${n.y + Math.max(n.h, 2) / 2 + 3}" text-anchor="${right ? "end" : "start"}" style="fill:var(--text-muted)">${n.name} ${n.v}</text>`; });
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Item flow">${s}</svg>`;
+}
+
+/* ---------- state / theme / tabs ---------- */
+$("themeBtn").onclick = (e) => { const dark = root.dataset.theme !== "dark"; root.dataset.theme = dark ? "dark" : "light"; e.target.textContent = dark ? "Light" : "Dark"; };
+function showTab(name) { document.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-selected", t.dataset.tab === name)); document.querySelectorAll(".panel").forEach((p) => p.classList.toggle("active", p.id === "panel-" + name)); }
+document.querySelectorAll(".tab").forEach((t) => (t.onclick = () => showTab(t.dataset.tab)));
+document.querySelectorAll("[data-goto]").forEach((a) => (a.onclick = () => { showTab(a.dataset.goto); $("d-fail").open = true; }));
+let warn = false;
+$("stateBtn").onclick = () => { warn = !warn; renderOverview(); };
+
+function renderOverview() {
+  const chips = warn
+    ? [["Redis connected", ""], ["Cron: last tick 38m ago", "bad"], ["Fetch 20:30 ok", ""], ["Backlog 72", "warn"], ["Groq tokens 78%", "warn"], ["GitHub API 4,950", ""]]
+    : [["Redis connected", ""], ["Cron: last tick 4m ago · 15/15", ""], ["Fetch 20:30 ok · 9/9 sources", ""], ["Backlog 0", ""], ["Groq 18% · Upstash 0.1%", ""], ["GitHub API 4,950", ""]];
+  $("chips").innerHTML = chips.map(([t, c]) => `<span class="chip ${c}"><i></i>${t}</span>`).join("");
+  $("banner").classList.toggle("warn", warn);
+  $("verdict").textContent = warn ? "2 things need attention: cron is late, translation backlog is growing" : "All systems normal";
+  $("stateBtn").textContent = warn ? "State: warnings" : "State: all OK";
+
+  $("gauges").innerHTML = ["g1", "g2", "g3", "g4"].map((id) => `<div class="card gcard" id="${id}"></div>`).join("");
+  const tok = warn ? 156000 : 35120, req = warn ? 610 : 80, bw = warn ? 7.4e9 : 6.0e6, sz = 376000, BW = 10 * 1024 ** 3;
+  gauge($("g1"), { pct: (tok / 200000) * 100, center: "tokens", name: "Groq tokens today", sub: `${tok.toLocaleString()} / 200,000 · UTC day` });
+  gauge($("g2"), { pct: (req / 1000) * 100, center: "requests", name: "Groq requests today", sub: `${req} / 1,000 · UTC day` });
+  gauge($("g3"), { pct: (bw / BW) * 100, center: "this month", name: "Upstash bandwidth", sub: `${bytes(bw)} / 10 GB` + (warn ? " · projected 11.2 GB" : "") });
+  gauge($("g4"), { pct: (sz / 250e6) * 100, center: "of 238 MB", name: "Upstash data size", sub: `${bytes(sz)} / 238 MB` });
+
+  ring($("ringHealth"), [
+    { label: "Translated", value: warn ? 123 : 195, max: 195, color: "var(--accent)" },
+    { label: "Sources OK", value: warn ? 7 : 9, max: 9, color: "var(--c2)" },
+    { label: "Ticks today", value: warn ? 10 : 15, max: 15, color: "var(--c3)" },
+  ], warn ? "Attention" : "Healthy", "pipeline");
+
+  const t = (cls, b, sp) => `<div class="tile ${cls}"><b>${b}</b><span>${sp}</span></div>`;
+  $("pipeTiles").innerHTML = [
+    t("", "08:30 ICT", "Next fetch in 9h 30m"), t("", "20:30 · 195", "Last fetch · items · 4.1s"), t("", "40", "New items in last fetch"), t("", "2h 5m ago", "Newest item published"),
+    t(warn ? "bad" : "", warn ? "38m ago" : "4m ago", "Last cron tick"), t("", warn ? "10 / 15" : "15 / 15", "Ticks today (UTC) / expected"),
+    t("", "12.4s", "Longest of last 50 ticks (limit 60s)"), t(warn ? "warn" : "", warn ? "72" : "0", "Items awaiting translation"),
+  ].join("");
+  $("trafficTiles").innerHTML = [t("", "12", "Home views today"), t("", "140", "Home views total"), t("", "8 / 4", "EN / VI toggles"), t(warn ? "warn" : "", warn ? "6" : "0", "Recent failures"), t("", "0", "Groq 429s today"), t("", "4,950", "GitHub API left")].join("");
+
+  const r = rnd(5), ticks = Array.from({ length: 50 }, (_, i) => (i % 14 === 0 ? 9 + r() * 6 : 0.9 + r() * 1.3));
+  chart($("chTick"), { title: "Cron tick duration (last 50 ticks)", kind: "line", smooth: true, h: 130, labels: ticks.map((_, i) => `tick ${i + 1}`), ticks: ticks.map((_, i) => (i % 10 === 0 ? `#${i + 1}` : null)), series: [{ name: "Duration (s)", v: ticks, tone: "a" }], limit: { v: 60, label: "Function limit 60s" }, fmt: (v) => v.toFixed(1) + "s", axisFmt: (v) => v + "s", note: "oldest → newest" });
+  const rv = rnd(11), d14 = Array.from({ length: 14 }, (_, i) => (i < 2 ? `Sep ${29 + i}` : `Oct ${i - 1}`));
+  chart($("chViewsMini"), { title: "Home views, last 14 days", kind: "area", smooth: true, h: 130, labels: d14, ticks: d14.map((l, i) => (i % 3 === 0 ? l : null)), series: [{ name: "Views", v: d14.map(() => Math.floor(3 + rv() * 14)), tone: "a" }] });
+}
+
+/* ---------- Limits tab data ---------- */
+let range = "1h";
+function groqData() {
+  const [minutes, bucket, every] = { "1h": [60, 1, 10], "6h": [360, 1, 60], "24h": [1440, 5, 240] }[range], n = minutes / bucket, r = rnd(7), end = 21 * 60 + 50;
+  const labels = [], ticks = [], req = new Array(n).fill(0), inp = new Array(n).fill(0), out = new Array(n).fill(0), marks = [];
+  for (let i = 0; i < n; i++) {
+    const startMin = end - (n - 1 - i) * bucket; labels.push(ict(startMin) + (bucket > 1 ? "–" + ict(startMin + bucket) : "") + " ICT");
+    ticks.push((((startMin % 1440) + 1440) % 1440) % every === 0 ? ict(startMin) : null);
+    for (let m = 0; m < bucket; m++) { const mm = (((startMin + m) % 1440) + 1440) % 1440; if (mm % 10 < 2 && (range !== "24h" || r() > 0.5)) { const q = mm % 10 === 0 ? 5 : 3; req[i] += q; inp[i] += q * (300 + Math.floor(r() * 80)); out[i] += q * (110 + Math.floor(r() * 50)); } }
+    if (req[i] > 12 && i % 7 === 3) marks.push(i);
+  }
+  return { labels, ticks, req, inp, out, marks, bucket };
+}
+function renderGroq() {
+  const d = groqData(), seg = `<span class="seg">${["1h", "6h", "24h"].map((x) => `<button class="${x === range ? "on" : ""}" data-r="${x}">${x}</button>`).join("")}</span>`, note = (d.bucket > 1 ? d.bucket + "-minute buckets" : "per minute") + " · ICT", mult = d.bucket > 1 ? " × " + d.bucket : "";
+  chart($("chReq"), { title: "Requests", kind: "bar", labels: d.labels, ticks: d.ticks, series: [{ name: "Requests", v: d.req, tone: "a" }], limit: { v: 30 * d.bucket, label: "Rate limit 30/min" + mult }, marks: d.marks, note, extra: seg });
+  chart($("chTok"), { title: "Total tokens", kind: "stack", labels: d.labels, ticks: d.ticks, series: [{ name: "Input", v: d.inp, tone: "a" }, { name: "Output", v: d.out, tone: "b" }], limit: { v: 8000 * d.bucket, label: "Rate limit 8,000/min" + mult }, note, extra: seg });
+  document.querySelectorAll(".seg button").forEach((b) => (b.onclick = () => { range = b.dataset.r; renderGroq(); }));
+}
+function renderUpstash() {
+  const days = ["Oct 7", "Oct 8", "Oct 9", "Oct 10", "Oct 11", "Oct 12", "Oct 13", "Oct 14"], daily = [0, 0, 0, 0, 6.0e6, 0, 0, 0], cum = [0, 0, 0, 0, 6.0e6, 9.4e6, 12.8e6, 16.2e6];
+  chart($("chBw"), { title: "Bandwidth per day + month to date", kind: "bar", labels: days, ticks: days, series: [{ name: "Per day", v: daily, tone: "a" }], line2: { name: "Month to date", v: cum, tone: "c", dashFrom: 4, fmt: bytes, axisFmt: bytes }, fmt: bytes, axisFmt: bytes, note: "projection illustrative · UTC days" });
+  const mins = Array.from({ length: 60 }, (_, i) => i), r = rnd(3), lbl = mins.map((i) => ict(21 * 60 + i - 22 + 22) + " ICT"), tk = mins.map((i) => (i % 10 === 0 ? ict(21 * 60 + i) : null));
+  chart($("chSize"), { title: "Data size", kind: "area", labels: lbl, ticks: tk, series: [{ name: "Data size", v: mins.map((i) => 380000 + i * 90), tone: "a" }], limit: { v: 250e6, label: "Data size limit" }, fmt: bytes, axisFmt: bytes, note: "last 60 minutes · ICT", h: 180 });
+  const d5 = days.slice(0, 5);
+  chart($("chReqDay"), { title: "Requests per day", kind: "bar", labels: d5, ticks: d5, series: [{ name: "Requests", v: [0, 0, 0, 0, 479], tone: "a" }], note: "UTC days; last bar = today so far", h: 180 });
+  chart($("chThru"), { title: "Throughput (commands per sec)", kind: "line", smooth: true, labels: lbl, ticks: tk, series: [{ name: "Read", v: mins.map(() => 0.1 + r() * 0.3), tone: "a" }, { name: "Write", v: mins.map(() => 0.05 + r() * 0.2), tone: "b" }], limit: { v: 10000, label: "Commands/sec limit" }, fmt: (v) => v.toFixed(2), note: "per-minute average · last 60 minutes · ICT" });
+  chart($("chLat"), { title: "Latency", kind: "line", smooth: true, h: 150, labels: lbl, ticks: tk, series: [{ name: "Mean", v: mins.map(() => 0), tone: "a" }, { name: "p99", v: mins.map(() => 0), tone: "b" }], fmt: (v) => v.toFixed(2), note: "unit not documented (likely ms) · currently all 0" });
+}
+
+/* ---------- Activity tab data ---------- */
+function renderActivity() {
+  sankey($("sankey"),
+    [{ name: "RSS", v: 120, col: 0, color: "var(--accent)" }, { name: "Hacker News", v: 25, col: 0, color: "var(--c2)" }, { name: "GitHub", v: 40, col: 0, color: "var(--c3)" }, { name: "Anthropic", v: 10, col: 0, color: "var(--c4)" },
+     { name: "Already stored", v: 155, col: 1, color: "var(--text-faint)" }, { name: "New", v: 40, col: 1, color: "var(--ok)" },
+     { name: "Translated", v: 36, col: 2, color: "var(--accent)" }, { name: "Waiting", v: 3, col: 2, color: "var(--warn)" }, { name: "Failed", v: 1, col: 2, color: "var(--danger)" }],
+    [{ s: 0, t: 4, v: 100 }, { s: 0, t: 5, v: 20 }, { s: 1, t: 4, v: 15 }, { s: 1, t: 5, v: 10 }, { s: 2, t: 4, v: 32 }, { s: 2, t: 5, v: 8 }, { s: 3, t: 4, v: 8 }, { s: 3, t: 5, v: 2 }, { s: 5, t: 6, v: 36 }, { s: 5, t: 7, v: 3 }, { s: 5, t: 8, v: 1 }]);
+  funnel($("funnel"), [{ l: "Fetched", v: 195 }, { l: "New", v: 40 }, { l: "Summarised", v: 40 }, { l: "Translated", v: 36 }, { l: "Opened", v: 9 }]);
+  const end = new Date(), rv = rnd(21), rc = rnd(33);
+  heatmap($("hmViews"), { weeks: 26, end, value: (w, d) => (w < 24 ? 0 : Math.floor(rv() * 16)), ramp: RAMP_VIEWS, label: (v) => v + " home views" });
+  heatmap($("hmCron"), { weeks: 12, end, value: (w, d) => (w < 11 ? null : rc() > 0.82 ? 0.3 + rc() * 0.5 : 1), ramp: RAMP_CRON, label: (v) => (v == null ? "no data" : Math.round(v * 144) + " / 144 ticks") });
+  donut($("dnLang"), [{ l: "English", v: 8 }, { l: "Vietnamese", v: 4 }], "toggles");
+  donut($("dnSource"), [{ l: "RSS", v: 120 }, { l: "Hacker News", v: 25 }, { l: "GitHub", v: 40 }, { l: "Anthropic", v: 10 }], "items");
+  donut($("dnTopic"), [{ l: "AI tools & agents", v: 61 }, { l: "AI tool updates", v: 38 }, { l: "How devs work with AI", v: 24 }, { l: "Career & industry", v: 12 }, { l: "Untagged", v: 60 }], "items");
+}
+
+renderOverview(); renderGroq(); renderUpstash(); renderActivity();
+</script>
+</body>
+</html>
