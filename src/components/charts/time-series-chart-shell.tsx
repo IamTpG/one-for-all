@@ -28,7 +28,7 @@ import {
 } from "./chart-child-passthrough";
 import { ChartProvider, type LineConfig, type Margin } from "./chart-context";
 import { isGradientDefComponent, isPatternDefComponent } from "./chart-defs";
-import { shortDateFmt } from "./chart-formatters";
+import { useDateLabelFormat } from "./date-label-format";
 import {
   type ChartPhase,
   type ChartStatus,
@@ -404,9 +404,10 @@ const TimeSeriesChartCore = memo(function TimeSeriesChartCore({
     scaleLinear({ range: [innerHeight, 0], domain: [0, 100], nice: true })
   );
 
+  const formatDateLabel = useDateLabelFormat();
   const dateLabels = useMemo(
-    () => visiblePlotData.map((d) => shortDateFmt.format(xAccessor(d))),
-    [visiblePlotData, xAccessor]
+    () => visiblePlotData.map((d) => formatDateLabel(xAccessor(d))),
+    [visiblePlotData, xAccessor, formatDateLabel]
   );
 
   const canInteract = isLoaded && isChartInteractionPhase(chartPhase);

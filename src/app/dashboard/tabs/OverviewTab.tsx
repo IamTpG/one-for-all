@@ -1,39 +1,63 @@
-import { GROQ_LIMITS, UPSTASH_LIMITS } from "@/lib/config";
+import Link from "next/link";
 import { formatBytes } from "@/lib/chartUtils";
+import { GROQ_LIMITS, UPSTASH_LIMITS } from "@/lib/config";
 import {
   loadBacklogSize,
+  loadGithubRateLimit,
   loadGroqUsage,
   loadHomeViews,
+  loadHomeViewsDaily,
+  loadRecentFailures,
   loadRuns,
   loadSettings,
+  loadStatus,
   loadStoredItems,
   loadTickStats,
   loadTicks,
   loadToggleStats,
   loadUpstashUsage,
 } from "@/lib/dashboardData";
+import type { CheckLevel } from "@/lib/dashboardStatus";
 import { formatAgo, formatDuration, formatMinutes, formatTs } from "@/lib/format";
 import { nextScheduledSlot, utcToIct } from "@/lib/schedule";
-import styles from "../Dashboard.module.css";
-import Meter from "../Meter";
+import { Card, Tile, type Tone } from "../overview";
+import LimitGauge from "../overview/LimitGauge";
+import PipelineRing from "../overview/PipelineRing";
+import TickDurationChart from "../overview/TickDurationChart";
+import ViewsAreaChart from "../overview/ViewsAreaChart";
 
 const n = (value: number) => value.toLocaleString("en-US");
 
-// The at-a-glance tab: the numbers worth a daily look. Charts, tables and
-// history live in the other tabs.
+// formatBytes gives "6.02 MB"; the gauge wants the number and its unit apart.
+function splitBytes(bytes: number): { value: number; unit: string; digits: number } {
+  const [num, unit] = formatBytes(bytes).split(" ");
+  return { value: Number(num), unit: ` ${unit}`, digits: num.includes(".") ? num.split(".")[1].length : 0 };
+}
+
+const toneOf = (level: CheckLevel | undefined): Tone => (level === "bad" ? "bad" : level === "warn" ? "warn" : "default");
+
+// The at-a-glance tab: the numbers worth a daily look. Details live in the
+// other tabs.
 export default async function OverviewTab() {
-  const [settings, runs, ticks, tickStats, items, backlog, groq, upstash, homeViews, toggles] = await Promise.all([
-    loadSettings(),
-    loadRuns(),
-    loadTicks(),
-    loadTickStats(),
-    loadStoredItems(),
-    loadBacklogSize(),
-    loadGroqUsage(),
-    loadUpstashUsage(),
-    loadHomeViews(),
-    loadToggleStats(),
-  ]);
+  const [settings, runs, ticks, tickStats, items, backlog, groq, upstash, homeViews, homeViewsDaily, toggles, failures, github, status] =
+    await Promise.all([
+      loadSettings(),
+      loadRuns(),
+      loadTicks(),
+      loadTickStats(),
+      loadStoredItems(),
+      loadBacklogSize(),
+      loadGroqUsage(),
+      loadUpstashUsage(),
+      loadHomeViews(),
+      loadHomeViewsDaily(),
+      loadToggleStats(),
+      loadRecentFailures(),
+      loadGithubRateLimit(),
+      loadStatus(),
+    ]);
+
+  const tone = (id: string) => toneOf(status.checks.find((check) => check.id === id)?.level);
 
   const nextDue = nextScheduledSlot(new Date(), settings.fetchTimesUtc);
   const latestRun = runs[0] ?? null;
@@ -45,131 +69,121 @@ export default async function OverviewTab() {
   const sourcesTotal = latestRun?.sources.length ?? 0;
   const translated = Math.max(0, items.length - backlog);
 
+  const rings = [
+    { label: "Translated", value: translated, max: items.length },
+    ...(latestRun ? [{ label: "Sources OK", value: sourcesOk, max: sourcesTotal }] : []),
+    { label: "Ticks today", value: Math.min(tickStats.ticksToday, tickStats.expectedSoFar), max: tickStats.expectedSoFar },
+  ];
+
+  // Oldest to newest, like the x axis.
+  const tickPoints = [...ticks].reverse().map((tick) => ({ t: tick.ts, seconds: tick.durationMs / 1000 }));
+
+  const bandwidth = upstash.status === "ok" ? upstash.data.bandwidth.monthBytes : null;
+  const dataSize = upstash.status === "ok" ? upstash.data.dataSize.currentBytes : null;
+
   return (
-    <>
-      <section className={styles.section}>
-        <h2 className={`${styles.sectionTitle} mono`}>Cron / Fetch Health</h2>
-        <div className={styles.statGrid}>
-          <div className={styles.statTile}>
-            <span className={styles.statValue}>{nextDue ? `${utcToIct(nextDue.slotUtc)} ICT` : "—"}</span>
-            <span className={styles.statLabel}>
-              Next fetch {nextDue ? `in ${formatMinutes(nextDue.minutesUntil)}` : "not scheduled"}
-            </span>
-          </div>
-          <div className={styles.statTile}>
-            <span className={styles.statValue}>{latestRun ? formatTs(latestRun.ts) : "never"}</span>
-            <span className={styles.statLabel}>Last run</span>
-          </div>
-          <div className={styles.statTile}>
-            <span className={styles.statValue}>{latestRun ? latestRun.totalFetched : "—"}</span>
-            <span className={styles.statLabel}>
-              Items fetched {latestRun ? `in ${formatDuration(latestRun.durationMs)}` : ""}
-            </span>
-          </div>
-          <div className={styles.statTile}>
-            <span className={styles.statValue}>{latestRun?.newItems === undefined ? "—" : latestRun.newItems}</span>
-            <span className={styles.statLabel}>New items in last run</span>
-          </div>
-          <div className={styles.statTile}>
-            <span className={styles.statValue}>
-              {newestItem ? formatAgo(new Date(newestItem.publishedAt).getTime()) : "—"}
-            </span>
-            <span className={styles.statLabel}>Newest item published</span>
-          </div>
-          <div className={styles.statTile}>
-            <span className={styles.statValue}>{lastTick ? formatAgo(lastTick.ts) : "never"}</span>
-            <span className={styles.statLabel}>Last cron tick</span>
-          </div>
-          <div className={styles.statTile}>
-            <span className={styles.statValue}>
-              {tickStats.ticksToday} / {tickStats.expectedSoFar}
-            </span>
-            <span className={styles.statLabel}>Ticks today (UTC) / expected so far</span>
-          </div>
-          <div className={styles.statTile}>
-            <span className={styles.statValue}>{ticks.length > 0 ? formatDuration(longestTickMs) : "—"}</span>
-            <span className={styles.statLabel}>Longest of last {ticks.length} ticks (limit 60s)</span>
-          </div>
-        </div>
-
-        {latestRun && (
-          <Meter
-            label="Latest run — sources succeeded"
-            value={sourcesOk}
-            total={sourcesTotal}
-            displayText={`${sourcesOk} / ${sourcesTotal}`}
-            variant="severity"
-          />
-        )}
-      </section>
-
-      <section className={styles.section}>
-        <h2 className={`${styles.sectionTitle} mono`}>Translation</h2>
-        <div className={styles.statGrid}>
-          <div className={styles.statTile}>
-            <span className={styles.statValue}>{backlog}</span>
-            <span className={styles.statLabel}>Items awaiting translation</span>
-          </div>
-        </div>
-        <Meter
-          label="Items translated"
-          value={translated}
-          total={items.length}
-          displayText={`${translated} / ${items.length}`}
+    <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <LimitGauge
+          name="Groq tokens today"
+          percent={(groq.today.tokens / GROQ_LIMITS.tokensPerDay) * 100}
+          centerValue={groq.today.tokens}
+          sub={`${n(groq.today.tokens)} / ${n(GROQ_LIMITS.tokensPerDay)} · UTC day`}
         />
-      </section>
-
-      <section className={styles.section}>
-        <h2 className={`${styles.sectionTitle} mono`}>Limits</h2>
-        <Meter
-          label="Groq tokens today (UTC)"
-          value={groq.today.tokens}
-          total={GROQ_LIMITS.tokensPerDay}
-          displayText={`${n(groq.today.tokens)} / ${n(GROQ_LIMITS.tokensPerDay)}`}
+        <LimitGauge
+          name="Groq requests today"
+          percent={(groq.today.requests / GROQ_LIMITS.requestsPerDay) * 100}
+          centerValue={groq.today.requests}
+          sub={`${n(groq.today.requests)} / ${n(GROQ_LIMITS.requestsPerDay)} · UTC day`}
         />
-        <Meter
-          label="Groq requests today (UTC)"
-          value={groq.today.requests}
-          total={GROQ_LIMITS.requestsPerDay}
-          displayText={`${n(groq.today.requests)} / ${n(GROQ_LIMITS.requestsPerDay)}`}
-        />
-        {upstash.status === "ok" && (
+        {bandwidth !== null && dataSize !== null ? (
           <>
-            <Meter
-              label="Upstash bandwidth this month"
-              value={upstash.data.bandwidth.monthBytes}
-              total={UPSTASH_LIMITS.bandwidthBytesPerMonth}
-              displayText={`${formatBytes(upstash.data.bandwidth.monthBytes)} / ${formatBytes(UPSTASH_LIMITS.bandwidthBytesPerMonth)}`}
+            <LimitGauge
+              name="Upstash bandwidth"
+              percent={(bandwidth / UPSTASH_LIMITS.bandwidthBytesPerMonth) * 100}
+              centerValue={splitBytes(bandwidth).value}
+              centerSuffix={splitBytes(bandwidth).unit}
+              centerFractionDigits={splitBytes(bandwidth).digits}
+              sub={`${formatBytes(bandwidth)} / ${formatBytes(UPSTASH_LIMITS.bandwidthBytesPerMonth)} this month`}
             />
-            <Meter
-              label="Upstash data size"
-              value={upstash.data.dataSize.currentBytes}
-              total={UPSTASH_LIMITS.dataSizeBytes}
-              displayText={`${formatBytes(upstash.data.dataSize.currentBytes)} / ${formatBytes(UPSTASH_LIMITS.dataSizeBytes)}`}
+            <LimitGauge
+              name="Upstash data size"
+              percent={(dataSize / UPSTASH_LIMITS.dataSizeBytes) * 100}
+              centerValue={splitBytes(dataSize).value}
+              centerSuffix={splitBytes(dataSize).unit}
+              centerFractionDigits={splitBytes(dataSize).digits}
+              sub={`${formatBytes(dataSize)} / ${formatBytes(UPSTASH_LIMITS.dataSizeBytes)}`}
             />
           </>
+        ) : (
+          <Card title="Upstash" className="col-span-2 flex items-center justify-center text-sm text-ink-faint">
+            {upstash.status === "error" ? `Usage unavailable: ${upstash.message}` : "Usage panel not configured"}
+          </Card>
         )}
-      </section>
+      </div>
 
-      <section className={styles.section}>
-        <h2 className={`${styles.sectionTitle} mono`}>Page Views</h2>
-        <div className={styles.statGrid}>
-          <div className={styles.statTile}>
-            <span className={styles.statValue}>{homeViews.total}</span>
-            <span className={styles.statLabel}>Home views (total)</span>
+      <div className="grid gap-3 lg:grid-cols-[1.35fr_1fr]">
+        <Card title="Pipeline">
+          <div className="flex flex-wrap items-start gap-4">
+            <div className="w-full max-w-[220px] shrink-0 sm:w-[190px]">
+              <PipelineRing rings={rings} summary={status.level === "ok" ? "Healthy" : "Attention"} />
+            </div>
+            <div className="grid min-w-[260px] flex-1 grid-cols-[repeat(auto-fit,minmax(130px,1fr))] gap-2">
+              <Tile
+                value={nextDue ? `${utcToIct(nextDue.slotUtc)} ICT` : "—"}
+                label={`Next fetch ${nextDue ? `in ${formatMinutes(nextDue.minutesUntil)}` : "not scheduled"}`}
+                tone={tone("fetch")}
+              />
+              <Tile
+                value={latestRun ? formatTs(latestRun.ts) : "never"}
+                label={latestRun ? `Last fetch · ${latestRun.totalFetched} items · ${formatDuration(latestRun.durationMs)}` : "Last fetch"}
+              />
+              <Tile value={latestRun?.newItems ?? "—"} label="New items in last fetch" />
+              <Tile
+                value={newestItem ? formatAgo(new Date(newestItem.publishedAt).getTime()) : "—"}
+                label="Newest item published"
+              />
+              <Tile value={lastTick ? formatAgo(lastTick.ts) : "never"} label="Last cron tick" tone={tone("tick")} />
+              <Tile value={`${tickStats.ticksToday} / ${tickStats.expectedSoFar}`} label="Ticks today (UTC) / expected" />
+              <Tile
+                value={ticks.length > 0 ? formatDuration(longestTickMs) : "—"}
+                label={`Longest of last ${ticks.length} ticks (limit 60s)`}
+                tone={tone("tickDuration")}
+              />
+              <Tile value={backlog} label="Items awaiting translation" tone={tone("backlog")} />
+              {latestRun && (
+                <Tile value={`${sourcesOk} / ${sourcesTotal}`} label="Sources OK in last fetch" tone={tone("sources")} />
+              )}
+            </div>
           </div>
-          <div className={styles.statTile}>
-            <span className={styles.statValue}>{homeViews.today}</span>
-            <span className={styles.statLabel}>Home views (today)</span>
+        </Card>
+
+        <Card title="Traffic & problems">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(130px,1fr))] gap-2">
+            <Tile value={homeViews.today} label="Home views today" />
+            <Tile value={homeViews.total} label="Home views total" />
+            <Tile value={`${toggles.en} / ${toggles.vi}`} label="EN / VI toggles" />
+            <Tile value={failures.length} label="Recent failures" tone={failures.length > 0 ? "warn" : "default"} />
+            <Tile value={groq.today.rateLimited} label="Groq 429s today" tone={groq.today.rateLimited > 0 ? "warn" : "default"} />
+            <Tile value={github ? n(github.remaining) : "—"} label="GitHub API left" />
           </div>
-          <div className={styles.statTile}>
-            <span className={styles.statValue}>
-              {toggles.en} / {toggles.vi}
-            </span>
-            <span className={styles.statLabel}>EN / VI toggles</span>
-          </div>
-        </div>
-      </section>
-    </>
+          <p className="mt-3 px-1 text-xs text-ink-faint">
+            Details:{" "}
+            <Link href="/dashboard?tab=activity" prefetch={false} className="text-accent underline">
+              Activity › Recent failures
+            </Link>
+          </p>
+        </Card>
+      </div>
+
+      <div className="grid gap-3 lg:grid-cols-2">
+        <Card title="Cron tick duration">
+          <TickDurationChart ticks={tickPoints} limitSeconds={60} />
+        </Card>
+        <Card title="Home views">
+          <ViewsAreaChart points={homeViewsDaily} />
+        </Card>
+      </div>
+    </div>
   );
 }
