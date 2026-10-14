@@ -56,7 +56,7 @@
   --color-chart-tooltip-muted: var(--chart-tooltip-muted);
 }
 
-/* Today's card look (.section in Dashboard.module.css) as a utility. */
+/* The dashboard card look as a utility. */
 @utility glass {
   background: var(--surface);
   border: 1px solid var(--border);
