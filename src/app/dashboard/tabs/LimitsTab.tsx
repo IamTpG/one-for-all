@@ -1,6 +1,6 @@
 import { formatBytes } from "@/lib/chartUtils";
 import { GROQ_LIMITS, UPSTASH_LIMITS } from "@/lib/config";
-import { loadGroqUsage, loadUpstashUsage } from "@/lib/dashboardData";
+import { loadGithubRateLimit, loadGroqUsage, loadUpstashUsage } from "@/lib/dashboardData";
 import { formatAgo } from "@/lib/format";
 import { Card, Tile } from "../overview";
 import UsageBar from "../overview/UsageBar";
@@ -9,9 +9,9 @@ import UpstashCharts from "../limits/UpstashCharts";
 
 const n = (value: number) => value.toLocaleString("en-US");
 
-// Everything about staying inside the Groq and Upstash free-plan limits.
+// Everything about staying inside the Groq, Upstash and GitHub limits.
 export default async function LimitsTab() {
-  const [groq, upstash] = await Promise.all([loadGroqUsage(), loadUpstashUsage()]);
+  const [groq, upstash, github] = await Promise.all([loadGroqUsage(), loadUpstashUsage(), loadGithubRateLimit()]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -89,6 +89,22 @@ export default async function LimitsTab() {
           <UpstashCharts data={upstash.data} limits={UPSTASH_LIMITS} />
         </Card>
       )}
+
+      <Card title="GitHub">
+        {github ? (
+          <UsageBar
+            label="Search API calls left this minute"
+            value={github.limit - github.remaining}
+            total={github.limit}
+            text={`${n(github.remaining)} left of ${n(github.limit)}`}
+          />
+        ) : (
+          <p className="px-1 text-sm text-ink-faint">GitHub rate limit unavailable.</p>
+        )}
+        <p className="mt-3 px-1 text-xs text-ink-faint">
+          Read live from GitHub on each page load. Set GITHUB_TOKEN to raise the limit.
+        </p>
+      </Card>
     </div>
   );
 }

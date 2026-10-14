@@ -1,4 +1,6 @@
+import dynamic from "next/dynamic";
 import Link from "next/link";
+import { itemsBySource, itemsByTopic, topSlices } from "@/lib/activityData";
 import { formatBytes } from "@/lib/chartUtils";
 import { GROQ_LIMITS, UPSTASH_LIMITS } from "@/lib/config";
 import {
@@ -6,7 +8,8 @@ import {
   loadGithubRateLimit,
   loadGroqUsage,
   loadHomeViews,
-  loadHomeViewsDaily,
+  loadHomeViewsHeatmap,
+  loadItemViewCounts,
   loadRecentFailures,
   loadRuns,
   loadSettings,
@@ -20,11 +23,17 @@ import {
 import type { CheckLevel } from "@/lib/dashboardStatus";
 import { formatAgo, formatDuration, formatMinutes, formatTs } from "@/lib/format";
 import { nextScheduledSlot, utcToIct } from "@/lib/schedule";
+import Donut from "../activity/Donut";
+import MostViewedBars from "../activity/MostViewedBars";
 import { Card, Tile, type Tone } from "../overview";
 import LimitGauge from "../overview/LimitGauge";
 import PipelineRing from "../overview/PipelineRing";
 import TickDurationChart from "../overview/TickDurationChart";
-import ViewsAreaChart from "../overview/ViewsAreaChart";
+
+// Loaded as its own chunk, so the other tabs do not pay for it.
+const ActivityHeatmap = dynamic(() => import("../activity/ActivityHeatmap"), {
+  loading: () => <div className="h-48 animate-pulse rounded-xl bg-surface-sunken" />,
+});
 
 const n = (value: number) => value.toLocaleString("en-US");
 
@@ -39,7 +48,7 @@ const toneOf = (level: CheckLevel | undefined): Tone => (level === "bad" ? "bad"
 // The at-a-glance tab: the numbers worth a daily look. Details live in the
 // other tabs.
 export default async function OverviewTab() {
-  const [settings, runs, ticks, tickStats, items, backlog, groq, upstash, homeViews, homeViewsDaily, toggles, failures, github, status] =
+  const [settings, runs, ticks, tickStats, items, backlog, groq, upstash, homeViews, homeViewsHeatmap, itemViews, toggles, failures, github, status] =
     await Promise.all([
       loadSettings(),
       loadRuns(),
@@ -50,7 +59,8 @@ export default async function OverviewTab() {
       loadGroqUsage(),
       loadUpstashUsage(),
       loadHomeViews(),
-      loadHomeViewsDaily(),
+      loadHomeViewsHeatmap(),
+      loadItemViewCounts(),
       loadToggleStats(),
       loadRecentFailures(),
       loadGithubRateLimit(),
@@ -77,6 +87,16 @@ export default async function OverviewTab() {
 
   // Oldest to newest, like the x axis.
   const tickPoints = [...ticks].reverse().map((tick) => ({ t: tick.ts, seconds: tick.durationMs / 1000 }));
+
+  const titleById = new Map(items.map((item) => [item.id, item.title]));
+  const mostViewed = Array.from(itemViews.entries())
+    .map(([id, count]) => ({ id, count, title: titleById.get(id) ?? id }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
+  const langSlices = [
+    { label: "English", value: toggles.en },
+    { label: "Vietnamese", value: toggles.vi },
+  ].filter((slice) => slice.value > 0);
 
   const bandwidth = upstash.status === "ok" ? upstash.data.bandwidth.monthBytes : null;
   const dataSize = upstash.status === "ok" ? upstash.data.dataSize.currentBytes : null;
@@ -158,30 +178,48 @@ export default async function OverviewTab() {
           </div>
         </Card>
 
-        <Card title="Traffic & problems">
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(130px,1fr))] gap-2">
-            <Tile value={homeViews.today} label="Home views today" />
-            <Tile value={homeViews.total} label="Home views total" />
-            <Tile value={`${toggles.en} / ${toggles.vi}`} label="EN / VI toggles" />
-            <Tile value={failures.length} label="Recent failures" tone={failures.length > 0 ? "warn" : "default"} />
-            <Tile value={groq.today.rateLimited} label="Groq 429s today" tone={groq.today.rateLimited > 0 ? "warn" : "default"} />
-            <Tile value={github ? n(github.remaining) : "—"} label="GitHub API left" />
-          </div>
-          <p className="mt-3 px-1 text-xs text-ink-faint">
-            Details:{" "}
-            <Link href="/dashboard?tab=activity" prefetch={false} className="text-accent underline">
-              Activity › Recent failures
-            </Link>
-          </p>
+        <div className="flex min-w-0 flex-col gap-3">
+          <Card title="Traffic & problems">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(130px,1fr))] gap-2">
+              <Tile value={homeViews.today} label="Home views today" />
+              <Tile value={homeViews.total} label="Home views total" />
+              <Tile value={`${toggles.en} / ${toggles.vi}`} label="EN / VI toggles" />
+              <Tile value={failures.length} label="Recent failures" tone={failures.length > 0 ? "warn" : "default"} />
+              <Tile value={groq.today.rateLimited} label="Groq 429s today" tone={groq.today.rateLimited > 0 ? "warn" : "default"} />
+              <Tile value={github ? n(github.remaining) : "—"} label="GitHub API left" />
+            </div>
+            <p className="mt-3 px-1 text-xs text-ink-faint">
+              Details:{" "}
+              <Link href="/dashboard?tab=activity" prefetch={false} className="text-accent underline">
+                Activity › Recent failures
+              </Link>
+            </p>
+          </Card>
+
+          <Card title="Cron tick duration">
+            <TickDurationChart ticks={tickPoints} limitSeconds={60} />
+          </Card>
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Card title="Language toggles">
+          <Donut slices={langSlices} centerLabel="toggles" />
+        </Card>
+        <Card title="Items by source">
+          <Donut slices={topSlices(itemsBySource(items), 5)} centerLabel="items" />
+        </Card>
+        <Card title="Items by topic">
+          <Donut slices={topSlices(itemsByTopic(items), 5)} centerLabel="tags" />
         </Card>
       </div>
 
       <div className="grid gap-3 lg:grid-cols-2">
-        <Card title="Cron tick duration">
-          <TickDurationChart ticks={tickPoints} limitSeconds={60} />
+        <Card title={`Home views, last ${homeViewsHeatmap.length} days`}>
+          <ActivityHeatmap days={homeViewsHeatmap} unit="home views" />
         </Card>
-        <Card title="Home views">
-          <ViewsAreaChart points={homeViewsDaily} />
+        <Card title="Most viewed articles" className="flex flex-col">
+          <MostViewedBars items={mostViewed} />
         </Card>
       </div>
     </div>

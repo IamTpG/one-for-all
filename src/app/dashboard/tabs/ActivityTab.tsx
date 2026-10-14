@@ -1,26 +1,35 @@
+import dynamic from "next/dynamic";
+import { itemFunnel, runSankey } from "@/lib/activityData";
+import { CRON_TICK_INTERVAL_MINUTES } from "@/lib/config";
 import {
   loadBackfillHistory,
-  loadGithubRateLimit,
-  loadHomeViewsDaily,
   loadItemViewCounts,
   loadRecentFailures,
-  loadRedisUp,
   loadRuns,
   loadSettings,
   loadStoredItems,
+  loadTickCountsDaily,
   loadTicks,
 } from "@/lib/dashboardData";
 import { formatDuration, formatTs } from "@/lib/format";
 import { utcToIct } from "@/lib/schedule";
 import Collapsible from "../Collapsible";
 import styles from "../Dashboard.module.css";
-import MostViewedChart from "../MostViewedChart";
-import ViewsLineChart from "../ViewsLineChart";
+import Card from "../overview/Card";
+import ExpandableTable from "../activity/ExpandableTable";
 
-// Lower-priority detail, one collapsible card each: failures (open), pipeline
-// history, traffic, system.
+// Only this tab pays for the heavy charts: they load as separate chunks.
+const chartPlaceholder = () => <div className="h-48 animate-pulse rounded-xl bg-surface-sunken" />;
+const ActivityHeatmap = dynamic(() => import("../activity/ActivityHeatmap"), { loading: chartPlaceholder });
+const ItemFunnel = dynamic(() => import("../activity/ItemFunnel"), { loading: chartPlaceholder });
+const SourceSankey = dynamic(() => import("../activity/SourceSankey"), { loading: chartPlaceholder });
+
+const TICKS_PER_DAY = Math.floor((24 * 60) / CRON_TICK_INTERVAL_MINUTES);
+
+// Lower-priority detail, one collapsible card each: failures (open), pipeline,
+// and the four history tables.
 export default async function ActivityTab() {
-  const [settings, runs, ticks, backfill, recentFailures, items, itemViews, homeViewsDaily, redisUp, githubRate] =
+  const [settings, runs, ticks, backfill, recentFailures, items, itemViews, tickCounts] =
     await Promise.all([
       loadSettings(),
       loadRuns(),
@@ -29,9 +38,7 @@ export default async function ActivityTab() {
       loadRecentFailures(),
       loadStoredItems(),
       loadItemViewCounts(),
-      loadHomeViewsDaily(),
-      loadRedisUp(),
-      loadGithubRateLimit(),
+      loadTickCountsDaily(),
     ]);
 
   const latestRun = runs[0] ?? null;
@@ -40,11 +47,11 @@ export default async function ActivityTab() {
     run: runs.find((run) => run.slot === slotUtc) ?? null,
   }));
 
-  const titleById = new Map(items.map((item) => [item.id, item.title]));
-  const mostViewed = Array.from(itemViews.entries())
-    .map(([id, count]) => ({ id, count, title: titleById.get(id) ?? id }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 10);
+  // Failing sources first, so they are inside the rows shown by default.
+  const sourcesFailedFirst = [...(latestRun?.sources ?? [])].sort((a, b) => Number(a.ok) - Number(b.ok));
+
+  const sankey = runSankey(latestRun);
+  const funnel = itemFunnel(items, itemViews);
 
   return (
     <div className="flex flex-col gap-3">
@@ -75,7 +82,28 @@ export default async function ActivityTab() {
         )}
       </Collapsible>
 
-      <Collapsible title="Pipeline">
+      <Collapsible title="Pipeline" defaultOpen>
+        <div className="mb-4 grid gap-3 lg:grid-cols-2">
+          <Card title={`Cron health, last ${tickCounts.length} days`}>
+            <ActivityHeatmap days={tickCounts} unit="ticks" expected={TICKS_PER_DAY} />
+            <p className="px-1 pt-1 text-xs text-ink-faint">
+              Ticks per UTC day against {TICKS_PER_DAY} expected. Counting started when this was deployed.
+            </p>
+          </Card>
+          <Card title="Items in the store">
+            <ItemFunnel stages={funnel} />
+            <p className="px-1 pt-1 text-xs text-ink-faint">
+              Stored, then summarised by AI, then translated, then opened at least once.
+            </p>
+          </Card>
+        </div>
+        <Card title="Latest fetch: new or already stored" className="mb-4">
+          {sankey ? (
+            <SourceSankey data={sankey} />
+          ) : (
+            <p className="px-1 py-6 text-sm text-ink-faint">Needs a fetch recorded after this feature shipped.</p>
+          )}
+        </Card>
         <h2 className={`${styles.sectionTitle} mono`}>Configured slots</h2>
         <div className={styles.tableWrap}>
           <table className={styles.table}>
@@ -97,156 +125,113 @@ export default async function ActivityTab() {
             </tbody>
           </table>
         </div>
+      </Collapsible>
 
-        {latestRun && (
-          <>
-            <h2 className={`${styles.sectionTitle} mono`}>Latest run — per source</h2>
-            <div className={styles.tableWrap}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Source</th>
-                    <th>Items</th>
-                    <th>Status</th>
-                    <th>Error</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {latestRun.sources.map((source) => (
-                    <tr key={source.sourceId}>
-                      <td>{source.label}</td>
-                      <td>{source.count}</td>
-                      <td>
-                        <span className={source.ok ? styles.badgeOk : styles.badgeFail}>
-                          {source.ok ? "ok" : "fail"}
-                        </span>
-                      </td>
-                      <td className={styles.errorMessage}>{source.error || "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
+      <Collapsible title="Latest run: per source" count={latestRun?.sources.length}>
+        {latestRun ? (
+          <ExpandableTable
+            initial={5}
+            head={
+              <tr>
+                <th>Source</th>
+                <th>Items</th>
+                <th>Status</th>
+                <th>Error</th>
+              </tr>
+            }
+            rows={sourcesFailedFirst.map((source) => (
+              <tr key={source.sourceId}>
+                <td>{source.label}</td>
+                <td>{source.count}</td>
+                <td>
+                  <span className={source.ok ? styles.badgeOk : styles.badgeFail}>{source.ok ? "ok" : "fail"}</span>
+                </td>
+                <td className={styles.errorMessage}>{source.error || "—"}</td>
+              </tr>
+            ))}
+          />
+        ) : (
+          <p className={styles.emptyState}>No fetch runs recorded yet.</p>
         )}
+      </Collapsible>
 
-        <h2 className={`${styles.sectionTitle} mono`}>Recent runs</h2>
+      <Collapsible title="Recent runs" count={runs.length}>
         {runs.length === 0 ? (
           <p className={styles.emptyState}>No fetch runs recorded yet.</p>
         ) : (
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Time</th>
-                  <th>Slot</th>
-                  <th>Duration</th>
-                  <th>Total</th>
-                  <th>New</th>
-                  <th>Failures</th>
-                </tr>
-              </thead>
-              <tbody>
-                {runs.map((run) => (
-                  <tr key={run.ts}>
-                    <td>{formatTs(run.ts)}</td>
-                    <td>{run.slot ? `${utcToIct(run.slot)} ICT` : "manual"}</td>
-                    <td>{formatDuration(run.durationMs)}</td>
-                    <td>{run.totalFetched}</td>
-                    <td>{run.newItems ?? "—"}</td>
-                    <td>{run.sources.filter((s) => !s.ok).length}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ExpandableTable
+            head={
+              <tr>
+                <th>Time</th>
+                <th>Slot</th>
+                <th>Duration</th>
+                <th>Total</th>
+                <th>New</th>
+                <th>Failures</th>
+              </tr>
+            }
+            rows={runs.map((run) => (
+              <tr key={run.ts}>
+                <td>{formatTs(run.ts)}</td>
+                <td>{run.slot ? `${utcToIct(run.slot)} ICT` : "manual"}</td>
+                <td>{formatDuration(run.durationMs)}</td>
+                <td>{run.totalFetched}</td>
+                <td>{run.newItems ?? "—"}</td>
+                <td>{run.sources.filter((s) => !s.ok).length}</td>
+              </tr>
+            ))}
+          />
         )}
+      </Collapsible>
 
-        <h2 className={`${styles.sectionTitle} mono`}>Recent cron ticks</h2>
+      <Collapsible title="Recent cron ticks" count={ticks.length}>
         {ticks.length === 0 ? (
           <p className={styles.emptyState}>No cron ticks recorded yet.</p>
         ) : (
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Time</th>
-                  <th>Duration</th>
-                  <th>Fetched</th>
-                  <th>Translated</th>
-                  <th>Groq 429s</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ticks.slice(0, 20).map((tick) => (
-                  <tr key={tick.ts}>
-                    <td>{formatTs(tick.ts)}</td>
-                    <td>{formatDuration(tick.durationMs)}</td>
-                    <td>{tick.fetched ?? "—"}</td>
-                    <td>{tick.backfillProcessed}</td>
-                    <td>{tick.groq429}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ExpandableTable
+            head={
+              <tr>
+                <th>Time</th>
+                <th>Duration</th>
+                <th>Fetched</th>
+                <th>Translated</th>
+                <th>Groq 429s</th>
+              </tr>
+            }
+            rows={ticks.map((tick) => (
+              <tr key={tick.ts}>
+                <td>{formatTs(tick.ts)}</td>
+                <td>{formatDuration(tick.durationMs)}</td>
+                <td>{tick.fetched ?? "—"}</td>
+                <td>{tick.backfillProcessed}</td>
+                <td>{tick.groq429}</td>
+              </tr>
+            ))}
+          />
         )}
+      </Collapsible>
 
-        <h2 className={`${styles.sectionTitle} mono`}>Backfill history</h2>
+      <Collapsible title="Backfill history" count={backfill.length}>
         {backfill.length === 0 ? (
           <p className={styles.emptyState}>No backfill ticks recorded yet.</p>
         ) : (
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Time</th>
-                  <th>Processed</th>
-                  <th>Failed</th>
-                </tr>
-              </thead>
-              <tbody>
-                {backfill.map((tick) => (
-                  <tr key={tick.ts}>
-                    <td>{formatTs(tick.ts)}</td>
-                    <td>{tick.processed}</td>
-                    <td>{tick.failureCount}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ExpandableTable
+            head={
+              <tr>
+                <th>Time</th>
+                <th>Processed</th>
+                <th>Failed</th>
+              </tr>
+            }
+            rows={backfill.map((tick) => (
+              <tr key={tick.ts}>
+                <td>{formatTs(tick.ts)}</td>
+                <td>{tick.processed}</td>
+                <td>{tick.failureCount}</td>
+              </tr>
+            ))}
+          />
         )}
-      </Collapsible>
-
-      <Collapsible title="Traffic">
-        <h2 className={`${styles.sectionTitle} mono`}>Home views, last {homeViewsDaily.length} days</h2>
-        <ViewsLineChart data={homeViewsDaily} />
-
-        <h2 className={`${styles.sectionTitle} mono`}>Most viewed articles</h2>
-        {mostViewed.length === 0 ? (
-          <p className={styles.emptyState}>No article views recorded yet.</p>
-        ) : (
-          <MostViewedChart items={mostViewed} />
-        )}
-      </Collapsible>
-
-      <Collapsible title="System">
-        <div className={styles.statGrid}>
-          <div className={styles.statTile}>
-            <span className={styles.statValue}>
-              <span className={`${styles.dot} ${redisUp ? styles.dotUp : styles.dotDown}`} />
-              {redisUp ? "Connected" : "Unreachable"}
-            </span>
-            <span className={styles.statLabel}>Redis</span>
-          </div>
-          <div className={styles.statTile}>
-            <span className={styles.statValue}>
-              {githubRate ? `${githubRate.remaining} / ${githubRate.limit}` : "—"}
-            </span>
-            <span className={styles.statLabel}>GitHub API rate limit (live)</span>
-          </div>
-        </div>
       </Collapsible>
     </div>
   );

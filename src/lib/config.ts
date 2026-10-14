@@ -123,6 +123,10 @@ export const CRON_TICK_INTERVAL_MINUTES = 10;
 // counter hash lives.
 export const DASHBOARD_TICK_HISTORY_LIMIT = 50;
 export const DASHBOARD_TICK_COUNT_RETENTION_DAYS = 3;
+// Per-day tick totals kept for the cron-health heatmap (one hash, one field per UTC day).
+export const DASHBOARD_TICK_DAILY_RETENTION_DAYS = 90;
+// Weeks shown by the Activity heatmaps.
+export const DASHBOARD_HEATMAP_WEEKS = 12;
 
 // When the dashboard's status banner turns amber ("warn") or red ("bad").
 // Percentages are of a limit; minutes/ms are ages or durations.

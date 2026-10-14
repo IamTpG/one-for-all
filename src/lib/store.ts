@@ -74,7 +74,7 @@ export async function getLastFetchAt(): Promise<number | null> {
 export async function mergeFreshItems(
   fresh: FeedItem[],
   retentionDays: number
-): Promise<{ newItems: number }> {
+): Promise<{ newItems: number; newBySource: Record<string, number> }> {
   const existing = await getHashAll<StoredItem>(ITEMS_KEY);
   const now = Date.now();
   const retentionMs = retentionDays * 24 * 60 * 60 * 1000;
@@ -86,8 +86,12 @@ export async function mergeFreshItems(
 
   const toWrite: Record<string, StoredItem> = {};
   const newIds = new Set<string>();
+  const newBySource: Record<string, number> = {};
   for (const item of fresh) {
-    if (!existing.has(item.id)) newIds.add(item.id);
+    if (!existing.has(item.id) && !newIds.has(item.id)) {
+      newIds.add(item.id);
+      newBySource[item.sourceId] = (newBySource[item.sourceId] ?? 0) + 1;
+    }
     const keywordTopics = matchKeywordTopics(`${item.title} ${item.summary ?? ""}`);
     const hit = cached.get(item.id);
     const enriched: FeedItem = hit
@@ -116,7 +120,7 @@ export async function mergeFreshItems(
   if (toDrop.length > 0) await deleteHashFields(ITEMS_KEY, toDrop);
 
   await setJson(LAST_FETCH_KEY, now);
-  return { newItems: newIds.size };
+  return { newItems: newIds.size, newBySource };
 }
 
 async function withConcurrency<T>(

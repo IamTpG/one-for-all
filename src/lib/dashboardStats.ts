@@ -4,6 +4,7 @@ import {
   DASHBOARD_GROQ_FAILURE_LIMIT,
   DASHBOARD_RUN_HISTORY_LIMIT,
   DASHBOARD_TICK_COUNT_RETENTION_DAYS,
+  DASHBOARD_TICK_DAILY_RETENTION_DAYS,
   DASHBOARD_TICK_HISTORY_LIMIT,
   DASHBOARD_VIEWS_CHART_DAYS,
 } from "@/lib/config";
@@ -12,6 +13,7 @@ import { getCappedList, getHashAll, incrHashField, incrHashFields, pingRedis, pu
 const RUNS_KEY = "wire:runs";
 const TICKS_KEY = "wire:cron:ticks";
 const TICK_COUNT_KEY_PREFIX = "wire:cron:count:";
+const TICK_DAILY_KEY = "wire:cron:daily";
 const BACKFILL_HISTORY_KEY = "wire:backfill:history";
 const GROQ_FAILURES_KEY = "wire:groq:failures";
 const HOME_VIEWS_KEY = "wire:views:home";
@@ -22,6 +24,8 @@ export type FetchRunSourceResult = {
   sourceId: string;
   label: string;
   count: number;
+  // Items from this source not already in the store. Absent on older runs.
+  newItems?: number;
   ok: boolean;
   error?: string;
 };
@@ -72,6 +76,13 @@ export async function recordTick(record: TickRecord): Promise<void> {
       { count: 1 },
       DASHBOARD_TICK_COUNT_RETENTION_DAYS * 24 * 60 * 60
     ),
+    // One field per day in a single hash, so the heatmap reads it in one call.
+    // The TTL is refreshed on every tick, so the hash only expires if ticks stop.
+    incrHashFields(
+      TICK_DAILY_KEY,
+      { [utcDayKey(record.ts)]: 1 },
+      DASHBOARD_TICK_DAILY_RETENTION_DAYS * 24 * 60 * 60
+    ),
   ]);
 }
 
@@ -89,6 +100,17 @@ export async function getTickStats(): Promise<{ ticksToday: number; expectedSoFa
     ticksToday: raw.get("count") ?? 0,
     expectedSoFar: Math.floor(minutesIntoDay / CRON_TICK_INTERVAL_MINUTES) + 1,
   };
+}
+
+// Ticks received per UTC day for the last `days` days, oldest first, zero-filled.
+export async function getTickCountsDaily(days: number): Promise<{ date: string; count: number }[]> {
+  const raw = await getHashAll<number>(TICK_DAILY_KEY);
+  const series: { date: string; count: number }[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const date = utcDayKey(Date.now() - i * 24 * 60 * 60 * 1000);
+    series.push({ date, count: raw.get(date) ?? 0 });
+  }
+  return series;
 }
 
 export async function recordFetchRun(record: FetchRunRecord): Promise<void> {
