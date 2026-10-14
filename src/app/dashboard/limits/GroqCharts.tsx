@@ -14,6 +14,7 @@ import { bucketGroqUsage, GROQ_RANGES, type RangeKey } from "@/lib/usageBuckets"
 import type { GroqUsagePoint } from "@/lib/usage";
 import { cn } from "@/lib/utils";
 import { CHART_MARGIN, ictTime, LIMIT_VISIBLE_RATIO, RateLimitMarkers } from "./chartBits";
+import ChartKey, { type KeyItem } from "./ChartKey";
 
 type Props = {
   points: GroqUsagePoint[];
@@ -70,7 +71,8 @@ export default function GroqCharts({ points, nowMs, requestsPerMinute, tokensPer
   const hasData = maxRequests > 0;
   const barWidth = bucketMinutes > 1 ? 8 : 10;
   const note = `${bucketMinutes > 1 ? `${bucketMinutes}-minute buckets` : "per minute"} · times in ICT`;
-  const limitNote = (shown: boolean, text: string) => (shown ? `Dashed line: ${text}${bucketMinutes > 1 ? ` × ${bucketMinutes}` : ""} · ` : "");
+  const limitKey = (shown: boolean, text: string): KeyItem[] =>
+    shown ? [{ label: `Rate limit ${text}${bucketMinutes > 1 ? ` × ${bucketMinutes}` : ""}`, color: "var(--danger)", shape: "dash" }] : [];
 
   return (
     <DateLabelFormatProvider value={ictTime}>
@@ -79,9 +81,16 @@ export default function GroqCharts({ points, nowMs, requestsPerMinute, tokensPer
           <RangeToggle value={range} onChange={setRange} />
         </div>
         <div className="grid gap-5 lg:grid-cols-2">
-          <div className="min-w-0">
+          <div className="min-w-0 rounded-xl border border-line p-3">
             <h3 className="mb-1 px-1 text-sm font-bold text-ink">Requests</h3>
-            <ComposedChart data={data} xDataKey="date" aspectRatio="2 / 1" margin={CHART_MARGIN} barGap={0} maxBarSize={barWidth}>
+            <ChartKey
+              items={[
+                { label: "Requests", color: "var(--chart-1)", shape: "bar" },
+                ...limitKey(showRequestsLimit, `${requestsPerMinute}/min`),
+                ...(hasData ? [{ label: "429", color: "var(--danger)", shape: "dot" } as KeyItem] : []),
+              ]}
+            />
+            <ComposedChart data={data} xDataKey="date" aspectRatio="auto" className="h-64" margin={CHART_MARGIN} barGap={0} maxBarSize={barWidth}>
               <Grid horizontal />
               <SeriesBar dataKey="requests" fill="var(--chart-1)" radius={2} />
               {showRequestsLimit && (
@@ -102,18 +111,24 @@ export default function GroqCharts({ points, nowMs, requestsPerMinute, tokensPer
               />
             </ComposedChart>
             <p className="px-1 pt-1 text-xs text-ink-faint">
-              {limitNote(showRequestsLimit, `rate limit ${requestsPerMinute}/min`)}
-              {hasData ? "Red dots: minutes with a 429 · " : "No Groq calls in this period · "}
+              {hasData ? "" : "No Groq calls in this period · "}
               {note}
             </p>
           </div>
 
-          <div className="min-w-0">
+          <div className="min-w-0 rounded-xl border border-line p-3">
             <h3 className="mb-1 px-1 text-sm font-bold text-ink">Total tokens</h3>
-            <ComposedChart data={data} xDataKey="date" aspectRatio="2 / 1" margin={CHART_MARGIN} barGap={0} maxBarSize={barWidth} stacked>
+            <ChartKey
+              items={[
+                { label: "Input", color: "var(--chart-1)", shape: "bar" },
+                { label: "Output", color: "var(--chart-3)", shape: "bar" },
+                ...limitKey(showTokensLimit, `${formatCount(tokensPerMinute)}/min`),
+              ]}
+            />
+            <ComposedChart data={data} xDataKey="date" aspectRatio="auto" className="h-64" margin={CHART_MARGIN} barGap={0} maxBarSize={barWidth} stacked>
               <Grid horizontal />
               <SeriesBar dataKey="input" fill="var(--chart-1)" />
-              <SeriesBar dataKey="output" fill="var(--chart-2)" radius={2} />
+              <SeriesBar dataKey="output" fill="var(--chart-3)" radius={2} />
               {showTokensLimit && (
                 <Line dataKey="tokensLimit" stroke="var(--danger)" strokeWidth={1.5} dashFromIndex={0} dashArray="6,4" showHighlight={false} />
               )}
@@ -124,14 +139,13 @@ export default function GroqCharts({ points, nowMs, requestsPerMinute, tokensPer
                 showDots={false}
                 rows={(p) => [
                   { color: "var(--chart-1)", label: "Input", value: formatCount(Number(p.input)) },
-                  { color: "var(--chart-2)", label: "Output", value: formatCount(Number(p.output)) },
+                  { color: "var(--chart-3)", label: "Output", value: formatCount(Number(p.output)) },
                   { color: "var(--text-faint)", label: "Total", value: formatCount(Number(p.input) + Number(p.output)) },
                 ]}
               />
             </ComposedChart>
             <p className="px-1 pt-1 text-xs text-ink-faint">
-              {limitNote(showTokensLimit, `rate limit ${formatCount(tokensPerMinute)}/min`)}
-              Input and output tokens · {note}
+              {note}
             </p>
           </div>
         </div>

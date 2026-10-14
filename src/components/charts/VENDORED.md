@@ -6,7 +6,7 @@ Copied in with:
 ```
 npx shadcn@latest add @bklit/gauge-chart @bklit/ring-chart @bklit/pie-chart \
   @bklit/line-chart @bklit/area-chart @bklit/bar-chart @bklit/composed-chart \
-  @bklit/heatmap-chart @bklit/funnel-chart @bklit/sankey-chart --yes --overwrite
+  @bklit/heatmap-chart @bklit/funnel-chart @bklit/sankey-chart @bklit/legend --yes --overwrite
 ```
 
 We own this source. Do not restyle it in place; theming comes from the
@@ -36,3 +36,7 @@ updating (from this directory): `patch -p1 < local-patches.patch`.
   `margin` for narrow containers and give it a full-width card.
 - `shadcn add` also rewrites `src/app/dashboard/dashboard.css` and
   `src/lib/utils.ts`; restore ours afterwards (`git checkout` the files).
+- Legend: a value legend for donuts and rings (round marker, label, value,
+  percentage). It has no line or dashed-line markers; the Limits charts use
+  our own `limits/ChartKey.tsx` for that. Its colour tokens
+  (`--color-legend-*`) are mapped in `dashboard.css`.

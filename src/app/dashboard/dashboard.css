@@ -32,6 +32,10 @@
   --color-surface: var(--surface);
   --color-surface-sunken: var(--surface-sunken);
   --color-line: var(--border);
+  --color-legend-foreground: var(--text);
+  --color-legend-muted: var(--surface-sunken);
+  --color-legend-muted-foreground: var(--text-faint);
+  --color-legend-track: var(--border);
   --color-ink: var(--text);
   --color-ink-muted: var(--text-muted);
   --color-ink-faint: var(--text-faint);
