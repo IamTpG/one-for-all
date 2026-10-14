@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { DASHBOARD_RECENT_FAILURES_DISPLAY_LIMIT, GROQ_LIMITS, UPSTASH_LIMITS } from "@/lib/config";
+import { DASHBOARD_HEATMAP_WEEKS, DASHBOARD_RECENT_FAILURES_DISPLAY_LIMIT, GROQ_LIMITS, UPSTASH_LIMITS } from "@/lib/config";
 import {
   getBackfillHistory,
   getGroqFailures,
@@ -9,6 +9,7 @@ import {
   getLanguageToggleStats,
   getRecentRuns,
   getRecentTicks,
+  getTickCountsDaily,
   getTickStats,
   pingRedis,
 } from "@/lib/dashboardStats";
@@ -35,7 +36,8 @@ export const loadRedisUp = cache(() => pingRedis());
 export const loadGroqUsage = cache(() => getGroqUsage());
 export const loadUpstashUsage = cache(() => getUpstashUsage());
 export const loadHomeViews = cache(() => getHomeViewStats());
-export const loadHomeViewsDaily = cache(() => getHomeViewsDaily());
+export const loadHomeViewsHeatmap = cache(() => getHomeViewsDaily(DASHBOARD_HEATMAP_WEEKS * 7));
+export const loadTickCountsDaily = cache(() => getTickCountsDaily(DASHBOARD_HEATMAP_WEEKS * 7));
 export const loadItemViewCounts = cache(() => getItemViewCounts());
 export const loadToggleStats = cache(() => getLanguageToggleStats());
 export const loadGithubRateLimit = cache(() => fetchGithubSearchRateLimit());

@@ -27,7 +27,7 @@ export async function runFetchCycle(
 
   const allResults = [...rss, ...anthropic, ...hn, ...trending, ...releases];
   const fresh = allResults.flatMap((result) => result.items);
-  const { newItems } = await mergeFreshItems(fresh, settings.retentionDays);
+  const { newItems, newBySource } = await mergeFreshItems(fresh, settings.retentionDays);
 
   await recordFetchRun({
     ts: startedAt,
@@ -35,7 +35,11 @@ export async function runFetchCycle(
     durationMs: Date.now() - startedAt,
     totalFetched: fresh.length,
     newItems,
-    sources: allResults.map(({ items, ...rest }) => ({ ...rest, count: items.length })),
+    sources: allResults.map(({ items, ...rest }) => ({
+      ...rest,
+      count: items.length,
+      newItems: newBySource[rest.sourceId] ?? 0,
+    })),
   });
 
   return { fetched: fresh.length, newItems };
