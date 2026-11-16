@@ -98,6 +98,25 @@ typography:
     fontSize: "18px"
     fontWeight: 700
     letterSpacing: "-0.01em"
+  standfirst:
+    fontFamily: "Mona Sans, Segoe UI, Roboto, sans-serif"
+    fontSize: "clamp(18px, 1rem + 0.3vw, 20px)"
+    fontWeight: 400
+    lineHeight: 1.5
+  prose:
+    fontFamily: "Mona Sans, Segoe UI, Roboto, sans-serif"
+    fontSize: "clamp(17px, 1rem + 0.15vw, 18px)"
+    fontWeight: 400
+    lineHeight: 1.7
+  prose-heading:
+    fontFamily: "Mona Sans, Segoe UI, Roboto, sans-serif"
+    fontSize: "clamp(21px, 1rem + 0.6vw, 24px)"
+    fontWeight: 600
+    lineHeight: 1.25
+    letterSpacing: "-0.02em"
+  code:
+    fontFamily: "ui-monospace, SF Mono, SFMono-Regular, Menlo, Consolas, monospace"
+    fontSize: "0.86em"
 rounded:
   pill: "999px"
   image: "6px"
@@ -110,6 +129,8 @@ spacing:
   column: "32px"
   side-column: "clamp(48px, 5.5vw, 80px)"
   feed-end: "96px"
+  reading-column: "680px"
+  toc-column: "240px"
 components:
   button-pill:
     backgroundColor: "{colors.chip}"
@@ -178,6 +199,24 @@ components:
   image-thumb:
     rounded: "{rounded.image}"
     width: "168px"
+  masthead-article:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.ink-dark}"
+    typography: "{typography.headline-text-only}"
+    padding: "clamp(24px, 4vw, 52px) clamp(16px, 4.4vw, 64px) clamp(28px, 4vw, 44px)"
+  button-pill-action:
+    backgroundColor: "{colors.chip}"
+    textColor: "{colors.ink}"
+    typography: "{typography.label}"
+    rounded: "{rounded.pill}"
+    padding: "0 16px"
+    height: "40px"
+  code-block:
+    backgroundColor: "{colors.chip}"
+    textColor: "{colors.ink}"
+    typography: "{typography.code}"
+    rounded: "{rounded.image}"
+    padding: "16px 18px"
 ---
 
 # Design System: OneForAll
@@ -192,7 +231,7 @@ Density is calm but fast: rows are open, measures are capped (summaries at 64ch)
 
 The dark theme is not an inversion of the lime: the band becomes deep olive, and lime moves to the leading numeral, the "new" dot and the focus ring, where a small amount reads as a signal instead of glare. The old frosted-glass look (blurred panels, gradient body, Lexend / Plus Jakarta Sans / IBM Plex Mono) is the retired system.
 
-**Migration status.** Only the home feed (`/`) is built in this world; its tokens are scoped to the feed root. The article page, settings, dashboard and owner login still render the old frosted-glass tokens from `src/app/globals.css`, `AppShell.module.css` and `PageHeader`, and will move to this system. New and migrated surfaces follow this file, not the old tokens.
+**Migration status.** The home feed (`/`) and the article page (`/article/[id]`) are built in this world. Its tokens, base rules, top bar and shared buttons live in `src/app/world.module.css`, scoped to a `.world` class each migrated page puts on its root. Settings, dashboard and owner login still render the old frosted-glass tokens from `src/app/globals.css`, `AppShell.module.css` and `PageHeader`, and will move to this system. New and migrated surfaces follow this file, not the old tokens.
 
 **Key Characteristics:**
 - White paper, near-black ink, two text greys; one lime field per screen.
@@ -207,7 +246,7 @@ The dark theme is not an inversion of the lime: the band becomes deep olive, and
 A black-and-white newsroom with a single acid-lime voice and an olive night mode.
 
 ### Primary
-- **Chanh Lime** (#d9f85a): the catch-up band's full-bleed field in light mode. Also the ring around the "new" dot and the text-selection highlight. In dark mode it is only ever solid: the band's leading numeral, the group-count pills, the whole chip on hover, the new dot itself and the focus ring. Never at partial opacity.
+- **Chanh Lime** (#d9f85a): the catch-up band's full-bleed field in light mode. Also the ring around the "new" dot and the text-selection highlight. In dark mode it is only ever solid: the band's leading numeral, the group-count pills, the whole chip on hover, the new dot itself and the focus ring. In both themes it also sets the article masthead's figures (reading minutes, section count) on ink or olive. Never at partial opacity.
 
 ### Neutral
 - **Newsprint Ink** (#0b0b0b): all headlines, active tabs and views, the ink button, count pills on the band, the new dot (light), focus ring (light).
@@ -240,7 +279,7 @@ A black-and-white newsroom with a single acid-lime voice and an olive night mode
 
 **Display Font:** Mona Sans (variable, `wdth` axis loaded; fallback Segoe UI, Roboto, sans-serif)
 **Body Font:** Mona Sans
-**Label/Mono Font:** none; counts use Mona Sans tabular numerals.
+**Label/Mono Font:** none; counts use Mona Sans tabular numerals. Code inside article bodies (inline `code` and `pre`) uses the system monospace stack, and only there: monospace is never a UI voice.
 
 **Character:** One grotesque does everything. Big sizes get tight negative tracking and weight 600; the one figure that matters gets weight 800 stretched to 125% width. Both faces carry the `vietnamese` subset; diacritics must render cleanly at display size.
 
@@ -329,13 +368,26 @@ A row titled "Repo · N bản mới" with the version range (oldest → newest) 
 ### Industry Panel ("Tin ngành")
 Lime-tint panel, 12px radius, 18px 22px 14px padding. 15px/600 heading, then one-liner links (15px/500, 1.4) separated by tint-rule hairlines, each with 13px slate metadata. Shows five, then a disclosure for the rest.
 
+### Article Page
+A reading surface opened by one ink masthead, with no lime field: lime appears only as the masthead's figures, focus and selection.
+- **Ink masthead:** full-bleed #0b0b0b block (dark theme: Deep Olive Band #1d2309, the band's night colour, so it still separates from Night Paper). It carries the top bar, the title (clamp(30px → 48px), 600, -0.03em, max 24ch, no kicker), the Vietnamese summary as a **standfirst** (clamp(18px → 20px)), the metadata line (Topic · Source · date · HN points or stars, each part unbreakable; HN adds an underlined "discussion" link), and a foot row: the figures that size the read on the left, the action pills on the right. Inside it the world's tokens are re-pointed at ink (ink #f2f4ec, graphite #cdd0c4 or pale olive in dark, slate #9ea294, chips #1b1d16 / #2a3211), so shared components render light-on-ink without their own rules.
+- **Masthead figures:** reading minutes and section count (sections only from 3), weight 800 at width 125, tabular, in solid lime, each with a 13px slate label beneath. HN points and stars stay in the small metadata line; the triage found they never decided anything.
+- **Layout below:** at 1100px+ with 3+ sections, a 240px sticky table of contents left of the 680px reading column (80px gap); the masthead's text block widens to the same 1000px so both left edges line up. Otherwise the column is centred alone and the masthead text narrows to 680px.
+- **Table of contents:** "Trong bài này" (13px/600), then the body's h2s as 14px slate links on a 1px rule; the section being read is ink 600 with a 2px ink bar, tracked from scroll (the last heading on screen once the page bottoms out). "Còn N phút" below, from scroll progress. Under 1100px the same list sits behind a "Trong bài này · N mục" disclosure (48px, hairlines above and below, rotating 11px chevron) at the top of the column; picking a section closes it. Smooth scrolling only without reduced motion.
+- **Action pills:** 40px chip-grey pills with a 16px icon: the original (named for its source: original, repo, GitHub release) and Save / Saved (bookmark filled when saved; never turns ink). They repeat once after the body under "Nguồn: …".
+- **Media:** an image or video sits at the top of the reading column (680px), image at 6px radius, taking no space until loaded and at least 640px wide.
+- **Prose:** clamp(17px → 18px) at 1.7 in graphite; headings in ink at 24 / 19 / 17px with negative tracking; links in ink with a slate underline that darkens on hover; list markers slate; blockquotes indented with a 1px ink rule; block images and code blocks at 6px; tables ruled by hairlines, scrolling sideways when wide.
+- **Waiting:** a single hairline with an ink segment travelling along it, plus one line of text, replaces any spinner or skeleton (static under reduced motion). The loading state is the real top bar and an empty ink masthead holding that hairline; translation waits show it in the reading column.
+- **Translation hand-off:** where the Vietnamese stops and untranslated English continues, a block between two hairlines states how many parts remain, with one ink pill to translate the next batch. The English part carries `lang="en"`, and its headings join the same contents numbering.
+- **Missing body:** the empty-state title, a note that says what is missing and why the summary may be thin, and one ink pill to the original; the end block is dropped so the original is not offered again.
+
 ### Empty States
 Title at clamp(22px → 28px)/600, a graphite note, and at most one ink pill action. Max 52ch.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** keep lime to the band field, plus dot rings, the band numeral (dark) and focus (dark).
+- **Do** keep lime to the band field, plus dot rings, the band numeral (dark), the article masthead's figures and focus (dark).
 - **Do** carry hierarchy with Mona Sans size and weight: 56 / 32 / 24 / 16px, 600 for headlines, negative tracking on anything 19px and up.
 - **Do** separate items with 1px hairlines and generous padding (22px rows, 28px lead).
 - **Do** make every control a full pill, every image 6px, and the single tinted panel 12px.

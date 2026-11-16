@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-16T07:18:52+00:00",
+  "generatedAt": "2026-11-16T09:19:52.595501+00:00",
   "title": "Design System: OneForAll",
   "extensions": {
     "colorMeta": {
@@ -446,6 +446,22 @@
       "brand": {
         "displayName": "Brand",
         "purpose": "OneForAll wordmark."
+      },
+      "standfirst": {
+        "displayName": "Standfirst",
+        "purpose": "Article page: the Vietnamese summary under the title."
+      },
+      "prose": {
+        "displayName": "Prose",
+        "purpose": "Article body text, 680px column, line-height 1.7."
+      },
+      "prose-heading": {
+        "displayName": "Prose Heading",
+        "purpose": "h1/h2 inside article bodies (h3 19px, h4 17px)."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "System monospace for inline code and pre blocks in article bodies only; never a UI voice."
       }
     },
     "shadows": [
@@ -581,6 +597,30 @@
       "description": "The one tinted panel: compact industry one-liners.",
       "html": "<section class=\"ds-ind\"><h2>Tin ngành</h2><ul><li><a href=\"#\">Nvidia công bố GPU mới cho data center</a><span>The Verge · 2 giờ trước</span></li><li><a href=\"#\">OpenAI đổi giá API</a><span>OpenAI News · 5 giờ trước</span></li></ul></section>",
       "css": ".ds-ind{font-family:'Mona Sans','Segoe UI',Roboto,sans-serif;background:#f6f9e4;border-radius:12px;padding:18px 22px 14px;max-width:340px;color:#0b0b0b}.ds-ind h2{margin:0 0 4px;font-size:15px;font-weight:600}.ds-ind ul{list-style:none;margin:0;padding:0}.ds-ind li{padding:12px 0;border-bottom:1px solid #e3eac2}.ds-ind li:last-child{border-bottom:0}.ds-ind a{display:block;font-size:15px;font-weight:500;line-height:1.4;color:#0b0b0b;text-underline-offset:3px;text-decoration:none}.ds-ind a:hover{text-decoration:underline}.ds-ind a:focus-visible{outline:2px solid #0b0b0b;outline-offset:2px}.ds-ind span{display:block;margin-top:4px;font-size:13px;color:#666}"
+    },
+    {
+      "name": "Article Masthead",
+      "kind": "section",
+      "refersTo": "headline-text-only",
+      "description": "Full-bleed ink block (deep olive in dark): title, standfirst, metadata, then lime width-125 figures (minutes, sections) beside the action pills.",
+      "html": "<header class=\"ds-am\"><h1>Show HN: Turbo-Browser-MCP – Form batch, delta DOM và bảo vệ submit cho MCP</h1><p class=\"ds-sf\">Bài viết giới thiệu Turbo-Browser-MCP, một công cụ bổ sung khả năng xử lý form hàng loạt cho môi trường trình duyệt MCP.</p><p class=\"ds-mt\">Công cụ &amp; agent · Hacker News · 15/11/2026 · 8 điểm HN</p><div class=\"ds-ft\"><dl><div><dt>phút đọc</dt><dd>19</dd></div><div><dt>mục</dt><dd>11</dd></div></dl><div class=\"ds-act\"><a href=\"#\">Đọc bản gốc ↗</a><button type=\"button\">Lưu</button></div></div></header>",
+      "css": ".ds-am{font-family:'Mona Sans','Segoe UI',Roboto,sans-serif;background:#0b0b0b;color:#f2f4ec;padding:40px 44px 34px;max-width:1000px}.ds-am h1{margin:0;font-size:44px;font-weight:600;letter-spacing:-.03em;line-height:1.08;max-width:24ch}.ds-sf{margin:18px 0 0;font-size:20px;line-height:1.5;color:#cdd0c4;max-width:64ch}.ds-mt{margin:18px 0 0;font-size:14px;color:#9ea294}.ds-ft{display:flex;justify-content:space-between;align-items:flex-end;margin-top:26px;gap:20px}.ds-ft dl{display:flex;gap:40px;margin:0}.ds-ft dl div{display:flex;flex-direction:column-reverse}.ds-ft dd{margin:0;color:#d9f85a;font-size:36px;font-weight:800;font-stretch:125%;font-variation-settings:'wdth' 125;font-variant-numeric:tabular-nums;line-height:1}.ds-ft dt{margin-top:6px;font-size:13px;color:#9ea294}.ds-act{display:flex;gap:8px}.ds-act a,.ds-act button{height:40px;padding:0 16px;border:0;border-radius:999px;background:#1b1d16;color:#f2f4ec;font:500 14px 'Mona Sans',sans-serif;display:inline-flex;align-items:center;text-decoration:none;cursor:pointer}.ds-act a:hover,.ds-act button:hover{background:#272a20}.ds-act a:focus-visible,.ds-act button:focus-visible{outline:2px solid #d9f85a;outline-offset:2px}"
+    },
+    {
+      "name": "Translation Hand-off",
+      "kind": "section",
+      "refersTo": "nav",
+      "description": "Between hairlines where the translated body stops: how many parts remain in English, one ink pill to translate the next batch.",
+      "html": "<aside class=\"ds-ho\"><p class=\"ds-hl\">Phần dưới chưa được dịch (còn 3 đoạn), đang hiện bản tiếng Anh.</p><p class=\"ds-hn\">Bài dài được dịch từng đợt. Bấm Dịch tiếp, hoặc mở lại bài sau, để dịch thêm.</p><button type=\"button\">Dịch tiếp</button></aside>",
+      "css": ".ds-ho{font-family:'Mona Sans','Segoe UI',Roboto,sans-serif;max-width:680px;padding:20px 0;border-block:1px solid #eaeaea;color:#0b0b0b}.ds-hl{margin:0;font-size:15px;font-weight:600}.ds-hn{margin:8px 0 0;font-size:13px;font-weight:500;color:#666}.ds-ho button{margin-top:14px;height:40px;padding:0 16px;border:0;border-radius:999px;background:#0b0b0b;color:#fff;font:600 14px 'Mona Sans',sans-serif;cursor:pointer}.ds-ho button:hover{opacity:.85}.ds-ho button:focus-visible{outline:2px solid #0b0b0b;outline-offset:2px}"
+    },
+    {
+      "name": "Table of Contents",
+      "kind": "navigation",
+      "refersTo": "label",
+      "description": "Sticky 240px list of the body's h2s on a 1px rule; the section being read is ink 600 with a 2px bar; minutes left below. A disclosure under 1100px.",
+      "html": "<nav class=\"ds-toc\"><p>Trong bài này</p><ol><li><a href=\"#\">Install</a></li><li><a href=\"#\" class=\"on\">Tools</a></li><li><a href=\"#\">Known limits</a></li></ol><small>Còn 12 phút</small></nav>",
+      "css": ".ds-toc{font-family:'Mona Sans','Segoe UI',Roboto,sans-serif;width:240px;color:#0b0b0b}.ds-toc p{margin:0 0 12px;font-size:13px;font-weight:600}.ds-toc ol{list-style:none;margin:0;padding:0}.ds-toc a{display:block;padding:7px 0 7px 14px;border-left:1px solid #eaeaea;font-size:14px;color:#666;text-decoration:none}.ds-toc a:hover{color:#0b0b0b}.ds-toc a.on{padding-left:13px;border-left:2px solid #0b0b0b;color:#0b0b0b;font-weight:600}.ds-toc a:focus-visible{outline:2px solid #0b0b0b;outline-offset:2px}.ds-toc small{display:block;margin-top:14px;font-size:13px;color:#666}"
     }
   ],
   "narrative": {
