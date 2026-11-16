@@ -1,8 +1,14 @@
 import Groq, { RateLimitError } from "groq-sdk";
-import { GROQ_MODEL, TOPICS, TRANSLATE_MAX_TOKENS } from "@/lib/config";
+import {
+  GROQ_COOLDOWN_MAX_SECONDS,
+  GROQ_COOLDOWN_MIN_RETRY_AFTER_SECONDS,
+  GROQ_MODEL,
+  TOPICS,
+  TRANSLATE_MAX_TOKENS,
+} from "@/lib/config";
 import { errorMessage } from "@/lib/errors";
 import { sanitizeArticleHtml } from "@/lib/sanitize";
-import { recordGroq429, recordGroqCall } from "@/lib/usage";
+import { getGroqCooldown, nextUtcMidnight, recordGroq429, recordGroqCall, setGroqCooldown } from "@/lib/usage";
 import type { AiAnalysis, FeedItem } from "@/lib/types";
 
 export type GroqResult<T> = { data: T | null; error?: string };
@@ -93,6 +99,22 @@ async function requestCompletion(
       rateLimitedCount++;
       await recordGroq429();
     }
+    if (err instanceof RateLimitError) {
+      const retryAfter = Number(err.headers?.get?.("retry-after"));
+      // A per-minute 429 asks for a few seconds; the daily one for minutes or
+      // hours (or names the daily limit in its message). Retrying is pointless
+      // then — pause Groq so later calls don't each earn another 429.
+      const longWait = Number.isFinite(retryAfter) && retryAfter >= GROQ_COOLDOWN_MIN_RETRY_AFTER_SECONDS;
+      const namesDaily = /\b(per day|TPD|RPD)\b/i.test(err.message ?? "");
+      if (longWait || namesDaily) {
+        const until = longWait
+          ? Date.now() + Math.min(retryAfter, GROQ_COOLDOWN_MAX_SECONDS) * 1000
+          : nextUtcMidnight();
+        console.error(`[groq] daily limit hit on ${logId}, pausing until ${new Date(until).toISOString()}`);
+        await setGroqCooldown(until, "retry-after");
+        throw err;
+      }
+    }
     if (err instanceof RateLimitError && attempt === 0) {
       const retryAfter = Number(err.headers?.get?.("retry-after"));
       const delayMs = Number.isFinite(retryAfter) ? retryAfter * 1000 : DEFAULT_RETRY_DELAY_MS;
@@ -111,6 +133,7 @@ async function requestCompletion(
 export async function classifyAndSummarize(item: FeedItem): Promise<GroqResult<AiAnalysis>> {
   const groq = getClient();
   if (!groq) return { data: null }; // not configured — not a failure
+  if (await getGroqCooldown()) return { data: null }; // paused after hitting the daily cap
 
   try {
     const validIds = new Set(TOPICS.map((t) => t.id));
@@ -161,6 +184,7 @@ export async function translateArticleHtml(
 ): Promise<GroqResult<string>> {
   const groq = getClient();
   if (!groq) return { data: null }; // not configured — not a failure
+  if (await getGroqCooldown()) return { data: null }; // paused after hitting the daily cap
 
   try {
     const prompt =

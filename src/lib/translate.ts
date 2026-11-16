@@ -8,6 +8,7 @@ import {
 } from "@/lib/config";
 import { recordGroqFailure } from "@/lib/dashboardStats";
 import { translateArticleHtml } from "@/lib/groq";
+import { enforceGroqBudget } from "@/lib/usage";
 import { getJson, setJson } from "@/lib/redis";
 
 const KEY_PREFIX = "wire:translation:";
@@ -116,6 +117,8 @@ async function translateOne(
   html: string,
   deadline: number
 ): Promise<{ text: string | null; failed: boolean }> {
+  // Out of daily budget: skip the call instead of earning a 429.
+  if (process.env.GROQ_API_KEY && (await enforceGroqBudget())) return { text: null, failed: true };
   const { data, error } = await translateArticleHtml(itemId, html, deadline);
   if (error) await recordGroqFailure({ ts: Date.now(), stage: "translate", itemId, message: error });
   return { text: data, failed: !data };

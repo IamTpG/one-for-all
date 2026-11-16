@@ -37,6 +37,8 @@ export type StatusInputs = {
   sourcesTotal: number;
   backlog: number;
   groqTokensPercent: number;
+  // Epoch ms until which Groq is paused (daily cap reached); null when running.
+  groqPausedUntil: number | null;
   // null when the Upstash panel is not configured or unavailable.
   upstashBandwidthPercent: number | null;
 };
@@ -127,6 +129,17 @@ export function evaluateStatus(input: StatusInputs): StatusResult {
     label: `Groq ${Math.round(input.groqTokensPercent)}%`,
     problem: `Groq is at ${Math.round(input.groqTokensPercent)}% of today's tokens`,
   });
+
+  if (input.groqPausedUntil !== null) {
+    // 7h = ICT, the zone the fetch slots are shown in.
+    const at = new Date(input.groqPausedUntil + 7 * 60 * 60 * 1000).toISOString().slice(11, 16);
+    checks.push({
+      id: "groqPause",
+      level: "warn",
+      label: `Groq paused until ${at} ICT`,
+      problem: `Groq hit its daily cap and is paused until ${at} ICT`,
+    });
+  }
 
   if (input.upstashBandwidthPercent !== null) {
     const pct = input.upstashBandwidthPercent;

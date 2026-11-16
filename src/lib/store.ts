@@ -1,6 +1,7 @@
 import { AI_BACKFILL_BATCH_SIZE, AI_CACHE_TTL_SECONDS, AI_CONCURRENCY } from "@/lib/config";
 import { recordBackfillTick, recordGroqFailure } from "@/lib/dashboardStats";
 import { classifyAndSummarize } from "@/lib/groq";
+import { enforceGroqBudget } from "@/lib/usage";
 import { matchKeywordTopics, sourceTopics } from "@/lib/keywordTopics";
 import {
   deleteHashFields,
@@ -174,6 +175,9 @@ export async function runAiBackfillTick(
   const needsAi = itemsNeedingAi(stored).slice(0, batchSize);
 
   if (needsAi.length === 0) return { processed: 0 };
+  // Daily cap reached (or nearly): leave the backlog for after the reset
+  // rather than sending calls that can only come back as 429s.
+  if (process.env.GROQ_API_KEY && (await enforceGroqBudget())) return { processed: 0 };
 
   const updates: Record<string, StoredItem> = {};
   const failures: { itemId: string; message: string }[] = [];

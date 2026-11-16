@@ -1,6 +1,6 @@
 import { formatBytes } from "@/lib/chartUtils";
 import { GROQ_LIMITS, UPSTASH_LIMITS } from "@/lib/config";
-import { loadGithubRateLimit, loadGroqUsage, loadUpstashUsage } from "@/lib/dashboardData";
+import { loadGithubRateLimit, loadGroqCooldown, loadGroqUsage, loadUpstashUsage } from "@/lib/dashboardData";
 import { formatAgo } from "@/lib/format";
 import { Card, Tile } from "../overview";
 import UsageBar from "../overview/UsageBar";
@@ -11,7 +11,12 @@ const n = (value: number) => value.toLocaleString("en-US");
 
 // Everything about staying inside the Groq, Upstash and GitHub limits.
 export default async function LimitsTab() {
-  const [groq, upstash, github] = await Promise.all([loadGroqUsage(), loadUpstashUsage(), loadGithubRateLimit()]);
+  const [groq, cooldown, upstash, github] = await Promise.all([
+    loadGroqUsage(),
+    loadGroqCooldown(),
+    loadUpstashUsage(),
+    loadGithubRateLimit(),
+  ]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -34,6 +39,11 @@ export default async function LimitsTab() {
           <Tile value={groq.rate?.remainingRequests ?? "—"} label="Requests left today (per Groq)" />
           <Tile value={groq.rate?.remainingTokens ?? "—"} label="Tokens left this minute (per Groq)" />
           <Tile value={groq.rate ? formatAgo(groq.rate.ts) : "—"} label="Last Groq call" />
+          <Tile
+            value={cooldown ? `until ${new Date(cooldown.until).toISOString().slice(11, 16)} UTC` : "Running"}
+            label="Groq calls"
+            tone={cooldown ? "warn" : "default"}
+          />
           <Tile value={groq.today.rateLimited} label="Rate-limited (429) today" tone={groq.today.rateLimited > 0 ? "warn" : "default"} />
         </div>
         <GroqCharts

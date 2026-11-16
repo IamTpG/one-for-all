@@ -19,7 +19,7 @@ import { latestDueSlot, slotDateKey, utcToIct } from "@/lib/schedule";
 import { getSiteSettings } from "@/lib/siteSettings";
 import { getStoredItems } from "@/lib/store";
 import { getUpstashUsage } from "@/lib/upstashUsage";
-import { getGroqUsage } from "@/lib/usage";
+import { getGroqCooldown, getGroqUsage } from "@/lib/usage";
 
 // Per-request memoised loaders for the dashboard. The status banner and the
 // active tab both need some of the same data, and React's `cache` makes each
@@ -34,6 +34,7 @@ export const loadGroqFailures = cache(() => getGroqFailures());
 export const loadStoredItems = cache(() => getStoredItems());
 export const loadRedisUp = cache(() => pingRedis());
 export const loadGroqUsage = cache(() => getGroqUsage());
+export const loadGroqCooldown = cache(() => getGroqCooldown());
 export const loadUpstashUsage = cache(() => getUpstashUsage());
 export const loadHomeViews = cache(() => getHomeViewStats());
 export const loadHomeViewsHeatmap = cache(() => getHomeViewsDaily(DASHBOARD_HEATMAP_WEEKS * 7));
@@ -84,13 +85,14 @@ function dueSlotInfo(
 
 export const loadStatus = cache(async (): Promise<StatusResult> => {
   const now = Date.now();
-  const [settings, runs, ticks, backlog, redisUp, groq, upstash] = await Promise.all([
+  const [settings, runs, ticks, backlog, redisUp, groq, groqCooldown, upstash] = await Promise.all([
     loadSettings(),
     loadRuns(),
     loadTicks(),
     loadBacklogSize(),
     loadRedisUp(),
     loadGroqUsage(),
+    loadGroqCooldown(),
     loadUpstashUsage(),
   ]);
 
@@ -112,6 +114,7 @@ export const loadStatus = cache(async (): Promise<StatusResult> => {
     sourcesTotal: latestRun ? latestRun.sources.length : 0,
     backlog,
     groqTokensPercent: (groq.today.tokens / GROQ_LIMITS.tokensPerDay) * 100,
+    groqPausedUntil: groqCooldown?.until ?? null,
     upstashBandwidthPercent,
   });
 });

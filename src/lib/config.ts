@@ -154,6 +154,16 @@ export const GROQ_LIMITS = {
   tokensPerDay: 200_000,
 };
 
+// Circuit breaker for the daily cap. A 429 whose retry-after is at least this
+// long (seconds) is a daily limit, not the per-minute one (whose retry-after is
+// a few seconds): Groq is then not called again until it has passed.
+export const GROQ_COOLDOWN_MIN_RETRY_AFTER_SECONDS = 120;
+// Never pause for longer than this, whatever the header says.
+export const GROQ_COOLDOWN_MAX_SECONDS = 24 * 60 * 60;
+// Pause until the next UTC midnight once today's own counters come within this
+// much of a daily limit, before Groq has to answer with a 429.
+export const GROQ_BUDGET_RESERVE = { requests: 5, tokens: 2_000 };
+
 // Upstash Redis free-plan limits (Upstash console > database > Details). Used
 // only to draw the dashboard's usage meters — Upstash itself enforces them.
 // The console shows the storage limit as "238.42 MB", which is 250,000,000
