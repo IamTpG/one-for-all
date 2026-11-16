@@ -46,3 +46,16 @@ export function hnThreadUrl(item: ArticleItem): string | null {
 
 // A table of contents earns its column only from this many sections.
 export const MIN_TOC_SECTIONS = 3;
+
+// A link post that points at a repo's front page (github.com/owner/repo)
+// opens a repo, not an article.
+export function pointsAtRepo(item: ArticleItem): boolean {
+  if (item.sourceType !== "hn") return false;
+  try {
+    const url = new URL(item.url);
+    if (url.hostname !== "github.com" && url.hostname !== "www.github.com") return false;
+    return url.pathname.split("/").filter(Boolean).length === 2;
+  } catch {
+    return false;
+  }
+}

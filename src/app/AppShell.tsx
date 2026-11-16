@@ -316,12 +316,35 @@ export default function AppShell({
     latestHomeStateRef.current = { visibleCount, filters };
   });
 
+  // The position is tracked as it changes: by the time this component
+  // unmounts during a client-side navigation, the router may already have
+  // moved the page, so window.scrollY at that moment is not the reader's.
+  const latestScrollYRef = useRef(0);
+  useEffect(() => {
+    latestScrollYRef.current = window.scrollY;
+    function onScroll() {
+      // The router's own scroll-to-top can fire while this page is still
+      // mounted (its cleanup runs later); that position is not the reader's.
+      if (window.location.pathname !== "/") return;
+      latestScrollYRef.current = window.scrollY;
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Coming back with nothing saved (a link from elsewhere, e.g. an article
+  // opened directly): start at the top. Links back from an article keep the
+  // router from scrolling (scroll={false}), so this is what resets them.
+  useLayoutEffect(() => {
+    if (!getHomeStateSnapshot()) window.scrollTo({ top: 0, behavior: "instant" });
+  }, []);
+
   useEffect(() => {
     function save() {
       try {
         sessionStorage.setItem(
           HOME_STATE_KEY,
-          JSON.stringify({ ...latestHomeStateRef.current, scrollY: window.scrollY } satisfies SavedHomeState)
+          JSON.stringify({ ...latestHomeStateRef.current, scrollY: latestScrollYRef.current } satisfies SavedHomeState)
         );
       } catch {
         // Private browsing / storage full — nothing to fall back to.

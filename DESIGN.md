@@ -98,6 +98,20 @@ typography:
     fontSize: "18px"
     fontWeight: 700
     letterSpacing: "-0.01em"
+  masthead-title:
+    fontFamily: "Mona Sans, Segoe UI, Roboto, sans-serif"
+    fontSize: "clamp(30px, 1.1rem + 2.2vw, 48px)"
+    fontWeight: 600
+    lineHeight: 1.08
+    letterSpacing: "-0.03em"
+  masthead-figure:
+    fontFamily: "Mona Sans, Segoe UI, Roboto, sans-serif"
+    fontSize: "clamp(28px, 1rem + 1.6vw, 38px)"
+    fontWeight: 800
+    lineHeight: 1
+    letterSpacing: "-0.02em"
+    fontFeature: "\"tnum\" 1"
+    fontVariation: "\"wdth\" 125"
   standfirst:
     fontFamily: "Mona Sans, Segoe UI, Roboto, sans-serif"
     fontSize: "clamp(18px, 1rem + 0.3vw, 20px)"
@@ -370,14 +384,16 @@ Lime-tint panel, 12px radius, 18px 22px 14px padding. 15px/600 heading, then one
 
 ### Article Page
 A reading surface opened by one ink masthead, with no lime field: lime appears only as the masthead's figures, focus and selection.
-- **Ink masthead:** full-bleed #0b0b0b block (dark theme: Deep Olive Band #1d2309, the band's night colour, so it still separates from Night Paper). It carries the top bar, the title (clamp(30px → 48px), 600, -0.03em, max 24ch, no kicker), the Vietnamese summary as a **standfirst** (clamp(18px → 20px)), the metadata line (Topic · Source · date · HN points or stars, each part unbreakable; HN adds an underlined "discussion" link), and a foot row: the figures that size the read on the left, the action pills on the right. Inside it the world's tokens are re-pointed at ink (ink #f2f4ec, graphite #cdd0c4 or pale olive in dark, slate #9ea294, chips #1b1d16 / #2a3211), so shared components render light-on-ink without their own rules.
-- **Masthead figures:** reading minutes and section count (sections only from 3), weight 800 at width 125, tabular, in solid lime, each with a 13px slate label beneath. HN points and stars stay in the small metadata line; the triage found they never decided anything.
+- **Ink masthead:** full-bleed #0b0b0b block (dark theme: Deep Olive Band #1d2309, the band's night colour, so it still separates from Night Paper). It carries the top bar, the title (`masthead-title`: clamp(30px → 48px), 600, -0.03em, max 24ch, no kicker), the Vietnamese summary as a **standfirst** (clamp(18px → 20px)), the metadata line (Topic · Source · date · HN points or stars, each part unbreakable; HN adds an underlined "discussion" link), and a foot row: the figures that size the read on the left, the action pills on the right. Inside it the world's tokens are re-pointed at ink (ink #f2f4ec, graphite #cdd0c4 or pale olive in dark, slate #9ea294, chips #1b1d16 / #2a3211), so shared components render light-on-ink without their own rules.
+- **Masthead figures:** reading minutes and section count (sections only from 3), `masthead-figure` (clamp(28px → 38px), weight 800 at width 125, tabular), in solid lime, each with a 13px slate label beneath. HN points and stars stay in the small metadata line; the triage found they never decided anything.
+- **Masthead under 720px:** the figures leave their row and lead the metadata line ("**19** phút đọc · **11** mục · …", numerals 16px/800 at width 125 in lime), the standfirst clamps to four lines with a "Đọc hết tóm tắt" text toggle that appears only when the clamp cuts text, and the action pills follow the metadata directly so Save lands in the first screen. The HN discussion link carries 12px of vertical padding with matching negative margin: a ~45px target with no change to the line.
+- **Contents:** beyond 15 sections the sticky list shows only the seven around the current one, with a text toggle "Xem cả N mục" / "Thu gọn". Entries still in English inside a Vietnamese article (the untranslated remainder) carry a small "EN" tag, shown only when the list mixes both languages.
 - **Layout below:** at 1100px+ with 3+ sections, a 240px sticky table of contents left of the 680px reading column (80px gap); the masthead's text block widens to the same 1000px so both left edges line up. Otherwise the column is centred alone and the masthead text narrows to 680px.
 - **Table of contents:** "Trong bài này" (13px/600), then the body's h2s as 14px slate links on a 1px rule; the section being read is ink 600 with a 2px ink bar, tracked from scroll (the last heading on screen once the page bottoms out). "Còn N phút" below, from scroll progress. Under 1100px the same list sits behind a "Trong bài này · N mục" disclosure (48px, hairlines above and below, rotating 11px chevron) at the top of the column; picking a section closes it. Smooth scrolling only without reduced motion.
 - **Action pills:** 40px chip-grey pills with a 16px icon: the original (named for its source: original, repo, GitHub release) and Save / Saved (bookmark filled when saved; never turns ink). They repeat once after the body under "Nguồn: …".
 - **Media:** an image or video sits at the top of the reading column (680px), image at 6px radius, taking no space until loaded and at least 640px wide.
 - **Prose:** clamp(17px → 18px) at 1.7 in graphite; headings in ink at 24 / 19 / 17px with negative tracking; links in ink with a slate underline that darkens on hover; list markers slate; blockquotes indented with a 1px ink rule; block images and code blocks at 6px; tables ruled by hairlines, scrolling sideways when wide.
-- **Waiting:** a single hairline with an ink segment travelling along it, plus one line of text, replaces any spinner or skeleton (static under reduced motion). The loading state is the real top bar and an empty ink masthead holding that hairline; translation waits show it in the reading column.
+- **Waiting:** a single hairline with an ink segment travelling along it, plus one line of text, replaces any spinner or skeleton (static under reduced motion). The loading state is the real top bar and an empty ink masthead holding that hairline. While the Vietnamese body translates, the column shows that hairline, copy sized to the article ("vài giây" for short ones, "N phần… tới nửa phút" for long ones), the contents built from the original's headings (so they match the masthead's section count), and a chip pill "Đọc bản tiếng Anh trong lúc chờ" that puts the original on the page. A reader who switched keeps the original when the translation lands, under a hand-off block offering "Chuyển sang tiếng Việt"; nothing swaps under them. The source line and actions at the end appear only with a body.
 - **Translation hand-off:** where the Vietnamese stops and untranslated English continues, a block between two hairlines states how many parts remain, with one ink pill to translate the next batch. The English part carries `lang="en"`, and its headings join the same contents numbering.
 - **Missing body:** the empty-state title, a note that says what is missing and why the summary may be thin, and one ink pill to the original; the end block is dropped so the original is not offered again.
 

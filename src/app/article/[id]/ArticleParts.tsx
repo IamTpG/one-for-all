@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useState, useTransition } from "react";
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
@@ -15,7 +15,14 @@ import LanguageToggle from "../../LanguageToggle";
 import ThemeToggle from "../../ThemeToggle";
 import world from "../../world.module.css";
 import { articleCopy } from "./articleCopy";
-import { displayTitle, hnThreadUrl, MIN_TOC_SECTIONS, sourceName, type ArticleItem } from "./articleModel";
+import {
+  displayTitle,
+  hnThreadUrl,
+  MIN_TOC_SECTIONS,
+  pointsAtRepo,
+  sourceName,
+  type ArticleItem,
+} from "./articleModel";
 import styles from "./Article.module.css";
 
 // ---------- Top bar ----------
@@ -34,7 +41,7 @@ export function ArticleTopBar({ onInk = false }: { onInk?: boolean }) {
         <div className={clsx(world.container, world.topInner)}>
           {/* A real link: the feed restores its own scroll and filters
               from session storage when it mounts again. */}
-          <Link href="/" className={clsx(world.brand, styles.back)} aria-label={copy.backLabel}>
+          <Link href="/" scroll={false} className={clsx(world.brand, styles.back)} aria-label={copy.backLabel}>
             <BackIcon className={styles.backIcon} />
             {copy.back}
           </Link>
@@ -61,10 +68,12 @@ export function ArticleMasthead({
   item,
   readMinutes,
   sections,
+  hasBody,
 }: {
   item: ArticleItem;
   readMinutes: number | null;
   sections: number;
+  hasBody: boolean;
 }) {
   const { language } = useLanguage();
   const copy = articleCopy(language);
@@ -82,6 +91,9 @@ export function ArticleMasthead({
   const pendingVi =
     language === "vi" && ((item.sourceType !== "github-release" && !item.titleVi) || (item.summary && !item.summaryVi));
 
+  // Releases without notes are legitimately empty; every other source
+  // should have had a body to extract.
+  const summaryOnly = !hasBody && !item.videoEmbedHtml && item.sourceType !== "github-release";
   const minutes = item.videoEmbedHtml ? null : (item.lengthMinutes ?? readMinutes);
   const showSections = sections >= MIN_TOC_SECTIONS;
 
@@ -104,12 +116,30 @@ export function ArticleMasthead({
           contents, the reading column otherwise. */}
       <header className={clsx(styles.mastInner, showSections && styles.mastInnerWide)}>
         <h1 className={styles.title}>{title}</h1>
-        {summary.text && <p className={styles.standfirst}>{summary.text}</p>}
+        {summary.text && <Standfirst text={summary.text} />}
+        {summaryOnly && summary.text && <p className={styles.mastNote}>{copy.summaryOnly}</p>}
         {pendingVi && copy.titlePending && <p className={styles.mastNote}>{copy.titlePending}</p>}
         <p className={styles.meta}>
           {/* Each part stays on one line; the space between parts is the
               only break, and the dot ends the part before it so a wrapped
               line never starts with one. */}
+          {/* Narrow screens: the figures lead the line instead of taking a
+              row of their own (hidden from 720px, where the row shows). */}
+          {(minutes || showSections) && (
+            <span className={styles.metaFigures}>
+              {minutes && (
+                <span className={styles.metaFigure}>
+                  <b>{minutes}</b> {copy.statMinutes} ·
+                </span>
+              )}
+              {minutes && showSections && " "}
+              {showSections && (
+                <span className={styles.metaFigure}>
+                  <b>{sections}</b> {copy.statSections} ·
+                </span>
+              )}{" "}
+            </span>
+          )}
           {parts.map((part, index) => (
             <Fragment key={index}>
               {index > 0 && " "}
@@ -152,6 +182,47 @@ export function ArticleMasthead({
   );
 }
 
+// ---------- Standfirst ----------
+
+// Narrow screens clamp the summary to four lines so the actions reach the
+// first screen; the full text stays one tap away, and the toggle appears
+// only when the clamp actually cuts something.
+function Standfirst({ text }: { text: string }) {
+  const { language } = useLanguage();
+  const copy = articleCopy(language);
+  const ref = useRef<HTMLParagraphElement | null>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [clipped, setClipped] = useState(false);
+
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const measure = () => setClipped(node.scrollHeight > node.clientHeight + 1);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [text]);
+
+  return (
+    <>
+      <p ref={ref} className={clsx(styles.standfirst, !expanded && styles.standfirstClamped)}>
+        {text}
+      </p>
+      {(clipped || expanded) && (
+        <button
+          type="button"
+          className={styles.standfirstToggle}
+          aria-expanded={expanded}
+          onClick={() => setExpanded((value) => !value)}
+        >
+          {expanded ? copy.standfirstLess : copy.standfirstMore}
+        </button>
+      )}
+    </>
+  );
+}
+
 // ---------- Actions ----------
 
 export function SaveButton({ item, className }: { item: ArticleItem; className?: string }) {
@@ -183,9 +254,23 @@ export function OriginalLink({ item, ink = false }: { item: ArticleItem; ink?: b
       target="_blank"
       rel="noopener noreferrer"
     >
-      {copy.original[item.sourceType]}
+      {pointsAtRepo(item) ? copy.openRepo : copy.original[item.sourceType]}
       <ArrowUpRightIcon className={styles.pillIcon} />
     </a>
+  );
+}
+
+// A real link to the feed, which restores its own scroll and filters.
+// Ink when it is the end of the article's main action, plain beside an
+// ink "read the original".
+export function BackToFeed({ ink = false, className }: { ink?: boolean; className?: string }) {
+  const { language } = useLanguage();
+  const copy = articleCopy(language);
+  return (
+    <Link href="/" scroll={false} className={clsx(styles.pill, ink && styles.pillInk, className)}>
+      <BackIcon className={styles.pillIcon} />
+      {copy.backToFeed}
+    </Link>
   );
 }
 
@@ -206,7 +291,11 @@ export function ArticleEnd({ item }: { item: ArticleItem }) {
       <p className={styles.endSource}>
         {copy.sourceLabel}: <span className={styles.endSourceName}>{sourceName(item)}</span>
       </p>
-      <ArticleActions item={item} />
+      <div className={clsx(styles.actions, styles.endActions)}>
+        <BackToFeed ink className={styles.endBack} />
+        <OriginalLink item={item} />
+        <SaveButton item={item} />
+      </div>
     </footer>
   );
 }

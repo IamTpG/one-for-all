@@ -4,6 +4,21 @@ import type { SourceType } from "@/lib/types";
 // Every user-facing string on the article page, in both languages.
 // Vietnamese is the primary voice; technical terms stay English.
 
+// One date format, day first, with the year, in a fixed zone (Vietnam) so
+// the server's text and the browser's agree whatever the reader's timezone.
+function formatDate(date: Date, language: Language): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: language === "vi" ? "numeric" : "short",
+    year: "numeric",
+    timeZone: "Asia/Ho_Chi_Minh",
+  }).formatToParts(date);
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
+  return language === "vi"
+    ? `${get("day")}/${get("month")}/${get("year")}`
+    : `${get("day")} ${get("month")} ${get("year")}`;
+}
+
 type Copy = {
   skip: string;
   back: string;
@@ -15,14 +30,22 @@ type Copy = {
   saveLabel: string;
   unsaveLabel: string;
   original: Record<SourceType, string>;
+  openRepo: string;
+  backToFeed: string;
+  summaryOnly: string;
   hnDiscussion: string;
   hnPoints: (n: number) => string;
   stars: (n: number) => string;
   readMinutes: (n: number) => string;
   statMinutes: string;
   statSections: string;
+  standfirstMore: string;
+  standfirstLess: string;
   tocTitle: string;
   tocToggle: (n: number) => string;
+  tocAll: (n: number) => string;
+  tocLess: string;
+  tocEnglish: string;
   minutesLeft: (n: number) => string;
   video: string;
   date: (d: Date) => string;
@@ -31,6 +54,13 @@ type Copy = {
   opening: string;
   translating: string;
   translatingNote: string;
+  translatingLongNote: (parts: number) => string;
+  readEnglishNow: string;
+  readingEnglishNote: string;
+  viReady: string;
+  viReadyPartial: string;
+  viFailedWhileEnglish: string;
+  switchToVi: string;
   loadingBody: string;
   translationFailed: string;
   partialLead: (n: number) => string;
@@ -69,21 +99,37 @@ const vi: Copy = {
     "github-trending": "Mở repo",
     "github-release": "Xem trên GitHub",
   },
+  openRepo: "Mở repo",
+  backToFeed: "Về feed",
+  summaryOnly: "Tóm tắt tự động, chưa có nội dung gốc",
   hnDiscussion: "Thảo luận trên HN",
   hnPoints: (n) => `${n.toLocaleString("vi-VN")} điểm HN`,
   stars: (n) => `${n.toLocaleString("vi-VN")} sao`,
   readMinutes: (n) => `đọc ${n} phút`,
   statMinutes: "phút đọc",
   statSections: "mục",
+  standfirstMore: "Đọc hết tóm tắt",
+  standfirstLess: "Thu gọn",
   tocTitle: "Trong bài này",
   tocToggle: (n) => `Trong bài này · ${n} mục`,
+  tocAll: (n) => `Xem cả ${n} mục`,
+  tocLess: "Thu gọn",
+  tocEnglish: "Tiêu đề còn bằng tiếng Anh",
   minutesLeft: (n) => (n > 0 ? `Còn ${n} phút` : "Sắp hết bài"),
   video: "Video",
-  date: (d) => `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`,
+  date: (d) => formatDate(d, "vi"),
   titlePending: "Bản tiếng Việt của tiêu đề và tóm tắt chưa xong, đang hiện bản gốc.",
   opening: "Đang mở bài…",
   translating: "Đang dịch bài sang tiếng Việt…",
-  translatingNote: "Thường mất vài giây. Bản dịch được lưu lại, lần sau mở ngay.",
+  translatingNote: "Bài ngắn thường xong trong vài giây. Bản dịch được lưu lại, lần sau mở ngay.",
+  translatingLongNote: (parts) =>
+    `Bài dài (${parts} phần) được dịch theo đợt, đợt này có thể mất tới nửa phút. Bản dịch được lưu lại, lần sau mở ngay.`,
+  readEnglishNow: "Đọc bản tiếng Anh trong lúc chờ",
+  readingEnglishNote: "Đang hiện bản tiếng Anh gốc. Bản tiếng Việt vẫn đang được dịch.",
+  viReady: "Bản tiếng Việt đã xong.",
+  viReadyPartial: "Đã dịch xong phần đầu bài.",
+  viFailedWhileEnglish: "Chưa dịch được bài này, bạn đang đọc bản tiếng Anh gốc.",
+  switchToVi: "Chuyển sang tiếng Việt",
   loadingBody: "Đang tải nội dung bài…",
   translationFailed: "Chưa dịch được bài này, đang hiện bản tiếng Anh.",
   partialLead: (n) => `Phần dưới chưa được dịch (còn ${n} đoạn), đang hiện bản tiếng Anh.`,
@@ -122,21 +168,36 @@ const en: Copy = {
     "github-trending": "Open the repo",
     "github-release": "View on GitHub",
   },
+  openRepo: "Open the repo",
+  backToFeed: "Back to the feed",
+  summaryOnly: "Automatic summary, original content not available",
   hnDiscussion: "Discussion on HN",
   hnPoints: (n) => `${n.toLocaleString("en-US")} HN points`,
   stars: (n) => `${n.toLocaleString("en-US")} stars`,
   readMinutes: (n) => `${n} min read`,
   statMinutes: "min read",
   statSections: "sections",
+  standfirstMore: "Show the full summary",
+  standfirstLess: "Show less",
   tocTitle: "In this article",
   tocToggle: (n) => `In this article · ${n} sections`,
+  tocAll: (n) => `Show all ${n} sections`,
+  tocLess: "Show fewer",
+  tocEnglish: "Heading still in English",
   minutesLeft: (n) => (n > 0 ? `${n} min left` : "Almost done"),
   video: "Video",
-  date: (d) => d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
+  date: (d) => formatDate(d, "en"),
   titlePending: "",
   opening: "Opening the article…",
   translating: "",
   translatingNote: "",
+  translatingLongNote: () => "",
+  readEnglishNow: "",
+  readingEnglishNote: "",
+  viReady: "",
+  viReadyPartial: "",
+  viFailedWhileEnglish: "",
+  switchToVi: "",
   loadingBody: "Loading the article…",
   translationFailed: "",
   partialLead: () => "",

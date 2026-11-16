@@ -1,17 +1,12 @@
 import { parseHTML } from "linkedom";
 
-export type TocHeading = { id: string; text: string };
+// `lang` is set only for headings known to be in another language than the
+// page (an untranslated English remainder).
+export type TocHeading = { id: string; text: string; lang?: "en" };
 
 // Section headings the table of contents lists: the body's h2s (an h1 inside
 // extracted content reads as a section heading too).
 const SECTION_SELECTOR = "h1, h2";
-const SECTION_TAG = /<h[12][\s>]/gi;
-
-// Cheap count on the raw HTML, for the masthead's section figure before
-// the (possibly translated) body exists.
-export function countSections(html: string | null): number {
-  return html ? (html.match(SECTION_TAG) ?? []).length : 0;
-}
 
 // Gives every section heading a stable id ("muc-1", "muc-2", …) and returns
 // the list. `start` continues the numbering across the translated part and

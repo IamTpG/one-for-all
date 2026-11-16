@@ -31,6 +31,21 @@ export function imageKey(raw: string, depth = 0): string | null {
   return `${url.hostname}${url.pathname}`.toLowerCase();
 }
 
+// Social preview images that repeat the title instead of showing the
+// article: GitHub's generated repository cards and the preview images
+// owners upload for a repo.
+const GENERATED_CARD_HOSTS = ["opengraph.githubassets.com", "repository-images.githubusercontent.com"];
+
+export function isGeneratedSocialCard(imageUrl: string | undefined): boolean {
+  if (!imageUrl) return false;
+  try {
+    const host = new URL(imageUrl.replace(/&amp;/g, "&")).hostname.toLowerCase();
+    return GENERATED_CARD_HOSTS.some((card) => host === card || host.endsWith(`.${card}`));
+  } catch {
+    return false;
+  }
+}
+
 const IMG_TAG = /<img\b[^>]*>/gi;
 const SRC_ATTR = /\bsrc\s*=\s*(?:"([^"]*)"|'([^']*)')/i;
 
@@ -100,8 +115,31 @@ export function dedupeImages(html: string): string {
 // margins as blank gaps.
 const EMPTY_BLOCK = /<(p|figure)>(?:\s|&nbsp;|<br\s*\/?>)*<\/\1>/gi;
 
+// A source page's own byline date ("November 12, 2026", "Posted on 12 Nov
+// 2026", "2026-11-12") that extraction left at the top of the body. The
+// masthead already shows the date, so a paragraph that is only a date goes.
+const MONTH = "(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\\.?";
+const DATE_ONLY = new RegExp(
+  "^(?:(?:posted|published|updated|date|last updated)\\s*(?:on|:)?\\s*)?(?:" +
+    `${MONTH}\\s+\\d{1,2}(?:st|nd|rd|th)?,?\\s+\\d{4}|` +
+    `\\d{1,2}(?:st|nd|rd|th)?\\s+${MONTH},?\\s+\\d{4}|` +
+    "\\d{4}-\\d{2}-\\d{2}|\\d{1,2}[/.]\\d{1,2}[/.]\\d{4}" +
+    ")$",
+  "i"
+);
+
+export function dropDateline(html: string): string {
+  let seen = 0;
+  return html.replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, (block, inner: string) => {
+    seen += 1;
+    if (seen > 3) return block;
+    const text = inner.replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+    return text.length <= 40 && DATE_ONLY.test(text) ? "" : block;
+  });
+}
+
 export function tidyBody(html: string | null): string | null {
   if (!html) return html;
-  const tidy = dedupeImages(html).replace(EMPTY_BLOCK, "").trim();
+  const tidy = dropDateline(dedupeImages(html)).replace(EMPTY_BLOCK, "").trim();
   return tidy || null;
 }

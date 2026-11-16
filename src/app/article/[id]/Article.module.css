@@ -112,6 +112,69 @@
   color: var(--ink-3);
 }
 
+/* ---------- Masthead under 720px ---------- */
+
+/* The figures lead the metadata line instead of a row of their own, so
+   the actions come up into the first screen. */
+.meta > .metaFigures {
+  display: none;
+  white-space: normal;
+}
+.metaFigure {
+  white-space: nowrap;
+}
+.metaFigure b {
+  color: var(--mast-figure);
+  font-size: 16px;
+  font-weight: 800;
+  font-stretch: 125%;
+  font-variation-settings: "wdth" 125;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.standfirstToggle {
+  display: none;
+}
+
+@media (max-width: 719px) {
+  .meta > .metaFigures {
+    display: inline;
+  }
+  .stats {
+    display: none;
+  }
+  .mastFoot {
+    margin-top: 18px;
+  }
+  .standfirstClamped {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+    overflow: hidden;
+  }
+  .standfirstToggle {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    margin: 2px 0 -6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: var(--ink-3);
+    text-underline-offset: 4px;
+    cursor: pointer;
+  }
+  .standfirstToggle:hover {
+    text-decoration-color: var(--ink);
+  }
+}
+
 /* ---------- Top bar (pages without a masthead) ---------- */
 
 .top {
@@ -217,6 +280,33 @@
   border-left: 2px solid var(--ink);
   color: var(--ink);
   font-weight: 600;
+}
+
+.tocLang {
+  margin-left: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  color: var(--ink-3);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 0 4px;
+  vertical-align: 1px;
+}
+
+.tocMore {
+  margin: 8px 0 0 14px;
+  padding: 8px 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
 }
 
 .tocLeft {
@@ -333,7 +423,12 @@
   white-space: nowrap;
 }
 
+/* The discussion link sits in a 14px line; padding with matching negative
+   margin gives it a ~43px tall target without moving the line. */
 .metaLink {
+  display: inline-block;
+  padding-block: 12px;
+  margin-block: -12px;
   color: var(--ink);
   font-weight: 500;
   text-decoration: underline;
@@ -659,6 +754,9 @@
 }
 .missingAction {
   margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 /* ---------- Waiting ---------- */
@@ -692,6 +790,24 @@
   to {
     transform: translateX(320%);
   }
+}
+
+/* The waiting shell's children join the layout grid directly; the shell
+   disappears once the real body follows it. */
+.pendingShell {
+  display: contents;
+}
+.pendingShell:has(~ [data-article-body]) {
+  display: none;
+}
+
+.pendingAction {
+  margin-top: 18px;
+}
+
+/* A status block that opens the column needs no space above it. */
+.bodyCol > .handoff:first-child {
+  margin-top: 0;
 }
 
 .pendingLabel {
@@ -730,4 +846,13 @@
 }
 .end .actions {
   margin-top: 14px;
+}
+
+/* Narrow screens: the way back is the first, full-width row. */
+@media (max-width: 719px) {
+  .endBack {
+    flex: 1 0 100%;
+    justify-content: center;
+    height: 48px;
+  }
 }
