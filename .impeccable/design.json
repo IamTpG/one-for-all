@@ -16,7 +16,8 @@
           "#778f00",
           "#9bb142",
           "#c4cf94",
-          "#d9f85a"
+          "#d9f85a",
+          "#2a3211"
         ],
         "oklch": "oklch(92.8% 0.183 120)"
       },
@@ -385,6 +386,12 @@
           "#ecf1e1"
         ],
         "oklch": "oklch(36.9% 0.074 121)"
+      },
+      "olive-chip-dark": {
+        "role": "neutral",
+        "displayName": "Olive Chip",
+        "canonical": "#2a3211",
+        "oklch": "oklch(36.9% 0.074 121)"
       }
     },
     "typographyMeta": {
@@ -445,7 +452,7 @@
       {
         "name": "new-dot-ring",
         "value": "0 0 0 2.5px #d9f85a",
-        "purpose": "Solid ring around the 8px new dot (dark: #3a4512). Not elevation; the system has no surface shadows."
+        "purpose": "Solid lime ring around the 8px ink new dot in light mode; dark mode has no ring (the dot itself is lime). Not elevation; the system has no surface shadows."
       }
     ],
     "motion": [

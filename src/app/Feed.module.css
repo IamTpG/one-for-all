@@ -14,8 +14,15 @@
   --band: #d9f85a;
   --band-ink: #0b0b0b;
   --band-ink-2: #3a450c;
-  --band-chip-border: #0b0b0b;
   --band-count: #0b0b0b;
+  /* Group chips: outlined in ink on lime; the count disk is ink with lime
+     figures; hover inverts the whole chip. */
+  --chip-band-bg: transparent;
+  --chip-band-border: #0b0b0b;
+  --chip-band-count-bg: #0b0b0b;
+  --chip-band-count-ink: #d9f85a;
+  --chip-band-hover-bg: #0b0b0b;
+  --chip-band-hover-ink: #d9f85a;
   --tint: #f6f9e4;
   --tint-rule: #e3eac2;
   --dot: #0b0b0b;
@@ -58,12 +65,17 @@
     --band: #1d2309;
     --band-ink: #f2f4ec;
     --band-ink-2: #c4cf94;
-    --band-chip-border: rgba(217, 248, 90, 0.5);
     --band-count: #d9f85a;
+    --chip-band-bg: #2a3211;
+    --chip-band-border: transparent;
+    --chip-band-count-bg: #d9f85a;
+    --chip-band-count-ink: #0e0f0b;
+    --chip-band-hover-bg: #d9f85a;
+    --chip-band-hover-ink: #0e0f0b;
     --tint: #15190a;
     --tint-rule: #2a3115;
     --dot: #d9f85a;
-    --dot-ring: #3a4512;
+    --dot-ring: transparent;
     --focus: #d9f85a;
     --image-ground: #1b1d16;
     --selection: #3a4512;
@@ -83,12 +95,17 @@
   --band: #1d2309;
   --band-ink: #f2f4ec;
   --band-ink-2: #c4cf94;
-  --band-chip-border: rgba(217, 248, 90, 0.5);
   --band-count: #d9f85a;
+  --chip-band-bg: #2a3211;
+  --chip-band-border: transparent;
+  --chip-band-count-bg: #d9f85a;
+  --chip-band-count-ink: #0e0f0b;
+  --chip-band-hover-bg: #d9f85a;
+  --chip-band-hover-ink: #0e0f0b;
   --tint: #15190a;
   --tint-rule: #2a3115;
   --dot: #d9f85a;
-  --dot-ring: #3a4512;
+  --dot-ring: transparent;
   --focus: #d9f85a;
   --image-ground: #1b1d16;
   --selection: #3a4512;
@@ -333,8 +350,8 @@
   min-height: 38px;
   padding: 0 14px 0 6px;
   border-radius: 999px;
-  border: 1.5px solid var(--band-chip-border);
-  background: transparent;
+  border: 1.5px solid var(--chip-band-border);
+  background: var(--chip-band-bg);
   font-size: 14px;
   font-weight: 500;
   color: var(--band-ink);
@@ -342,12 +359,13 @@
   transition: background-color 150ms ease, color 150ms ease;
 }
 .groupChip:hover {
-  background: var(--band-ink);
-  color: var(--band);
+  background: var(--chip-band-hover-bg);
+  border-color: var(--chip-band-hover-bg);
+  color: var(--chip-band-hover-ink);
 }
 .groupChip:hover .groupCount {
-  background: var(--band);
-  color: var(--band-ink);
+  background: var(--chip-band-hover-ink);
+  color: var(--chip-band-hover-bg);
 }
 
 .groupCount {
@@ -359,8 +377,8 @@
   border-radius: 999px;
   display: inline-grid;
   place-items: center;
-  background: var(--band-ink);
-  color: var(--band);
+  background: var(--chip-band-count-bg);
+  color: var(--chip-band-count-ink);
   font-size: 13px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;

@@ -26,6 +26,7 @@ colors:
   tint-dark: "#15190a"
   tint-rule-dark: "#2a3115"
   olive-ring-dark: "#3a4512"
+  olive-chip-dark: "#2a3211"
 typography:
   display:
     fontFamily: "Mona Sans, Segoe UI, Roboto, sans-serif"
@@ -206,7 +207,7 @@ The dark theme is not an inversion of the lime: the band becomes deep olive, and
 A black-and-white newsroom with a single acid-lime voice and an olive night mode.
 
 ### Primary
-- **Chanh Lime** (#d9f85a): the catch-up band's full-bleed field in light mode. Also the ring around the "new" dot and the text-selection highlight. In dark mode it becomes the band's leading numeral, the group-count text when chips invert, the new dot itself and the focus ring.
+- **Chanh Lime** (#d9f85a): the catch-up band's full-bleed field in light mode. Also the ring around the "new" dot and the text-selection highlight. In dark mode it is only ever solid: the band's leading numeral, the group-count pills, the whole chip on hover, the new dot itself and the focus ring. Never at partial opacity.
 
 ### Neutral
 - **Newsprint Ink** (#0b0b0b): all headlines, active tabs and views, the ink button, count pills on the band, the new dot (light), focus ring (light).
@@ -222,11 +223,13 @@ A black-and-white newsroom with a single acid-lime voice and an olive night mode
 ### Dark theme
 - **Night Paper** (#0e0f0b), **Night Ink** (#f2f4ec), **Night Graphite** (#cdd0c4), **Night Slate** (#9ea294): warm-green-tinted counterparts of the four neutrals.
 - **Night Hairline** (#23261c), **Night Chip** (#1b1d16), **Night Chip Pressed** (#272a20).
-- **Deep Olive Band** (#1d2309): the band field; its second clause is **Pale Olive** (#c4cf94) and its chip borders are lime at 50% alpha.
+- **Deep Olive Band** (#1d2309): the band field; its second clause is **Pale Olive** (#c4cf94). Its group chips are filled **Olive Chip** (#2a3211) with no outline.
 - **Night Tint** (#15190a) with **Night Tint Rule** (#2a3115): the industry panel.
-- **Olive Ring** (#3a4512): ring around the lime new-dot, and selection background.
+- **Olive Ring** (#3a4512): text-selection background only. The dark new-dot has no ring.
 
 ### Named Rules
+**The Solid Lime Rule.** In dark mode lime is never translucent: a 50% lime line over olive reads as khaki, not lime. Use it solid or not at all.
+
 **The One Lime Field Rule.** Only the catch-up band is filled with lime. Elsewhere lime appears as a signal no larger than a dot ring, a numeral or a focus ring, or diluted to the 3% tint of the industry panel. A second lime surface on a screen breaks the world.
 
 **The Two Greys Rule.** Text uses ink, graphite (#333) or slate (#666), nothing in between. Seen items step down to slate; they are not faded with opacity (images are the one exception, at 0.7).
@@ -280,7 +283,7 @@ The system is flat. There are no box shadows on surfaces; depth comes from color
 
 ## Shapes
 
-Three radii and nothing else: full pills (999px) for every control, count and chip; 6px for images (lead figure and thumbnails); 12px for the one tinted panel. The new dot is a circle. Text blocks, the band and the filter bar are square-edged and full-bleed. Borders are 1px hairlines for structure and 1.5px ink outlines only on the band's group chips.
+Three radii and nothing else: full pills (999px) for every control, count and chip; 6px for images (lead figure and thumbnails); 12px for the one tinted panel. The new dot is a circle. Text blocks, the band and the filter bar are square-edged and full-bleed. Borders are 1px hairlines for structure and 1.5px ink outlines only on the band's group chips in light mode (dark-mode chips are filled, not outlined).
 
 ## Components
 
@@ -294,7 +297,7 @@ Quiet pills that never shout; the only filled-ink control is the theme toggle an
 - **Focus:** 2px solid outline in `ink` (lime in dark) with 2px offset.
 
 ### Chips
-- **Group chip (band only):** transparent, 1.5px ink border, 38px tall, a 26px ink count pill with lime numerals at its left. Hover inverts the whole chip to ink with lime text and a lime count pill. Clicking filters the stream to that group.
+- **Group chip (band only):** light: transparent, 1.5px ink border, 38px tall, a 26px ink count pill with lime numerals at its left; hover inverts the whole chip to ink with lime text and a lime count pill. Dark: Olive Chip fill (#2a3211), no border, a solid lime count pill with night-paper numerals; hover turns the whole chip solid lime with night-paper text. Clicking filters the stream to that group.
 - **Entity chip:** chip-grey pill, 13px/500, 2px 10px; renders only when the item has entities.
 
 ### Inputs / Fields
@@ -315,7 +318,7 @@ The core unit: no container, just type between hairlines.
 The first item, larger: a 16:10 image (6px radius, image-ground behind, scale 1.02 on hover) beside a headline-size title and a 17px summary. Images narrower than 640px are rejected, and the lead falls back to the text-only variant at the larger headline size.
 
 ### Catch-up Band (signature)
-Full-bleed lime field. One display sentence computed from the reader's last visit: the leading count in the width-125 numeral, the second clause in band olive ink. Group chips below, then a 14px olive note line ("Cập nhật 1 giờ trước"). In dark mode: deep olive field, lime numeral, chips outlined in 50% lime.
+Full-bleed lime field. One display sentence computed from the reader's last visit: the leading count in the width-125 numeral, the second clause in band olive ink. Group chips below, then a 14px olive note line ("Cập nhật 1 giờ trước"). In dark mode: deep olive field, lime numeral, olive-filled chips with solid lime count pills.
 
 ### New Dot
 8px circle in ink with a 2.5px lime ring (dark: lime dot with olive ring). Marks items newer than the last visit until opened; carries `role="img"` and a label when it stands alone.
