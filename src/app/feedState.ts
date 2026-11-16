@@ -145,6 +145,37 @@ export function touchActivity() {
   }
 }
 
+// Keeps the visit alive while the reader is on a page: resolves the visit
+// now (so opening an article directly after days away starts a new one),
+// then records activity on input (throttled), when the tab is hidden or
+// shown, and when the page is left. Any page a reader spends time on calls
+// this; otherwise a long read would end the visit and reset the feed's
+// "new" marks on the way back. Returns the cleanup.
+export function trackVisitActivity(onPageHide?: () => void): () => void {
+  readVisit();
+  let lastTouch = 0;
+  function onInput() {
+    const t = Date.now();
+    if (t - lastTouch < 15_000) return;
+    lastTouch = t;
+    touchActivity();
+  }
+  function onHide() {
+    onPageHide?.();
+    touchActivity();
+  }
+  const inputEvents = ["pointerdown", "keydown", "scroll", "wheel"] as const;
+  window.addEventListener("pagehide", onHide);
+  document.addEventListener("visibilitychange", touchActivity);
+  inputEvents.forEach((name) => window.addEventListener(name, onInput, { passive: true }));
+  return () => {
+    window.removeEventListener("pagehide", onHide);
+    document.removeEventListener("visibilitychange", touchActivity);
+    inputEvents.forEach((name) => window.removeEventListener(name, onInput));
+    touchActivity();
+  };
+}
+
 function subscribeVisit(listener: Listener): () => void {
   visitListeners.add(listener);
   return () => visitListeners.delete(listener);

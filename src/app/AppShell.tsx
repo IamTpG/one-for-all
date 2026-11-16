@@ -25,7 +25,7 @@ import {
   type FeedFilters,
   type FeedView,
 } from "./feedModel";
-import { touchActivity, useSaved, useSeen, useVisit } from "./feedState";
+import { trackVisitActivity, useSaved, useSeen, useVisit } from "./feedState";
 import { IndustryPanel, ItemRow, LeadStory, ReleaseGroupRow, type RowContext } from "./FeedItemRow";
 import { homeCopy, type GroupId } from "./homeCopy";
 import { useLanguage } from "./LanguageProvider";
@@ -33,6 +33,7 @@ import LanguageToggle from "./LanguageToggle";
 import ThemeToggle from "./ThemeToggle";
 import ViewTracker from "./ViewTracker";
 import styles from "./Feed.module.css";
+import world from "./world.module.css";
 
 const PAGE_SIZE = 15;
 const SOURCE_TYPES: SourceType[] = ["rss", "hn", "github-trending", "github-release"];
@@ -326,31 +327,11 @@ export default function AppShell({
         // Private browsing / storage full — nothing to fall back to.
       }
     }
-    function onPageHide() {
-      save();
-      touchActivity();
-    }
     // Leaving the tab records when the reader was last here; coming back
     // after a long gap starts a new visit (touchActivity decides).
-    function onVisibility() {
-      touchActivity();
-    }
-    // Reading counts as activity, throttled so storage isn't hit per event.
-    let lastTouch = 0;
-    function onInput() {
-      const t = Date.now();
-      if (t - lastTouch < 15_000) return;
-      lastTouch = t;
-      touchActivity();
-    }
-    const inputEvents = ["pointerdown", "keydown", "scroll", "wheel"] as const;
-    window.addEventListener("pagehide", onPageHide);
-    document.addEventListener("visibilitychange", onVisibility);
-    inputEvents.forEach((name) => window.addEventListener(name, onInput, { passive: true }));
+    const stopTracking = trackVisitActivity(save);
     return () => {
-      window.removeEventListener("pagehide", onPageHide);
-      document.removeEventListener("visibilitychange", onVisibility);
-      inputEvents.forEach((name) => window.removeEventListener(name, onInput));
+      stopTracking();
       save();
     };
   }, []);
@@ -449,14 +430,14 @@ export default function AppShell({
     ) : null;
 
   return (
-    <div className={styles.root}>
-      <a href="#main-feed" className={styles.skipLink}>
+    <div className={world.world}>
+      <a href="#main-feed" className={world.skipLink}>
         {copy.skip}
       </a>
       <ViewTracker type="home" />
 
       <header className={styles.top}>
-        <div className={clsx(styles.container, styles.topInner)}>
+        <div className={clsx(world.container, world.topInner)}>
           {/* Plain <a>, not next/link's <Link> — a real anchor always
               triggers a full reload, refetching everything fresh. The saved
               scroll key is cleared too, otherwise this "fresh reload" would
@@ -464,7 +445,7 @@ export default function AppShell({
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a
             href="/"
-            className={styles.brand}
+            className={world.brand}
             onClick={() => {
               try {
                 sessionStorage.removeItem(HOME_STATE_KEY);
@@ -492,20 +473,20 @@ export default function AppShell({
               );
             })}
           </nav>
-          <div className={styles.topActions}>
+          <div className={world.topActions}>
             {isOwner && (
               <>
-                <Link href="/dashboard" className={styles.circleButton} aria-label={copy.dashboard} title={copy.dashboard}>
+                <Link href="/dashboard" className={world.circleButton} aria-label={copy.dashboard} title={copy.dashboard}>
                   <ChartIcon />
                 </Link>
-                <Link href="/settings" className={styles.circleButton} aria-label={copy.settings} title={copy.settings}>
+                <Link href="/settings" className={world.circleButton} aria-label={copy.settings} title={copy.settings}>
                   <GearIcon />
                 </Link>
               </>
             )}
-            <LanguageToggle className={styles.pillButton} />
+            <LanguageToggle className={world.pillButton} />
             <ThemeToggle
-              className={styles.inkButton}
+              className={world.inkButton}
               labels={{ toDark: copy.themeToDark, toLight: copy.themeToLight }}
             />
           </div>
@@ -513,7 +494,7 @@ export default function AppShell({
       </header>
 
       <section className={styles.band} aria-label={copy.catchUpLabel}>
-        <div className={styles.container}>
+        <div className={world.container}>
           <h1 className={styles.bandHeadline}>
             {headline}
             {leadLine && <span className={styles.bandLead}> {leadLine}</span>}
@@ -540,7 +521,7 @@ export default function AppShell({
       </section>
 
       <div ref={feedTopRef} className={styles.filterBar}>
-        <div className={clsx(styles.container, styles.filterInner)}>
+        <div className={clsx(world.container, styles.filterInner)}>
           {showTabs ? (
             <nav className={styles.tabs} aria-label={copy.topicsLabel}>
               {(["all", ...TAB_TOPICS, OFF_TOPIC] as string[]).map((topic) => (
@@ -561,7 +542,7 @@ export default function AppShell({
           )}
           {showTabs && (
             <label className={styles.sourceSelect}>
-              <span className={styles.visuallyHidden}>{copy.sourceLabel}</span>
+              <span className={world.visuallyHidden}>{copy.sourceLabel}</span>
               <select
                 value={filters.source}
                 onChange={(event) => updateFilters({ source: event.target.value })}
@@ -595,7 +576,7 @@ export default function AppShell({
         </div>
       </div>
 
-      <div className={clsx(styles.container, styles.layout, hasAside && styles.layoutWithSide)}>
+      <div className={clsx(world.container, styles.layout, hasAside && styles.layoutWithSide)}>
         <main id="main-feed" className={styles.stream} tabIndex={-1}>
           {lead && <LeadStory item={lead} ctx={ctx} withImage={Boolean(lead.imageUrl) && !brokenImages.has(lead.id)} />}
           {visibleEntries.length === 0 && !lead && (
@@ -631,7 +612,7 @@ export default function AppShell({
           {visibleEntries.slice(industryInlineAt).map((_, index) => renderEntry(index + industryInlineAt))}
           {hasMore && (
             <div ref={sentinelRef} className={styles.sentinel} role="status">
-              <span className={styles.visuallyHidden}>{copy.loadingMore}</span>
+              <span className={world.visuallyHidden}>{copy.loadingMore}</span>
             </div>
           )}
         </main>
