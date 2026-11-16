@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-16T09:19:52.595501+00:00",
+  "generatedAt": "2026-11-16T14:29:23.667557+00:00",
   "title": "Design System: OneForAll",
   "extensions": {
     "colorMeta": {
@@ -462,6 +462,14 @@
       "code": {
         "displayName": "Code",
         "purpose": "System monospace for inline code and pre blocks in article bodies only; never a UI voice."
+      },
+      "masthead-title": {
+        "displayName": "Masthead Title",
+        "purpose": "Article page: the title on the ink masthead, clamp 30 to 48px, 600, max 24ch."
+      },
+      "masthead-figure": {
+        "displayName": "Masthead Figure",
+        "purpose": "Article page: reading minutes and section count in lime, 800 at width 125, tabular."
       }
     },
     "shadows": [
@@ -618,9 +626,17 @@
       "name": "Table of Contents",
       "kind": "navigation",
       "refersTo": "label",
-      "description": "Sticky 240px list of the body's h2s on a 1px rule; the section being read is ink 600 with a 2px bar; minutes left below. A disclosure under 1100px.",
-      "html": "<nav class=\"ds-toc\"><p>Trong bài này</p><ol><li><a href=\"#\">Install</a></li><li><a href=\"#\" class=\"on\">Tools</a></li><li><a href=\"#\">Known limits</a></li></ol><small>Còn 12 phút</small></nav>",
-      "css": ".ds-toc{font-family:'Mona Sans','Segoe UI',Roboto,sans-serif;width:240px;color:#0b0b0b}.ds-toc p{margin:0 0 12px;font-size:13px;font-weight:600}.ds-toc ol{list-style:none;margin:0;padding:0}.ds-toc a{display:block;padding:7px 0 7px 14px;border-left:1px solid #eaeaea;font-size:14px;color:#666;text-decoration:none}.ds-toc a:hover{color:#0b0b0b}.ds-toc a.on{padding-left:13px;border-left:2px solid #0b0b0b;color:#0b0b0b;font-weight:600}.ds-toc a:focus-visible{outline:2px solid #0b0b0b;outline-offset:2px}.ds-toc small{display:block;margin-top:14px;font-size:13px;color:#666}"
+      "description": "Sticky 240px list of the body's h1/h2 sections on a 1px rule; the section being read is ink 600 with a 2px bar; minutes left below. Past 15 sections it shows the seven around the current one with a \"Xem cả N mục\" toggle. Headings still in English inside a Vietnamese article carry a small EN tag (only when the list mixes languages). A disclosure under 1100px.",
+      "html": "<nav class=\"ds-toc\"><p>Trong bài này</p><ol><li><a href=\"#\">Install</a></li><li><a href=\"#\" class=\"on\">Tools</a></li><li><a href=\"#\">Known limits <abbr>EN</abbr></a></li></ol><button type=\"button\">Xem cả 16 mục</button><small>Còn 12 phút</small></nav>",
+      "css": ".ds-toc{font-family:'Mona Sans','Segoe UI',Roboto,sans-serif;width:240px;color:#0b0b0b}.ds-toc p{margin:0 0 12px;font-size:13px;font-weight:600}.ds-toc ol{list-style:none;margin:0;padding:0}.ds-toc a{display:block;padding:7px 0 7px 14px;border-left:1px solid #eaeaea;font-size:14px;color:#666;text-decoration:none}.ds-toc a:hover{color:#0b0b0b}.ds-toc a.on{padding-left:13px;border-left:2px solid #0b0b0b;color:#0b0b0b;font-weight:600}.ds-toc a:focus-visible{outline:2px solid #0b0b0b;outline-offset:2px}.ds-toc small{display:block;margin-top:14px;font-size:13px;color:#666}.ds-toc abbr{margin-left:6px;padding:0 4px;border:1px solid #eaeaea;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.04em;text-decoration:none;color:#666}.ds-toc button{margin:8px 0 0 14px;padding:8px 0;border:0;background:none;font:600 13px 'Mona Sans',sans-serif;color:#0b0b0b;text-decoration:underline;text-underline-offset:3px;cursor:pointer}"
+    },
+    {
+      "name": "Article End",
+      "kind": "custom",
+      "refersTo": "button-pill-action",
+      "description": "Closes the reading column with a hairline: the source, then the way back to the feed (ink pill, first, full width under 720px), the original and Save as chip pills. Also shown beside the original in the missing-body state.",
+      "html": "<footer class=\"ds-end\"><p>Nguồn: <b>Hacker News</b></p><div><a href=\"#\" class=\"ink\">‹ Về feed</a><a href=\"#\">Mở repo ↗</a><button type=\"button\">Lưu</button></div></footer>",
+      "css": ".ds-end{font-family:'Mona Sans','Segoe UI',Roboto,sans-serif;max-width:680px;margin-top:56px;padding-top:24px;border-top:1px solid #eaeaea}.ds-end p{margin:0;font-size:14px;color:#666}.ds-end b{color:#0b0b0b;font-weight:500}.ds-end div{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.ds-end a,.ds-end button{height:40px;padding:0 16px;border:0;border-radius:999px;background:#f0f0f0;color:#0b0b0b;font:500 14px 'Mona Sans',sans-serif;display:inline-flex;align-items:center;gap:8px;text-decoration:none;cursor:pointer}.ds-end a:hover,.ds-end button:hover{background:#e4e4e4}.ds-end a.ink{background:#0b0b0b;color:#fff;font-weight:600}.ds-end a.ink:hover{opacity:.85}.ds-end a:focus-visible,.ds-end button:focus-visible{outline:2px solid #0b0b0b;outline-offset:2px}"
     }
   ],
   "narrative": {
@@ -667,7 +683,7 @@
       }
     ],
     "dos": [
-      "Do keep lime to the band field, plus dot rings, the band numeral (dark) and focus (dark).",
+      "Do keep lime to the band field, plus dot rings, the band numeral (dark), the article masthead's figures and focus (dark).",
       "Do carry hierarchy with Mona Sans size and weight: 56 / 32 / 24 / 16px, 600 for headlines, negative tracking on anything 19px and up.",
       "Do separate items with 1px hairlines and generous padding (22px rows, 28px lead).",
       "Do make every control a full pill, every image 6px, and the single tinted panel 12px.",
