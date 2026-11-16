@@ -58,7 +58,7 @@ export type RowContext = {
 };
 
 function itemHref(item: FeedItem, ctx: RowContext): { href: string; external: boolean } {
-  if (item.sourceType === "github-trending" || !ctx.liveIds.has(item.id)) {
+  if (!ctx.liveIds.has(item.id)) {
     return { href: item.url, external: true };
   }
   return { href: `/article/${encodeURIComponent(item.id)}`, external: false };
@@ -113,19 +113,17 @@ function Actions({ item, ctx, title }: { item: FeedItem; ctx: RowContext; title:
       >
         <BookmarkIcon filled={saved} />
       </button>
-      {item.sourceType !== "github-trending" && (
-        <a
-          className={styles.iconButton}
-          href={item.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={copy.originalOf(title)}
-          title={copy.original}
-          onClick={() => markSeen([item.id])}
-        >
-          <ArrowUpRightIcon />
-        </a>
-      )}
+      <a
+        className={styles.iconButton}
+        href={item.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={copy.originalOf(title)}
+        title={copy.original}
+        onClick={() => markSeen([item.id])}
+      >
+        <ArrowUpRightIcon />
+      </a>
     </span>
   );
 }

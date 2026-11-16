@@ -209,9 +209,16 @@ export const DASHBOARD_GROQ_FAILURE_LIMIT = 50;
 export const DASHBOARD_RECENT_FAILURES_DISPLAY_LIMIT = 20;
 export const DASHBOARD_VIEWS_CHART_DAYS = 14;
 
-// Article bodies are capped before translation — very long articles only
-// get their first portion translated rather than chunked and reassembled.
+// Article bodies up to this many chars are translated in one Groq call.
+// Longer ones are split at block boundaries into chunks of at most this
+// size and translated chunk by chunk (see lib/translate.ts).
 export const TRANSLATE_MAX_CHARS = 6000;
+
+// How many untranslated chunks of a long article one page render may send
+// to Groq. A chunk costs roughly 4,000 tokens (input + output) against the
+// free tier's 8,000 tokens per minute, so two is the most that fits one
+// render; the rest waits for the reader to ask for the next batch.
+export const TRANSLATE_CHUNKS_PER_RUN = 2;
 
 // Output needs to cover a whole translated article rather than a short
 // summary, and Vietnamese diacritics tokenize less efficiently than plain

@@ -1,0 +1,30 @@
+import { parseHTML } from "linkedom";
+
+export type TocHeading = { id: string; text: string };
+
+// Section headings the table of contents lists: the body's h2s (an h1 inside
+// extracted content reads as a section heading too).
+const SECTION_SELECTOR = "h1, h2";
+const SECTION_TAG = /<h[12][\s>]/gi;
+
+// Cheap count on the raw HTML, for the masthead's section figure before
+// the (possibly translated) body exists.
+export function countSections(html: string | null): number {
+  return html ? (html.match(SECTION_TAG) ?? []).length : 0;
+}
+
+// Gives every section heading a stable id ("muc-1", "muc-2", …) and returns
+// the list. `start` continues the numbering across the translated part and
+// the untranslated remainder, so ids stay unique on one page.
+export function anchorSections(html: string, start = 0): { html: string; headings: TocHeading[] } {
+  const { document } = parseHTML(`<!doctype html><html><body>${html}</body></html>`);
+  const headings: TocHeading[] = [];
+  for (const node of Array.from(document.querySelectorAll(SECTION_SELECTOR))) {
+    const text = (node.textContent ?? "").replace(/\s+/g, " ").trim();
+    if (!text) continue;
+    const id = `muc-${start + headings.length + 1}`;
+    node.setAttribute("id", id);
+    headings.push({ id, text });
+  }
+  return { html: document.body.innerHTML, headings };
+}

@@ -8,6 +8,7 @@ export function sanitizeArticleHtml(html: string): string {
       "img", "figure", "figcaption",
       "h1", "h2", "h3", "h4",
       "code", "pre", "br", "hr",
+      "table", "thead", "tbody", "tr", "th", "td",
     ],
     allowedAttributes: {
       a: ["href", "title"],

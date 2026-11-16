@@ -98,6 +98,14 @@ export function BookmarkIcon({ className, filled = false }: { className?: string
   );
 }
 
+export function BackIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M14.5 6 L8.5 12 L14.5 18" />
+    </svg>
+  );
+}
+
 export function ArrowUpRightIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
