@@ -220,6 +220,12 @@ export const TRANSLATE_MAX_CHARS = 6000;
 // render; the rest waits for the reader to ask for the next batch.
 export const TRANSLATE_CHUNKS_PER_RUN = 2;
 
+// How long one page render may spend translating (ms). The article route
+// allows 60 s (maxDuration); extraction and rendering need the rest. Groq
+// calls time out at this deadline and 429 retries only happen when they fit,
+// so a rate-limited render ends with what it has instead of timing out.
+export const TRANSLATE_RENDER_BUDGET_MS = 40_000;
+
 // Output needs to cover a whole translated article rather than a short
 // summary, and Vietnamese diacritics tokenize less efficiently than plain
 // English, so this is sized well above a naive chars/4 estimate.

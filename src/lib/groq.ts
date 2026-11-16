@@ -50,7 +50,13 @@ function buildPrompt(item: FeedItem): string {
     `- "summaryVi": a natural Vietnamese translation of the summary you wrote above`;
 }
 
-type CompletionOptions = { prompt: string; jsonMode?: boolean; maxTokens: number };
+// `deadline` (epoch ms) bounds a call made while a page is rendering: the
+// request times out at it, and a 429 is only retried when Groq's
+// retry-after still fits before it.
+type CompletionOptions = { prompt: string; jsonMode?: boolean; maxTokens: number; deadline?: number };
+
+// Below this much time left, a call is not worth starting.
+const MIN_CALL_MS = 4000;
 
 // Shared retry/backoff core for every Groq call in this app: on a 429 on
 // the first attempt, sleep using Groq's own retry-after header (or a
@@ -58,10 +64,14 @@ type CompletionOptions = { prompt: string; jsonMode?: boolean; maxTokens: number
 // for the caller to catch, same fail-closed pattern as everywhere else.
 async function requestCompletion(
   groq: Groq,
-  { prompt, jsonMode, maxTokens }: CompletionOptions,
+  { prompt, jsonMode, maxTokens, deadline }: CompletionOptions,
   logId: string,
   attempt: number
 ): Promise<string | null> {
+  const remaining = deadline === undefined ? undefined : deadline - Date.now();
+  if (remaining !== undefined && remaining < MIN_CALL_MS) {
+    throw new Error(`no time left for ${logId} before the render deadline`);
+  }
   try {
     const { data: completion, response } = await groq.chat.completions
       .create({
@@ -74,7 +84,7 @@ async function requestCompletion(
       // keeps that short, and max_tokens has headroom for the answer itself.
       reasoning_effort: "low",
       max_tokens: maxTokens,
-      })
+      }, remaining === undefined ? undefined : { timeout: remaining, maxRetries: 0 })
       .withResponse();
     await recordGroqCall(completion.usage, response.headers);
     return completion.choices[0]?.message?.content ?? null;
@@ -86,9 +96,13 @@ async function requestCompletion(
     if (err instanceof RateLimitError && attempt === 0) {
       const retryAfter = Number(err.headers?.get?.("retry-after"));
       const delayMs = Number.isFinite(retryAfter) ? retryAfter * 1000 : DEFAULT_RETRY_DELAY_MS;
-      console.error(`[groq] rate limited on ${logId}, retrying in ${delayMs}ms`);
-      await sleep(delayMs);
-      return requestCompletion(groq, { prompt, jsonMode, maxTokens }, logId, attempt + 1);
+      const fits = deadline === undefined || Date.now() + delayMs + MIN_CALL_MS < deadline;
+      if (fits) {
+        console.error(`[groq] rate limited on ${logId}, retrying in ${delayMs}ms`);
+        await sleep(delayMs);
+        return requestCompletion(groq, { prompt, jsonMode, maxTokens, deadline }, logId, attempt + 1);
+      }
+      console.error(`[groq] rate limited on ${logId}; retry-after ${delayMs}ms does not fit the deadline`);
     }
     throw err;
   }
@@ -140,7 +154,11 @@ export async function classifyAndSummarize(item: FeedItem): Promise<GroqResult<A
 // Plain-text-in/HTML-out translation of a full article body. Not JSON
 // mode — escaping a whole article inside a JSON string is both wasteful
 // and failure-prone if the response gets truncated mid-string.
-export async function translateArticleHtml(logId: string, html: string): Promise<GroqResult<string>> {
+export async function translateArticleHtml(
+  logId: string,
+  html: string,
+  deadline?: number
+): Promise<GroqResult<string>> {
   const groq = getClient();
   if (!groq) return { data: null }; // not configured — not a failure
 
@@ -150,7 +168,7 @@ export async function translateArticleHtml(logId: string, html: string): Promise
       "Preserve the HTML tags and structure exactly, only translate the text " +
       "content. Return only the translated HTML, no commentary, no markdown " +
       `code fences.\n\n${html}`;
-    const raw = await requestCompletion(groq, { prompt, maxTokens: TRANSLATE_MAX_TOKENS }, logId, 0);
+    const raw = await requestCompletion(groq, { prompt, maxTokens: TRANSLATE_MAX_TOKENS, deadline }, logId, 0);
     if (!raw) return { data: null };
 
     // The model occasionally wraps output in a markdown code fence despite

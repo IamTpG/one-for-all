@@ -1,6 +1,11 @@
 import { createHash } from "node:crypto";
 import { parseHTML } from "linkedom";
-import { AI_CACHE_TTL_SECONDS, TRANSLATE_CHUNKS_PER_RUN, TRANSLATE_MAX_CHARS } from "@/lib/config";
+import {
+  AI_CACHE_TTL_SECONDS,
+  TRANSLATE_CHUNKS_PER_RUN,
+  TRANSLATE_MAX_CHARS,
+  TRANSLATE_RENDER_BUDGET_MS,
+} from "@/lib/config";
 import { recordGroqFailure } from "@/lib/dashboardStats";
 import { translateArticleHtml } from "@/lib/groq";
 import { getJson, setJson } from "@/lib/redis";
@@ -102,8 +107,16 @@ function chunkKey(itemId: string, chunk: string): string {
   return `${KEY_PREFIX}${itemId}:${hash}`;
 }
 
-async function translateOne(itemId: string, html: string): Promise<{ text: string | null; failed: boolean }> {
-  const { data, error } = await translateArticleHtml(itemId, html);
+// A chunk is not started with less time than this left: one chunk takes
+// several seconds even when Groq is not rate limited.
+const MIN_CHUNK_MS = 12_000;
+
+async function translateOne(
+  itemId: string,
+  html: string,
+  deadline: number
+): Promise<{ text: string | null; failed: boolean }> {
+  const { data, error } = await translateArticleHtml(itemId, html, deadline);
   if (error) await recordGroqFailure({ ts: Date.now(), stage: "translate", itemId, message: error });
   return { text: data, failed: !data };
 }
@@ -119,14 +132,22 @@ async function translateOne(itemId: string, html: string): Promise<{ text: strin
 // most TRANSLATE_CHUNKS_PER_RUN missing chunks: Groq's free tier allows
 // 8,000 tokens a minute and one chunk uses about half of that, so a long
 // article finishes over several runs (the reader asks for the next one).
-export async function getArticleTranslation(itemId: string, html: string): Promise<ArticleTranslation> {
+//
+// Everything runs inside a page render, so it is bounded by a deadline
+// (TRANSLATE_RENDER_BUDGET_MS from now): no chunk starts too close to it,
+// and Groq calls time out at it instead of running past the function limit.
+export async function getArticleTranslation(
+  itemId: string,
+  html: string,
+  deadline: number = Date.now() + TRANSLATE_RENDER_BUDGET_MS
+): Promise<ArticleTranslation> {
   if (html.length <= TRANSLATE_MAX_CHARS) {
     // Keyed by content like the chunks, so a source that changes (an
     // edited post, a README) is translated again instead of served stale.
     const key = chunkKey(itemId, html);
     const cached = await getJson<string>(key);
     if (cached) return { parts: [{ html: cached, translated: true }], remaining: 0, failed: false };
-    const { text, failed } = await translateOne(itemId, html);
+    const { text, failed } = await translateOne(itemId, html, deadline);
     if (!text) return { parts: [{ html, translated: false }], remaining: 1, failed };
     await setJson(key, text, AI_CACHE_TTL_SECONDS);
     return { parts: [{ html: text, translated: true }], remaining: 0, failed: false };
@@ -148,9 +169,10 @@ export async function getArticleTranslation(itemId: string, html: string): Promi
       parts.push({ html: cached[i]!, translated: true });
       continue;
     }
-    if (!stopped && budget > 0) {
+    const timeLeft = deadline - Date.now() >= MIN_CHUNK_MS;
+    if (!stopped && budget > 0 && timeLeft) {
       budget--;
-      const result = await translateOne(itemId, chunks[i]);
+      const result = await translateOne(itemId, chunks[i], deadline);
       if (result.text) {
         await setJson(keys[i], result.text, AI_CACHE_TTL_SECONDS);
         parts.push({ html: result.text, translated: true });
