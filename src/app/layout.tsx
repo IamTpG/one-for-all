@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { Lexend, Plus_Jakarta_Sans, IBM_Plex_Mono } from "next/font/google";
+import { Lexend, Plus_Jakarta_Sans, IBM_Plex_Mono, Mona_Sans } from "next/font/google";
 import { LANGUAGE_COOKIE, parseLanguageCookie } from "@/lib/language";
 import { LanguageProvider } from "./LanguageProvider";
 import "./globals.css";
@@ -23,9 +23,17 @@ const ibmPlexMono = IBM_Plex_Mono({
   weight: ["400", "500", "600"],
 });
 
+// The home feed's single face (big newsroom headlines + UI). Other pages
+// keep their faces until they move to the new design.
+const monaSans = Mona_Sans({
+  variable: "--font-news",
+  subsets: ["latin", "vietnamese"],
+  axes: ["wdth"],
+});
+
 export const metadata: Metadata = {
   title: "OneForAll",
-  description: "Personal aggregator for dev/AI blogs, Hacker News, and GitHub activity",
+  description: "Tin AI cho dev: công cụ, cách làm việc với agent và nghề nghiệp, tóm tắt bằng tiếng Việt.",
 };
 
 const THEME_INIT_SCRIPT = `
@@ -43,8 +51,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
 
   return (
     <html
-      lang="en"
-      className={`${lexend.variable} ${plusJakartaSans.variable} ${ibmPlexMono.variable}`}
+      lang={initialLanguage}
+      className={`${lexend.variable} ${plusJakartaSans.variable} ${ibmPlexMono.variable} ${monaSans.variable}`}
       suppressHydrationWarning
     >
       <head>

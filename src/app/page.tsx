@@ -11,7 +11,7 @@ export default async function Home() {
   const cookieStore = await cookies();
   const isOwner = isOwnerRequest(cookieStore.get(OWNER_COOKIE_NAME)?.value);
 
-  const { disabledFeeds, watchedRepos } = await getSiteSettings();
+  const { disabledFeeds, watchedRepos, retentionDays } = await getSiteSettings();
   const [allItems, fetchedAt] = await Promise.all([getStoredItems(), getLastFetchAt()]);
 
   const disabledSet = new Set(disabledFeeds);
@@ -19,23 +19,13 @@ export default async function Home() {
     (item) => !disabledSet.has(item.sourceId)
   );
 
-  const trendingRepos = items
-    .filter((item) => item.sourceType === "github-trending")
-    .slice(0, 5);
-
-  const topHn = items
-    .filter((item) => item.sourceType === "hn")
-    .sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
-    .slice(0, 5);
-
   return (
     <AppShell
       items={items}
-      feeds={buildFeedsList()}
+      feeds={buildFeedsList().filter((feed) => !disabledSet.has(feed.sourceId))}
       isOwner={isOwner}
-      trendingRepos={trendingRepos}
-      topHn={topHn}
       fetchedAt={fetchedAt}
+      retentionDays={retentionDays}
     />
   );
 }

@@ -1,0 +1,253 @@
+/* "Chữ lớn · Chanh": the shared world of the migrated surfaces (home feed,
+   article). White page, near-black ink, one lime field that owns only the
+   catch-up band. Mona Sans carries every level of the hierarchy by size and
+   weight alone. Tokens live on .world so pages not yet migrated keep their
+   own look; each migrated page puts .world on its root element. */
+
+.world {
+  --paper: #ffffff;
+  --ink: #0b0b0b;
+  --ink-2: #333333;
+  --ink-3: #666666;
+  --rule: #eaeaea;
+  --chip: #f0f0f0;
+  --chip-hover: #e4e4e4;
+  --band: #d9f85a;
+  --band-ink: #0b0b0b;
+  --band-ink-2: #3a450c;
+  --band-count: #0b0b0b;
+  /* Group chips: outlined in ink on lime; the count disk is ink with lime
+     figures; hover inverts the whole chip. */
+  --chip-band-bg: transparent;
+  --chip-band-border: #0b0b0b;
+  --chip-band-count-bg: #0b0b0b;
+  --chip-band-count-ink: #d9f85a;
+  --chip-band-hover-bg: #0b0b0b;
+  --chip-band-hover-ink: #d9f85a;
+  --tint: #f6f9e4;
+  --tint-rule: #e3eac2;
+  --dot: #0b0b0b;
+  --dot-ring: #d9f85a;
+  --focus: #0b0b0b;
+  --image-ground: #ededed;
+  --selection: #d9f85a;
+  --selection-ink: #0b0b0b;
+
+  --gutter: clamp(16px, 4.4vw, 64px);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  min-height: 100dvh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-news), "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  font-feature-settings: "ss01" 0;
+  -webkit-font-smoothing: antialiased;
+  color-scheme: light;
+}
+
+.world ::selection {
+  background: var(--selection);
+  color: var(--selection-ink);
+}
+
+/* Dark: the lime field becomes deep olive; lime moves to the numerals and
+   the "new" dot, where a small amount reads as a signal instead of glare. */
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) .world {
+    --paper: #0e0f0b;
+    --ink: #f2f4ec;
+    --ink-2: #cdd0c4;
+    --ink-3: #9ea294;
+    --rule: #23261c;
+    --chip: #1b1d16;
+    --chip-hover: #272a20;
+    --band: #1d2309;
+    --band-ink: #f2f4ec;
+    --band-ink-2: #c4cf94;
+    --band-count: #d9f85a;
+    --chip-band-bg: #2a3211;
+    --chip-band-border: transparent;
+    --chip-band-count-bg: #d9f85a;
+    --chip-band-count-ink: #0e0f0b;
+    --chip-band-hover-bg: #d9f85a;
+    --chip-band-hover-ink: #0e0f0b;
+    --tint: #15190a;
+    --tint-rule: #2a3115;
+    --dot: #d9f85a;
+    --dot-ring: transparent;
+    --focus: #d9f85a;
+    --image-ground: #1b1d16;
+    --selection: #3a4512;
+    --selection-ink: #f2f4ec;
+    color-scheme: dark;
+  }
+}
+
+:global(:root[data-theme="dark"]) .world {
+  --paper: #0e0f0b;
+  --ink: #f2f4ec;
+  --ink-2: #cdd0c4;
+  --ink-3: #9ea294;
+  --rule: #23261c;
+  --chip: #1b1d16;
+  --chip-hover: #272a20;
+  --band: #1d2309;
+  --band-ink: #f2f4ec;
+  --band-ink-2: #c4cf94;
+  --band-count: #d9f85a;
+  --chip-band-bg: #2a3211;
+  --chip-band-border: transparent;
+  --chip-band-count-bg: #d9f85a;
+  --chip-band-count-ink: #0e0f0b;
+  --chip-band-hover-bg: #d9f85a;
+  --chip-band-hover-ink: #0e0f0b;
+  --tint: #15190a;
+  --tint-rule: #2a3115;
+  --dot: #d9f85a;
+  --dot-ring: transparent;
+  --focus: #d9f85a;
+  --image-ground: #1b1d16;
+  --selection: #3a4512;
+  --selection-ink: #f2f4ec;
+  color-scheme: dark;
+}
+
+/* The body's global background (older pages' gradient) must not show
+   around the feed or during overscroll. */
+:global(body):has(.world) {
+  background: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"]) body):has(.world) {
+    background: #0e0f0b;
+  }
+}
+:global(:root[data-theme="dark"] body):has(.world) {
+  background: #0e0f0b;
+}
+
+/* The outline follows each control's own radius (pills stay pills). */
+.world :focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+:where(.world) button,
+:where(.world) select {
+  font: inherit;
+  color: inherit;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skipLink {
+  position: fixed;
+  top: -100px;
+  left: 16px;
+  z-index: 50;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 14px;
+}
+.skipLink:focus {
+  top: 12px;
+}
+
+.container {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding-inline: var(--gutter);
+}
+
+/* ---------- Top bar ---------- */
+
+.topInner {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 12px 40px;
+  flex-wrap: wrap;
+  padding-block: 10px;
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+
+.topActions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pillButton,
+.inkButton,
+.circleButton {
+  height: 34px;
+  min-width: 34px;
+  border-radius: 999px;
+  border: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 150ms ease, color 150ms ease, transform 100ms ease;
+}
+.pillButton {
+  padding: 0 14px;
+  background: var(--chip);
+  color: var(--ink);
+}
+.circleButton {
+  background: var(--chip);
+  color: var(--ink);
+}
+.pillButton:hover,
+.circleButton:hover {
+  background: var(--chip-hover);
+}
+.inkButton {
+  background: var(--ink);
+  color: var(--paper);
+}
+.inkButton:hover {
+  opacity: 0.85;
+}
+.pillButton:active,
+.inkButton:active,
+.circleButton:active {
+  transform: scale(0.95);
+}
+.inkButton svg,
+.circleButton svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .world *,
+  .world *::after {
+    transition: none !important;
+  }
+}

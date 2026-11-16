@@ -1,134 +1,168 @@
+import { cache, Suspense } from "react";
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
-import { TOPICS } from "@/lib/config";
 import { extractArticle } from "@/lib/extract";
-import { GithubIcon, HnIcon, ReleaseIcon, RssIcon } from "@/lib/icons";
-import { LANGUAGE_COOKIE, parseLanguageCookie, resolveLocalized, VI_NOT_READY_MESSAGE } from "@/lib/language";
+import { TRANSLATE_MAX_CHARS } from "@/lib/config";
+import { anchorSections } from "@/lib/headings";
+import { bodyHasImage, isGeneratedSocialCard, tidyBody } from "@/lib/images";
+import { LANGUAGE_COOKIE, parseLanguageCookie } from "@/lib/language";
+import { fetchRepoReadme, trendingRepo } from "@/lib/readme";
 import { getSiteSettings } from "@/lib/siteSettings";
 import { getStoredItemById } from "@/lib/store";
-import { getArticleTranslation } from "@/lib/translate";
-import LanguageToggle from "../../LanguageToggle";
-import PageHeader from "../../PageHeader";
-import ThemeToggle from "../../ThemeToggle";
+import { splitHtml } from "@/lib/translate";
+import type { FeedItem } from "@/lib/types";
 import ViewTracker from "../../ViewTracker";
+import world from "../../world.module.css";
+import ArticleBody from "./ArticleBody";
+import { ArticleImage, ArticleMasthead, ArticleTopBar, BodyPending } from "./ArticleParts";
+import { displayTitle, MIN_TOC_SECTIONS, type ArticleItem } from "./articleModel";
+import { PendingBody } from "./EnglishWhileWaiting";
 import styles from "./Article.module.css";
 
-const ICONS = {
-  rss: RssIcon,
-  hn: HnIcon,
-  "github-trending": GithubIcon,
-  "github-release": ReleaseIcon,
-} as const;
+// Translating a long article's next batch can take two Groq calls; the
+// translation itself stops at TRANSLATE_RENDER_BUDGET_MS so the render
+// finishes well inside this limit even when Groq is rate limited.
+export const maxDuration = 60;
 
-export default async function ArticlePage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
+const getItem = cache(async (rawId: string): Promise<FeedItem | null> => {
   const { watchedRepos } = await getSiteSettings();
-  const item = await getStoredItemById(decodeURIComponent(id), watchedRepos);
+  return getStoredItemById(decodeURIComponent(rawId), watchedRepos);
+});
+
+async function loadContent(item: FeedItem): Promise<string | null> {
+  if (item.fullContentHtml) return item.fullContentHtml;
+  if (item.sourceType === "github-trending") {
+    const repo = trendingRepo(item.id);
+    return repo ? fetchRepoReadme(repo) : null;
+  }
+  if (item.sourceType === "rss" || item.sourceType === "hn") return extractArticle(item.url);
+  return null;
+}
+
+// Words per minute for the "N min read" estimate; Vietnamese and English
+// read at about the same rate by word count.
+const WORDS_PER_MINUTE = 220;
+
+function readingMinutes(html: string | null): number | null {
+  if (!html) return null;
+  const words = html.replace(/<[^>]*>/g, " ").split(/\s+/).filter(Boolean).length;
+  const minutes = Math.round(words / WORDS_PER_MINUTE);
+  return minutes >= 2 ? minutes : null;
+}
+
+function toArticleItem(item: FeedItem): ArticleItem {
+  return {
+    id: item.id,
+    source: item.source,
+    sourceId: item.sourceId,
+    sourceType: item.sourceType,
+    title: item.title,
+    titleVi: item.titleVi,
+    url: item.url,
+    summary: item.summary,
+    summaryVi: item.summaryVi,
+    publishedAt: item.publishedAt,
+    imageUrl: item.imageUrl,
+    videoEmbedHtml: item.videoEmbedHtml,
+    topics: item.topics,
+    tag: item.tag,
+    points: item.points,
+    firstSeenAt: item.firstSeenAt,
+    lengthMinutes: item.lengthMinutes,
+  };
+}
+
+export async function generateMetadata({ params }: PageProps<"/article/[id]">): Promise<Metadata> {
+  const { id } = await params;
+  const item = await getItem(id);
+  if (!item) return { title: "OneForAll" };
+  const language = parseLanguageCookie((await cookies()).get(LANGUAGE_COOKIE)?.value);
+  return { title: `${displayTitle(item, language)} · OneForAll` };
+}
+
+export default async function ArticlePage({ params }: PageProps<"/article/[id]">) {
+  const { id } = await params;
+  const item = await getItem(id);
   if (!item) notFound();
 
-  const cookieStore = await cookies();
-  const language = parseLanguageCookie(cookieStore.get(LANGUAGE_COOKIE)?.value);
-
-  const contentHtml =
-    item.fullContentHtml ??
-    (item.sourceType === "rss" || item.sourceType === "hn"
-      ? await extractArticle(item.url)
-      : null);
-
-  // Translated on first paint, same as extractArticle above — no loading
-  // spinner. If contentHtml is null, there's nothing to translate; that
-  // failure is unrelated to language and is handled by the existing
-  // "couldn't load" fallback below, untouched.
-  const translatedBody =
-    language === "vi" && contentHtml ? await getArticleTranslation(item.id, contentHtml) : null;
-  const bodyTranslationNote = language === "vi" && contentHtml && !translatedBody;
-
-  const title = resolveLocalized(item.title, item.titleVi, language).text ?? item.title;
-  const localizedSummary = resolveLocalized(item.summary, item.summaryVi, language);
-
-  const Icon = ICONS[item.sourceType];
-  const date = new Date(item.publishedAt).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  const language = parseLanguageCookie((await cookies()).get(LANGUAGE_COOKIE)?.value);
+  // Repeated images collapse to one, and empty leftovers go, before the
+  // body is measured, translated or rendered.
+  const contentHtml = tidyBody(await loadContent(item));
+  const articleItem = toArticleItem(item);
+  const minutes = readingMinutes(contentHtml);
+  // The original with its section headings anchored: the masthead's section
+  // count, the contents shown while translating, and the English body all
+  // come from this one list, so they always agree.
+  const source = contentHtml ? anchorSections(contentHtml) : null;
+  const sections = source?.headings.length ?? 0;
+  const hasToc = sections >= MIN_TOC_SECTIONS;
+  // How many batches a long article is translated in, for the waiting copy.
+  const translationParts =
+    contentHtml && contentHtml.length > TRANSLATE_MAX_CHARS ? splitHtml(contentHtml).length : 1;
+  // The listing image often is the article's own lead picture (shown by the
+  // body already), or a card GitHub generates from the title: neither goes
+  // above the body.
+  const showImage =
+    Boolean(item.imageUrl) &&
+    !isGeneratedSocialCard(item.imageUrl) &&
+    !bodyHasImage(contentHtml, item.imageUrl);
 
   return (
-    <div className={styles.page}>
+    <div className={world.world}>
       <ViewTracker type="article" itemId={item.id} />
-      <PageHeader tagline="AI · DEV · GITHUB" actions={<><LanguageToggle /><ThemeToggle /></>} />
+      <ArticleTopBar onInk />
 
-      <main className={styles.article}>
-        <div className={styles.meta}>
-          <Icon className={styles.sourceIcon} />
-          <span className="mono">{item.source.toUpperCase()}</span>
-          <div className={styles.dotSep} />
-          <span className="mono">{date}</span>
-        </div>
+      <main id="article-main" className={styles.main} tabIndex={-1}>
+        <ArticleMasthead item={articleItem} readMinutes={minutes} sections={sections} hasBody={Boolean(contentHtml)} />
 
-        {item.tag && <span className={`${styles.tagBadge} mono`}>{item.tag}</span>}
+        {/* Grid: contents on the left (when the article has enough
+            sections), the reading column on the right. The contents come
+            from the body, so they stream in with it. */}
+        <div className={hasToc ? styles.layoutToc : styles.layout}>
+          {item.videoEmbedHtml ? (
+            <div className={styles.video} dangerouslySetInnerHTML={{ __html: item.videoEmbedHtml }} />
+          ) : (
+            showImage && item.imageUrl && <ArticleImage src={item.imageUrl} />
+          )}
 
-        <h1 className={`${styles.headline} display`}>{title}</h1>
-
-        {item.topics && item.topics.length > 0 && (
-          <div className={styles.topicRow}>
-            {item.topics.map((topicId) => {
-              const topic = TOPICS.find((t) => t.id === topicId);
-              if (!topic) return null;
-              return (
-                <span key={topicId} className={`${styles.topicPill} mono`}>
-                  {topic.label}
-                </span>
-              );
-            })}
-          </div>
-        )}
-
-        {item.videoEmbedHtml ? (
-          <div className={styles.videoEmbed} dangerouslySetInnerHTML={{ __html: item.videoEmbedHtml }} />
-        ) : (
-          item.imageUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={item.imageUrl} alt="" className={styles.heroImage} />
-          )
-        )}
-
-        {item.aiSummary && localizedSummary.text && (
-          <div className={styles.aiSummaryBox}>
-            <span className={`${styles.aiBadge} mono`}>AI Summary</span>
-            <p>{localizedSummary.text}</p>
-            {localizedSummary.note && <p className={styles.fallbackNote}>{localizedSummary.note}</p>}
-          </div>
-        )}
-
-        {contentHtml ? (
-          <>
-            {bodyTranslationNote && <p className={styles.fallbackNote}>{VI_NOT_READY_MESSAGE}</p>}
-            <div
-              className={styles.body}
-              dangerouslySetInnerHTML={{ __html: translatedBody ?? contentHtml }}
+          {/* Keyed by language: switching VI/EN shows the waiting state
+              instead of leaving the old language on screen while the
+              server translates. */}
+          {/* The Vietnamese waiting state sits beside the boundary, not in
+              its fallback, so its controls hydrate (see PendingBody). */}
+          {language === "vi" && source && (
+            <PendingBody
+              key={item.id}
+              itemId={item.id}
+              headings={source.headings}
+              englishHtml={source.html}
+              parts={translationParts}
+              minutes={minutes}
+              bodyId="article-body"
             />
-          </>
-        ) : (
-          <div className={styles.body}>
-            {item.summary && !item.aiSummary && <p>{item.summary}</p>}
-            <p className={styles.fallbackNote}>
-              Couldn&apos;t load the full article for this one.
-            </p>
-          </div>
-        )}
-
-        <a className={styles.openOriginal} href={item.url} target="_blank" rel="noopener noreferrer">
-          Open the original
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={styles.openIcon}>
-            <path d="M7 17 L17 7" />
-            <path d="M9 7h8v8" />
-          </svg>
-        </a>
+          )}
+          <Suspense
+            key={language}
+            fallback={
+              language === "vi" && source ? null : (
+                <div className={styles.bodyCol}>
+                  <BodyPending language={language} />
+                </div>
+              )
+            }
+          >
+            <ArticleBody
+              item={articleItem}
+              contentHtml={contentHtml}
+              source={source}
+              language={language}
+              readMinutes={minutes}
+              bodyId="article-body"
+            />
+          </Suspense>
+        </div>
       </main>
     </div>
   );

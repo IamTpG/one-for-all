@@ -1,0 +1,703 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-16T14:29:23.667557+00:00",
+  "title": "Design System: OneForAll",
+  "extensions": {
+    "colorMeta": {
+      "lime": {
+        "role": "primary",
+        "displayName": "Chanh Lime",
+        "canonical": "#d9f85a",
+        "tonalRamp": [
+          "#15190a",
+          "#1d2309",
+          "#3a4512",
+          "#586b00",
+          "#778f00",
+          "#9bb142",
+          "#c4cf94",
+          "#d9f85a",
+          "#2a3211"
+        ],
+        "oklch": "oklch(92.8% 0.183 120)"
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Newsprint Ink",
+        "canonical": "#0b0b0b",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ],
+        "oklch": "oklch(15.0% 0.000 90)"
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Graphite",
+        "canonical": "#333333",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ],
+        "oklch": "oklch(32.1% 0.000 90)"
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Slate Grey",
+        "canonical": "#666666",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ],
+        "oklch": "oklch(51.0% 0.000 90)"
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ],
+        "oklch": "oklch(100.0% 0.000 90)"
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#eaeaea",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ],
+        "oklch": "oklch(93.7% 0.000 90)"
+      },
+      "chip": {
+        "role": "neutral",
+        "displayName": "Chip Grey",
+        "canonical": "#f0f0f0",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ],
+        "oklch": "oklch(95.5% 0.000 90)"
+      },
+      "chip-hover": {
+        "role": "neutral",
+        "displayName": "Chip Grey Pressed",
+        "canonical": "#e4e4e4",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ],
+        "oklch": "oklch(91.9% 0.000 90)"
+      },
+      "band-ink-2": {
+        "role": "neutral",
+        "displayName": "Band Olive Ink",
+        "canonical": "#3a450c",
+        "tonalRamp": [
+          "#0a0c07",
+          "#232719",
+          "#3f462b",
+          "#5c673e",
+          "#7c8953",
+          "#a0ab81",
+          "#c5ceb0",
+          "#ecf1e0"
+        ],
+        "oklch": "oklch(36.8% 0.079 120)"
+      },
+      "tint": {
+        "role": "neutral",
+        "displayName": "Lime Tint",
+        "canonical": "#f6f9e4",
+        "tonalRamp": [
+          "#0b0b09",
+          "#252621",
+          "#42433a",
+          "#616355",
+          "#828472",
+          "#a5a798",
+          "#c9cac0",
+          "#eeefe9"
+        ],
+        "oklch": "oklch(97.4% 0.028 114)"
+      },
+      "tint-rule": {
+        "role": "neutral",
+        "displayName": "Tint Rule",
+        "canonical": "#e3eac2",
+        "tonalRamp": [
+          "#0b0c08",
+          "#25261d",
+          "#414432",
+          "#606449",
+          "#818762",
+          "#a4a98c",
+          "#c8ccb7",
+          "#eef0e4"
+        ],
+        "oklch": "oklch(92.1% 0.053 116)"
+      },
+      "image-ground": {
+        "role": "neutral",
+        "displayName": "Image Ground",
+        "canonical": "#ededed",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ],
+        "oklch": "oklch(94.6% 0.000 90)"
+      },
+      "paper-dark": {
+        "role": "neutral",
+        "displayName": "Night Paper",
+        "canonical": "#0e0f0b",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252524",
+          "#424240",
+          "#61625e",
+          "#82837e",
+          "#a4a6a1",
+          "#c9c9c6",
+          "#eeefed"
+        ],
+        "oklch": "oklch(16.6% 0.008 119)"
+      },
+      "ink-dark": {
+        "role": "neutral",
+        "displayName": "Night Ink",
+        "canonical": "#f2f4ec",
+        "tonalRamp": [
+          "#0b0b0a",
+          "#252523",
+          "#42423f",
+          "#61625d",
+          "#81837c",
+          "#a4a6a0",
+          "#c9cac5",
+          "#eeefec"
+        ],
+        "oklch": "oklch(96.3% 0.011 118)"
+      },
+      "ink-2-dark": {
+        "role": "neutral",
+        "displayName": "Night Graphite",
+        "canonical": "#cdd0c4",
+        "tonalRamp": [
+          "#0b0b0a",
+          "#252522",
+          "#41433d",
+          "#60625a",
+          "#818479",
+          "#a4a69d",
+          "#c8cac4",
+          "#eeefeb"
+        ],
+        "oklch": "oklch(85.2% 0.017 118)"
+      },
+      "ink-3-dark": {
+        "role": "neutral",
+        "displayName": "Night Slate",
+        "canonical": "#9ea294",
+        "tonalRamp": [
+          "#0b0b0a",
+          "#252622",
+          "#41433c",
+          "#606359",
+          "#818477",
+          "#a4a79c",
+          "#c8cac3",
+          "#eeefeb"
+        ],
+        "oklch": "oklch(70.5% 0.020 120)"
+      },
+      "rule-dark": {
+        "role": "neutral",
+        "displayName": "Night Hairline",
+        "canonical": "#23261c",
+        "tonalRamp": [
+          "#0b0b0a",
+          "#242622",
+          "#41433d",
+          "#60635a",
+          "#808478",
+          "#a3a69d",
+          "#c8cac3",
+          "#eeefeb"
+        ],
+        "oklch": "oklch(26.2% 0.019 121)"
+      },
+      "chip-dark": {
+        "role": "neutral",
+        "displayName": "Night Chip",
+        "canonical": "#1b1d16",
+        "tonalRamp": [
+          "#0b0b0a",
+          "#252523",
+          "#41433e",
+          "#60625c",
+          "#81847b",
+          "#a4a69f",
+          "#c8cac5",
+          "#eeefec"
+        ],
+        "oklch": "oklch(22.6% 0.013 120)"
+      },
+      "chip-hover-dark": {
+        "role": "neutral",
+        "displayName": "Night Chip Pressed",
+        "canonical": "#272a20",
+        "tonalRamp": [
+          "#0b0b0a",
+          "#252523",
+          "#41433e",
+          "#60625c",
+          "#81847b",
+          "#a4a69f",
+          "#c8cac5",
+          "#eeefec"
+        ]
+      },
+      "olive-band-dark": {
+        "role": "primary",
+        "displayName": "Deep Olive Band",
+        "canonical": "#1d2309",
+        "tonalRamp": [
+          "#0b0c09",
+          "#24261e",
+          "#404436",
+          "#5e644f",
+          "#7e876a",
+          "#a2a992",
+          "#c7ccbb",
+          "#edf0e6"
+        ],
+        "oklch": "oklch(24.3% 0.044 121)"
+      },
+      "band-ink-2-dark": {
+        "role": "neutral",
+        "displayName": "Pale Olive",
+        "canonical": "#c4cf94",
+        "tonalRamp": [
+          "#0b0c07",
+          "#242718",
+          "#40452a",
+          "#5f663c",
+          "#7f8951",
+          "#a2aa80",
+          "#c7cdaf",
+          "#edf1df"
+        ],
+        "oklch": "oklch(83.2% 0.079 117)"
+      },
+      "tint-dark": {
+        "role": "neutral",
+        "displayName": "Night Tint",
+        "canonical": "#15190a",
+        "tonalRamp": [
+          "#0b0b09",
+          "#242621",
+          "#41433a",
+          "#5f6355",
+          "#808573",
+          "#a3a799",
+          "#c7cbc0",
+          "#edefe9"
+        ],
+        "oklch": "oklch(20.4% 0.028 121)"
+      },
+      "tint-rule-dark": {
+        "role": "neutral",
+        "displayName": "Night Tint Rule",
+        "canonical": "#2a3115",
+        "tonalRamp": [
+          "#0b0b09",
+          "#242621",
+          "#41433a",
+          "#5f6355",
+          "#808573",
+          "#a3a799",
+          "#c7cbc0",
+          "#edefe9"
+        ]
+      },
+      "olive-ring-dark": {
+        "role": "neutral",
+        "displayName": "Olive Ring",
+        "canonical": "#3a4512",
+        "tonalRamp": [
+          "#0a0c07",
+          "#23271a",
+          "#3f452c",
+          "#5c6640",
+          "#7c8957",
+          "#a0ab83",
+          "#c5cdb1",
+          "#ecf1e1"
+        ],
+        "oklch": "oklch(36.9% 0.074 121)"
+      },
+      "olive-chip-dark": {
+        "role": "neutral",
+        "displayName": "Olive Chip",
+        "canonical": "#2a3211",
+        "oklch": "oklch(36.9% 0.074 121)"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The catch-up sentence in the lime band; one per page."
+      },
+      "display-numeral": {
+        "displayName": "Display Numeral",
+        "purpose": "Leading count inside the band sentence, width 125."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Lead story title beside its image."
+      },
+      "headline-text-only": {
+        "displayName": "Headline (text-only lead)",
+        "purpose": "Lead story title when no usable image exists."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Every stream row headline."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Vietnamese summaries, 64ch, clamped to 4 lines."
+      },
+      "body-lead": {
+        "displayName": "Body (lead)",
+        "purpose": "Lead story summary, clamped to 6 lines."
+      },
+      "nav": {
+        "displayName": "Nav",
+        "purpose": "View switch, topic tabs, industry headlines (15px)."
+      },
+      "empty-title": {
+        "displayName": "Empty Title",
+        "purpose": "Empty-state headline (clamp 22-28px)."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Controls, chips, metadata lines."
+      },
+      "label-small": {
+        "displayName": "Label Small",
+        "purpose": "Entity chips, notes, industry metadata."
+      },
+      "count": {
+        "displayName": "Count",
+        "purpose": "View and tab counts, tabular."
+      },
+      "brand": {
+        "displayName": "Brand",
+        "purpose": "OneForAll wordmark."
+      },
+      "standfirst": {
+        "displayName": "Standfirst",
+        "purpose": "Article page: the Vietnamese summary under the title."
+      },
+      "prose": {
+        "displayName": "Prose",
+        "purpose": "Article body text, 680px column, line-height 1.7."
+      },
+      "prose-heading": {
+        "displayName": "Prose Heading",
+        "purpose": "h1/h2 inside article bodies (h3 19px, h4 17px)."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "System monospace for inline code and pre blocks in article bodies only; never a UI voice."
+      },
+      "masthead-title": {
+        "displayName": "Masthead Title",
+        "purpose": "Article page: the title on the ink masthead, clamp 30 to 48px, 600, max 24ch."
+      },
+      "masthead-figure": {
+        "displayName": "Masthead Figure",
+        "purpose": "Article page: reading minutes and section count in lime, 800 at width 125, tabular."
+      }
+    },
+    "shadows": [
+      {
+        "name": "new-dot-ring",
+        "value": "0 0 0 2.5px #d9f85a",
+        "purpose": "Solid lime ring around the 8px ink new dot in light mode; dark mode has no ring (the dot itself is lime). Not elevation; the system has no surface shadows."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Tab underline (260ms), disclosure chevron (200ms), image fade (300ms) and hover zoom (400-500ms)."
+      },
+      {
+        "name": "state-color",
+        "value": "150ms ease",
+        "purpose": "Color and background changes on buttons, chips, tabs."
+      },
+      {
+        "name": "press",
+        "value": "scale(0.95) 100ms ease",
+        "purpose": "Active state of pill, ink and circle buttons."
+      },
+      {
+        "name": "image-hover",
+        "value": "scale(1.03) thumbnails, scale(1.02) lead",
+        "purpose": "Gentle zoom on image hover."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "transition: none",
+        "purpose": "All transitions removed under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "md",
+        "value": "720px"
+      },
+      {
+        "name": "tabs-fit",
+        "value": "1000px"
+      },
+      {
+        "name": "side-column",
+        "value": "1100px"
+      },
+      {
+        "name": "container",
+        "value": "1440px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Pill Button",
+      "kind": "button",
+      "refersTo": "button-pill",
+      "description": "Default control in the top bar (language toggle): quiet chip-grey pill.",
+      "html": "<button class=\"ds-pill\">VI</button>",
+      "css": ".ds-pill{font-family:'Mona Sans','Segoe UI',Roboto,sans-serif;height:34px;min-width:34px;padding:0 14px;border:0;border-radius:999px;background:#f0f0f0;color:#0b0b0b;font-size:14px;font-weight:500;cursor:pointer;transition:background-color 150ms ease,transform 100ms ease}.ds-pill:hover{background:#e4e4e4}.ds-pill:active{transform:scale(.95)}.ds-pill:focus-visible{outline:2px solid #0b0b0b;outline-offset:2px}"
+    },
+    {
+      "name": "Ink Button",
+      "kind": "button",
+      "refersTo": "button-ink-large",
+      "description": "The one filled control: empty-state action and theme toggle.",
+      "html": "<button class=\"ds-ink\">Xem tất cả</button>",
+      "css": ".ds-ink{font-family:'Mona Sans','Segoe UI',Roboto,sans-serif;height:40px;padding:0 18px;border:0;border-radius:999px;background:#0b0b0b;color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:opacity 150ms ease,transform 100ms ease}.ds-ink:hover{opacity:.85}.ds-ink:active{transform:scale(.95)}.ds-ink:focus-visible{outline:2px solid #0b0b0b;outline-offset:2px}"
+    },
+    {
+      "name": "Icon Button",
+      "kind": "button",
+      "refersTo": "button-icon",
+      "description": "Save and open-original actions at the end of each metadata line.",
+      "html": "<button class=\"ds-icon\" aria-label=\"Lưu\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6.5 3.5 H17.5 V20.5 L12 16.2 L6.5 20.5 Z\"/></svg></button>",
+      "css": ".ds-icon{width:36px;height:36px;border:0;border-radius:999px;background:none;display:inline-grid;place-items:center;color:#666;cursor:pointer;transition:background-color 150ms ease,color 150ms ease}.ds-icon svg{width:18px;height:18px}.ds-icon:hover{background:#f0f0f0;color:#0b0b0b}.ds-icon:focus-visible{outline:2px solid #0b0b0b;outline-offset:2px}"
+    },
+    {
+      "name": "Group Chip",
+      "kind": "chip",
+      "refersTo": "chip-group",
+      "description": "Band-only filter chip: ink outline, count pill, inverts on hover.",
+      "html": "<div class=\"ds-band-mini\"><button class=\"ds-gchip\"><span class=\"ds-gcount\">13</span>Công cụ &amp; agent</button></div>",
+      "css": ".ds-band-mini{background:#d9f85a;padding:16px}.ds-gchip{font-family:'Mona Sans','Segoe UI',Roboto,sans-serif;display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 14px 0 6px;border-radius:999px;border:1.5px solid #0b0b0b;background:transparent;color:#0b0b0b;font-size:14px;font-weight:500;cursor:pointer;transition:background-color 150ms ease,color 150ms ease}.ds-gcount{min-width:26px;height:26px;padding:0 7px;border-radius:999px;display:inline-grid;place-items:center;background:#0b0b0b;color:#d9f85a;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;font-variation-settings:'wdth' 112}.ds-gchip:hover{background:#0b0b0b;color:#d9f85a}.ds-gchip:hover .ds-gcount{background:#d9f85a;color:#0b0b0b}.ds-gchip:focus-visible{outline:2px solid #0b0b0b;outline-offset:2px}"
+    },
+    {
+      "name": "Entity Chip",
+      "kind": "chip",
+      "refersTo": "chip-entity",
+      "description": "Product/company tag under a summary; renders only when data exists.",
+      "html": "<ul class=\"ds-entities\"><li>Claude</li><li>OpenAI</li></ul>",
+      "css": ".ds-entities{font-family:'Mona Sans','Segoe UI',Roboto,sans-serif;list-style:none;margin:0;padding:0;display:flex;gap:6px}.ds-entities li{font-size:13px;font-weight:500;padding:2px 10px;border-radius:999px;background:#f0f0f0;color:#0b0b0b}"
+    },
+    {
+      "name": "Source Select",
+      "kind": "input",
+      "refersTo": "select-source",
+      "description": "Native select styled as a chip-grey pill with a chevron.",
+      "html": "<label class=\"ds-select\"><select><option>Mọi nguồn</option><option>Hacker News</option></select><svg viewBox=\"0 0 12 12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"><path d=\"M2.5 4.5 L6 8 L9.5 4.5\"/></svg></label>",
+      "css": ".ds-select{position:relative;display:inline-flex;align-items:center}.ds-select select{font-family:'Mona Sans','Segoe UI',Roboto,sans-serif;appearance:none;height:34px;padding:0 32px 0 14px;border:0;border-radius:999px;background:#f0f0f0;color:#0b0b0b;font-size:14px;font-weight:500;cursor:pointer}.ds-select select:hover{background:#e4e4e4}.ds-select select:focus-visible{outline:2px solid #0b0b0b;outline-offset:2px}.ds-select svg{position:absolute;right:12px;width:11px;height:11px;pointer-events:none;color:#0b0b0b}"
+    },
+    {
+      "name": "Topic Tabs",
+      "kind": "nav",
+      "refersTo": "tab-topic",
+      "description": "Underline tabs with tabular counts; the underline scales in from the left.",
+      "html": "<nav class=\"ds-tabs\"><button class=\"ds-tab\" aria-pressed=\"true\">Mọi chủ đề <span>26</span></button><button class=\"ds-tab\" aria-pressed=\"false\">Cách làm việc với AI <span>4</span></button><button class=\"ds-tab\" aria-pressed=\"false\">Lạc đề <span>136</span></button></nav>",
+      "css": ".ds-tabs{font-family:'Mona Sans','Segoe UI',Roboto,sans-serif;display:flex;gap:26px;border-bottom:1px solid #eaeaea}.ds-tab{position:relative;display:inline-flex;align-items:baseline;gap:6px;padding:15px 0 14px;border:0;background:none;font:inherit;font-size:15px;color:#666;cursor:pointer;white-space:nowrap;transition:color 150ms ease}.ds-tab span{font-size:12px;font-weight:500;color:#666;font-variant-numeric:tabular-nums}.ds-tab::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:#0b0b0b;transform:scaleX(0);transform-origin:left center;transition:transform 260ms cubic-bezier(.22,1,.36,1)}.ds-tab:hover{color:#0b0b0b}.ds-tab[aria-pressed=true]{color:#0b0b0b;font-weight:600}.ds-tab[aria-pressed=true]::after{transform:scaleX(1)}.ds-tab:focus-visible{outline:2px solid #0b0b0b;outline-offset:2px}"
+    },
+    {
+      "name": "Catch-up Band",
+      "kind": "custom",
+      "refersTo": "band-catch-up",
+      "description": "Signature: the one lime field, a display sentence led by a wide numeral.",
+      "html": "<section class=\"ds-band\"><h1><span class=\"ds-num\">26</span> tin mới kể từ hôm qua. <span class=\"ds-lead\">4 về cách làm việc với agent.</span></h1><p>Cập nhật 1 giờ trước</p></section>",
+      "css": ".ds-band{font-family:'Mona Sans','Segoe UI',Roboto,sans-serif;background:#d9f85a;color:#0b0b0b;padding:28px 24px 22px}.ds-band h1{margin:0;font-size:40px;font-weight:600;letter-spacing:-.035em;line-height:1.05;max-width:27ch;text-wrap:balance}.ds-num{font-weight:800;font-variant-numeric:tabular-nums;font-stretch:125%;font-variation-settings:'wdth' 125;letter-spacing:-.02em}.ds-lead{color:#3a450c}.ds-band p{margin:14px 0 0;font-size:14px;color:#3a450c}"
+    },
+    {
+      "name": "Feed Row",
+      "kind": "card",
+      "refersTo": "title",
+      "description": "Type between hairlines: title, summary, metadata line with new dot and actions.",
+      "html": "<article class=\"ds-row\"><h2><a href=\"#\">Thông báo Hegel-clj</a></h2><p class=\"ds-sum\">Thông báo giới thiệu Hegel-clj, một thư viện Clojure mới, kèm theo các bình luận ngắn gọn về mục đích và cách sử dụng.</p><div class=\"ds-meta\"><span class=\"ds-new\"><span class=\"ds-dot\"></span>Mới</span><span>Cập nhật · Lobsters · 3 giờ trước</span></div></article>",
+      "css": ".ds-row{font-family:'Mona Sans','Segoe UI',Roboto,sans-serif;padding:22px 0;border-bottom:1px solid #eaeaea;color:#0b0b0b;max-width:640px}.ds-row h2{margin:0;font-size:24px;font-weight:600;letter-spacing:-.02em;line-height:1.2}.ds-row a{color:#0b0b0b;text-decoration:none;text-decoration-thickness:1.5px;text-underline-offset:4px}.ds-row a:hover{text-decoration-line:underline}.ds-row a:focus-visible{outline:2px solid #0b0b0b;outline-offset:2px}.ds-sum{margin:8px 0 0;max-width:64ch;font-size:16px;line-height:1.55;color:#333}.ds-meta{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:14px;color:#666}.ds-new{display:inline-flex;align-items:center;gap:7px;font-weight:600;color:#0b0b0b}.ds-dot{width:8px;height:8px;border-radius:50%;background:#0b0b0b;box-shadow:0 0 0 2.5px #d9f85a}"
+    },
+    {
+      "name": "Industry Panel",
+      "kind": "card",
+      "refersTo": "panel-industry",
+      "description": "The one tinted panel: compact industry one-liners.",
+      "html": "<section class=\"ds-ind\"><h2>Tin ngành</h2><ul><li><a href=\"#\">Nvidia công bố GPU mới cho data center</a><span>The Verge · 2 giờ trước</span></li><li><a href=\"#\">OpenAI đổi giá API</a><span>OpenAI News · 5 giờ trước</span></li></ul></section>",
+      "css": ".ds-ind{font-family:'Mona Sans','Segoe UI',Roboto,sans-serif;background:#f6f9e4;border-radius:12px;padding:18px 22px 14px;max-width:340px;color:#0b0b0b}.ds-ind h2{margin:0 0 4px;font-size:15px;font-weight:600}.ds-ind ul{list-style:none;margin:0;padding:0}.ds-ind li{padding:12px 0;border-bottom:1px solid #e3eac2}.ds-ind li:last-child{border-bottom:0}.ds-ind a{display:block;font-size:15px;font-weight:500;line-height:1.4;color:#0b0b0b;text-underline-offset:3px;text-decoration:none}.ds-ind a:hover{text-decoration:underline}.ds-ind a:focus-visible{outline:2px solid #0b0b0b;outline-offset:2px}.ds-ind span{display:block;margin-top:4px;font-size:13px;color:#666}"
+    },
+    {
+      "name": "Article Masthead",
+      "kind": "section",
+      "refersTo": "headline-text-only",
+      "description": "Full-bleed ink block (deep olive in dark): title, standfirst, metadata, then lime width-125 figures (minutes, sections) beside the action pills.",
+      "html": "<header class=\"ds-am\"><h1>Show HN: Turbo-Browser-MCP – Form batch, delta DOM và bảo vệ submit cho MCP</h1><p class=\"ds-sf\">Bài viết giới thiệu Turbo-Browser-MCP, một công cụ bổ sung khả năng xử lý form hàng loạt cho môi trường trình duyệt MCP.</p><p class=\"ds-mt\">Công cụ &amp; agent · Hacker News · 15/11/2026 · 8 điểm HN</p><div class=\"ds-ft\"><dl><div><dt>phút đọc</dt><dd>19</dd></div><div><dt>mục</dt><dd>11</dd></div></dl><div class=\"ds-act\"><a href=\"#\">Đọc bản gốc ↗</a><button type=\"button\">Lưu</button></div></div></header>",
+      "css": ".ds-am{font-family:'Mona Sans','Segoe UI',Roboto,sans-serif;background:#0b0b0b;color:#f2f4ec;padding:40px 44px 34px;max-width:1000px}.ds-am h1{margin:0;font-size:44px;font-weight:600;letter-spacing:-.03em;line-height:1.08;max-width:24ch}.ds-sf{margin:18px 0 0;font-size:20px;line-height:1.5;color:#cdd0c4;max-width:64ch}.ds-mt{margin:18px 0 0;font-size:14px;color:#9ea294}.ds-ft{display:flex;justify-content:space-between;align-items:flex-end;margin-top:26px;gap:20px}.ds-ft dl{display:flex;gap:40px;margin:0}.ds-ft dl div{display:flex;flex-direction:column-reverse}.ds-ft dd{margin:0;color:#d9f85a;font-size:36px;font-weight:800;font-stretch:125%;font-variation-settings:'wdth' 125;font-variant-numeric:tabular-nums;line-height:1}.ds-ft dt{margin-top:6px;font-size:13px;color:#9ea294}.ds-act{display:flex;gap:8px}.ds-act a,.ds-act button{height:40px;padding:0 16px;border:0;border-radius:999px;background:#1b1d16;color:#f2f4ec;font:500 14px 'Mona Sans',sans-serif;display:inline-flex;align-items:center;text-decoration:none;cursor:pointer}.ds-act a:hover,.ds-act button:hover{background:#272a20}.ds-act a:focus-visible,.ds-act button:focus-visible{outline:2px solid #d9f85a;outline-offset:2px}"
+    },
+    {
+      "name": "Translation Hand-off",
+      "kind": "section",
+      "refersTo": "nav",
+      "description": "Between hairlines where the translated body stops: how many parts remain in English, one ink pill to translate the next batch.",
+      "html": "<aside class=\"ds-ho\"><p class=\"ds-hl\">Phần dưới chưa được dịch (còn 3 đoạn), đang hiện bản tiếng Anh.</p><p class=\"ds-hn\">Bài dài được dịch từng đợt. Bấm Dịch tiếp, hoặc mở lại bài sau, để dịch thêm.</p><button type=\"button\">Dịch tiếp</button></aside>",
+      "css": ".ds-ho{font-family:'Mona Sans','Segoe UI',Roboto,sans-serif;max-width:680px;padding:20px 0;border-block:1px solid #eaeaea;color:#0b0b0b}.ds-hl{margin:0;font-size:15px;font-weight:600}.ds-hn{margin:8px 0 0;font-size:13px;font-weight:500;color:#666}.ds-ho button{margin-top:14px;height:40px;padding:0 16px;border:0;border-radius:999px;background:#0b0b0b;color:#fff;font:600 14px 'Mona Sans',sans-serif;cursor:pointer}.ds-ho button:hover{opacity:.85}.ds-ho button:focus-visible{outline:2px solid #0b0b0b;outline-offset:2px}"
+    },
+    {
+      "name": "Table of Contents",
+      "kind": "navigation",
+      "refersTo": "label",
+      "description": "Sticky 240px list of the body's h1/h2 sections on a 1px rule; the section being read is ink 600 with a 2px bar; minutes left below. Past 15 sections it shows the seven around the current one with a \"Xem cả N mục\" toggle. Headings still in English inside a Vietnamese article carry a small EN tag (only when the list mixes languages). A disclosure under 1100px.",
+      "html": "<nav class=\"ds-toc\"><p>Trong bài này</p><ol><li><a href=\"#\">Install</a></li><li><a href=\"#\" class=\"on\">Tools</a></li><li><a href=\"#\">Known limits <abbr>EN</abbr></a></li></ol><button type=\"button\">Xem cả 16 mục</button><small>Còn 12 phút</small></nav>",
+      "css": ".ds-toc{font-family:'Mona Sans','Segoe UI',Roboto,sans-serif;width:240px;color:#0b0b0b}.ds-toc p{margin:0 0 12px;font-size:13px;font-weight:600}.ds-toc ol{list-style:none;margin:0;padding:0}.ds-toc a{display:block;padding:7px 0 7px 14px;border-left:1px solid #eaeaea;font-size:14px;color:#666;text-decoration:none}.ds-toc a:hover{color:#0b0b0b}.ds-toc a.on{padding-left:13px;border-left:2px solid #0b0b0b;color:#0b0b0b;font-weight:600}.ds-toc a:focus-visible{outline:2px solid #0b0b0b;outline-offset:2px}.ds-toc small{display:block;margin-top:14px;font-size:13px;color:#666}.ds-toc abbr{margin-left:6px;padding:0 4px;border:1px solid #eaeaea;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.04em;text-decoration:none;color:#666}.ds-toc button{margin:8px 0 0 14px;padding:8px 0;border:0;background:none;font:600 13px 'Mona Sans',sans-serif;color:#0b0b0b;text-decoration:underline;text-underline-offset:3px;cursor:pointer}"
+    },
+    {
+      "name": "Article End",
+      "kind": "custom",
+      "refersTo": "button-pill-action",
+      "description": "Closes the reading column with a hairline: the source, then the way back to the feed (ink pill, first, full width under 720px), the original and Save as chip pills. Also shown beside the original in the missing-body state.",
+      "html": "<footer class=\"ds-end\"><p>Nguồn: <b>Hacker News</b></p><div><a href=\"#\" class=\"ink\">‹ Về feed</a><a href=\"#\">Mở repo ↗</a><button type=\"button\">Lưu</button></div></footer>",
+      "css": ".ds-end{font-family:'Mona Sans','Segoe UI',Roboto,sans-serif;max-width:680px;margin-top:56px;padding-top:24px;border-top:1px solid #eaeaea}.ds-end p{margin:0;font-size:14px;color:#666}.ds-end b{color:#0b0b0b;font-weight:500}.ds-end div{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.ds-end a,.ds-end button{height:40px;padding:0 16px;border:0;border-radius:999px;background:#f0f0f0;color:#0b0b0b;font:500 14px 'Mona Sans',sans-serif;display:inline-flex;align-items:center;gap:8px;text-decoration:none;cursor:pointer}.ds-end a:hover,.ds-end button:hover{background:#e4e4e4}.ds-end a.ink{background:#0b0b0b;color:#fff;font-weight:600}.ds-end a.ink:hover{opacity:.85}.ds-end a:focus-visible,.ds-end button:focus-visible{outline:2px solid #0b0b0b;outline-offset:2px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Chữ lớn · Chanh (Big Type · Lime)",
+    "overview": "OneForAll reads like a newsroom index where type is the interface. A white page and near-black ink carry everything; hierarchy comes from Mona Sans at different sizes and weights, set tight and large, never from boxes, cards or shadows. One saturated lime field, the catch-up band, sits under the top bar and states in a single sentence what changed since the reader's last visit, followed by group counts that act as filters. Below it, the stream is a column of big headlines with Vietnamese summaries separated by hairline rules.\n\nDensity is calm but fast: rows are open, measures are capped (summaries at 64ch), and secondary information (topic, source, time) sits in one small grey line under each item. Controls are pills; navigation is underline tabs. Images appear only when an item really has one, at a single 6px radius, and never as grey placeholders.\n\nThe dark theme is not an inversion of the lime: the band becomes deep olive, and lime moves to the leading numeral, the \"new\" dot and the focus ring, where a small amount reads as a signal instead of glare. The old frosted-glass look (blurred panels, gradient body, Lexend / Plus Jakarta Sans / IBM Plex Mono) is the retired system.\n\n**Migration status.** Only the home feed (`/`) is built in this world; its tokens are scoped to the feed root. The article page, settings, dashboard and owner login still render the old frosted-glass tokens from `src/app/globals.css`, `AppShell.module.css` and `PageHeader`, and will move to this system. New and migrated surfaces follow this file, not the old tokens.",
+    "keyCharacteristics": [
+      "White paper, near-black ink, two text greys; one lime field per screen.",
+      "Mona Sans only, with its width axis used for the numerals that matter.",
+      "Big negative-tracked headlines (-0.02em to -0.035em) carry the hierarchy.",
+      "Hairline rules between items; no cards, no shadows.",
+      "Pill controls, underline tabs, 6px images, one 12px tinted panel.",
+      "Vietnamese-first copy with technical terms kept in English."
+    ],
+    "rules": [
+      {
+        "name": "The One Lime Field Rule",
+        "body": "Only the catch-up band is filled with lime. Elsewhere lime appears as a signal no larger than a dot ring, a numeral or a focus ring, or diluted to the 3% tint of the industry panel. A second lime surface on a screen breaks the world.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two Greys Rule",
+        "body": "Text uses ink, graphite (#333) or slate (#666), nothing in between. Seen items step down to slate; they are not faded with opacity (images are the one exception, at 0.7).",
+        "section": "colors"
+      },
+      {
+        "name": "The Olive Night Rule",
+        "body": "In dark mode the lime field never stays lime. It turns deep olive and hands its lime to the numerals and the new dot.",
+        "section": "colors"
+      },
+      {
+        "name": "The Size-Not-Style Rule",
+        "body": "Hierarchy is size and weight in a single family. No second display face, no italics for emphasis, no all-caps labels.",
+        "section": "typography"
+      },
+      {
+        "name": "The Width-Axis Rule",
+        "body": "The `wdth` axis is reserved for counts the reader acts on: 125% for the band's leading number, 112% for group counts. Body text and headlines stay at normal width.",
+        "section": "typography"
+      },
+      {
+        "name": "The Hairline-Not-Shadow Rule",
+        "body": "Items are separated by 1px rules in `rule`; nothing floats. If a surface needs to stand apart, it gets a tint field, not a shadow.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep lime to the band field, plus dot rings, the band numeral (dark), the article masthead's figures and focus (dark).",
+      "Do carry hierarchy with Mona Sans size and weight: 56 / 32 / 24 / 16px, 600 for headlines, negative tracking on anything 19px and up.",
+      "Do separate items with 1px hairlines and generous padding (22px rows, 28px lead).",
+      "Do make every control a full pill, every image 6px, and the single tinted panel 12px.",
+      "Do render images only when an item has a usable one; let the row reflow to text-only otherwise.",
+      "Do use tabular numerals for every count, and the `wdth` axis only for counts the reader acts on.",
+      "Do write UI copy in Vietnamese first, keeping technical terms (agent, MCP, skill, release) in English.",
+      "Do step opened items down to slate instead of hiding them."
+    ],
+    "donts": [
+      "Don't bring back the frosted-glass look: no backdrop blur, no translucent panels, no gradient page background, no Lexend / Plus Jakarta Sans / IBM Plex Mono on migrated surfaces.",
+      "Don't put items in cards with borders or shadows; the stream is type between rules.",
+      "Don't add a second lime surface or a lime button.",
+      "Don't show grey placeholder boxes for missing or loading images.",
+      "Don't add uppercase kickers or eyebrow labels above headlines; topic and source belong in the metadata line."
+    ]
+  }
+}

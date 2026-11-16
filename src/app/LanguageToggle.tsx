@@ -7,7 +7,7 @@ import styles from "./AppShell.module.css";
 
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
 
-export default function LanguageToggle() {
+export default function LanguageToggle({ className }: { className?: string } = {}) {
   const router = useRouter();
   const { language, setLanguage } = useLanguage();
 
@@ -16,6 +16,7 @@ export default function LanguageToggle() {
     // Instant — cards flip immediately, no round trip, since both
     // languages are already present in the data they were rendered with.
     setLanguage(next);
+    document.documentElement.lang = next;
     document.cookie = `${LANGUAGE_COOKIE}=${next}; path=/; max-age=${ONE_YEAR_SECONDS}`;
     navigator.sendBeacon?.("/api/views", JSON.stringify({ type: "toggle", lang: next }));
     // Re-runs the server tree so an already-open article's body picks up
@@ -25,11 +26,11 @@ export default function LanguageToggle() {
 
   return (
     <button
-      className={styles.langToggle}
+      className={className ?? styles.langToggle}
       type="button"
       onClick={toggle}
       aria-pressed={language === "vi"}
-      aria-label={language === "vi" ? "Switch to English" : "Switch to Vietnamese"}
+      aria-label={language === "vi" ? "Đổi sang tiếng Anh" : "Switch to Vietnamese"}
     >
       {language === "vi" ? "VI" : "EN"}
     </button>

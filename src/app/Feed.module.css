@@ -1,0 +1,762 @@
+/* Home feed surface. Tokens, base rules, the top bar and the shared
+   buttons live in world.module.css; this file holds the feed's own parts. */
+
+/* ---------- Top bar: view switch ---------- */
+
+.views {
+  display: flex;
+  gap: 4px;
+  order: 3;
+  width: 100%;
+  margin-inline: -10px;
+}
+
+.viewButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  font-size: 15px;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+.viewButton:hover {
+  color: var(--ink);
+}
+.viewButton[aria-pressed="true"] {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.viewCount {
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  background: var(--chip);
+  color: var(--ink);
+}
+.viewButton[aria-pressed="true"] .viewCount {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+@media (min-width: 720px) {
+  .views {
+    order: 0;
+    width: auto;
+    margin-inline: 0;
+    gap: 14px;
+  }
+}
+
+/* ---------- Catch-up band ---------- */
+
+.band {
+  background: var(--band);
+  color: var(--band-ink);
+  padding-block: clamp(22px, 3.2vw, 36px) clamp(20px, 2.6vw, 28px);
+}
+
+.bandHeadline {
+  margin: 0;
+  font-size: clamp(30px, 1.2rem + 2.6vw, 56px);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  max-width: 27ch;
+  text-wrap: balance;
+}
+
+/* The count is the one figure the band exists for: set wide and heavy on
+   Mona Sans's width axis, in lime on the dark band. */
+.bandCount {
+  color: var(--band-count);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  font-stretch: 125%;
+  font-variation-settings: "wdth" 125;
+  letter-spacing: -0.02em;
+}
+
+.bandLead {
+  color: var(--band-ink-2);
+}
+
+.groups {
+  list-style: none;
+  margin: clamp(18px, 2vw, 24px) 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.groupChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 14px 0 6px;
+  border-radius: 999px;
+  border: 1.5px solid var(--chip-band-border);
+  background: var(--chip-band-bg);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--band-ink);
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.groupChip:hover {
+  background: var(--chip-band-hover-bg);
+  border-color: var(--chip-band-hover-bg);
+  color: var(--chip-band-hover-ink);
+}
+.groupChip:hover .groupCount {
+  background: var(--chip-band-hover-ink);
+  color: var(--chip-band-hover-bg);
+}
+
+.groupCount {
+  font-stretch: 112%;
+  font-variation-settings: "wdth" 112;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 7px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  background: var(--chip-band-count-bg);
+  color: var(--chip-band-count-ink);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.bandNote {
+  margin: 14px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  font-size: 14px;
+  color: var(--band-ink-2);
+}
+.bandNote:empty {
+  display: none;
+}
+
+/* ---------- Filter bar (sticky) ---------- */
+
+.filterBar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+  scroll-margin-top: 0;
+}
+
+.filterInner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 52px;
+}
+
+.tabs {
+  display: flex;
+  gap: 26px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex: 1;
+  min-width: 0;
+  margin-bottom: -1px;
+  /* Hints that the row scrolls when the tabs don't fit (phones). */
+  mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent);
+  padding-right: 32px;
+}
+@media (min-width: 1000px) {
+  .tabs {
+    mask-image: none;
+  }
+}
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 15px 0 14px;
+  border: 0;
+  background: none;
+  font-size: 15px;
+  color: var(--ink-3);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 150ms ease;
+}
+.tab::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--ink);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 260ms var(--ease-out);
+}
+.tab:hover {
+  color: var(--ink);
+}
+.tab[aria-pressed="true"] {
+  color: var(--ink);
+  font-weight: 600;
+}
+.tab[aria-pressed="true"]::after {
+  transform: scaleX(1);
+}
+
+.tabCount {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.savedNote {
+  flex: 1;
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-3);
+}
+
+.sourceSelect {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+}
+.sourceSelect select {
+  appearance: none;
+  height: 34px;
+  max-width: 34vw;
+  padding: 0 32px 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--chip);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.sourceSelect select:hover {
+  background: var(--chip-hover);
+}
+.sourceSelect select:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.selectIcon {
+  position: absolute;
+  right: 12px;
+  width: 11px;
+  height: 11px;
+  pointer-events: none;
+  color: var(--ink);
+}
+
+/* ---------- Layout ---------- */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 32px;
+  padding-bottom: 96px;
+}
+
+.stream {
+  min-width: 0;
+  max-width: 800px;
+  outline: none;
+}
+
+.side {
+  display: none;
+}
+
+/* No side panel (no industry items, or the saved view): the stream takes
+   a wider measure instead of leaving half the page empty. */
+@media (min-width: 1100px) {
+  .layout:not(.layoutWithSide) .stream {
+    max-width: 1040px;
+  }
+  .layout:not(.layoutWithSide) .rowWithThumb {
+    grid-template-columns: minmax(0, 1fr) 232px;
+    gap: 40px;
+  }
+  .layout:not(.layoutWithSide) .lead:not(.leadTextOnly) {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: 40px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .layoutWithSide {
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: clamp(48px, 5.5vw, 80px);
+  }
+  .side {
+    display: block;
+  }
+  .industryInline {
+    display: none;
+  }
+}
+
+/* ---------- Rows ---------- */
+
+.row {
+  padding: 22px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.rowWithThumb {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 88px;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (min-width: 720px) {
+  .rowWithThumb {
+    grid-template-columns: minmax(0, 1fr) 168px;
+    gap: 28px;
+  }
+}
+
+.rowBody {
+  min-width: 0;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 32px;
+  margin-top: 10px;
+  margin-bottom: -6px;
+  font-size: 14px;
+  color: var(--ink-3);
+}
+
+.metaText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.newBadge {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.newDot {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dot);
+  box-shadow: 0 0 0 2.5px var(--dot-ring);
+}
+
+.actions {
+  flex: none;
+  margin-left: auto;
+  display: flex;
+  gap: 2px;
+}
+
+.iconButton {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  display: inline-grid;
+  place-items: center;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.iconButton svg {
+  width: 18px;
+  height: 18px;
+}
+.iconButton:hover {
+  background: var(--chip);
+  color: var(--ink);
+}
+.iconButton[aria-pressed="true"] {
+  color: var(--ink);
+}
+
+.rowTitle {
+  margin: 0;
+  font-size: clamp(19px, 0.95rem + 0.6vw, 24px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  text-wrap: pretty;
+}
+
+.titleLink {
+  color: var(--ink);
+  text-decoration: none;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
+}
+.titleLink:hover {
+  text-decoration-line: underline;
+}
+
+.summary {
+  margin: 8px 0 0;
+  max-width: 64ch;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink-2);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  overflow: hidden;
+}
+
+.note {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+.entities {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.entities li {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--chip);
+}
+
+/* Transparent until the image has actually loaded: never an empty grey
+   box standing in for a picture. */
+.thumb {
+  display: block;
+  margin-top: 4px;
+  border-radius: 6px;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+}
+.thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: transform 400ms var(--ease-out), opacity 300ms var(--ease-out);
+}
+.thumbLoaded img {
+  opacity: 1;
+}
+.thumb:hover img {
+  transform: scale(1.03);
+}
+
+/* Opened items step back: lighter headline, quieter summary. */
+.seen .titleLink {
+  color: var(--ink-3);
+  font-weight: 500;
+}
+.seen .summary {
+  color: var(--ink-3);
+}
+.seen .thumbLoaded img,
+.seen .leadImage {
+  opacity: 0.7;
+}
+
+/* ---------- Lead story ---------- */
+
+.lead {
+  padding: 28px 0;
+  border-bottom: 1px solid var(--rule);
+  display: grid;
+  gap: 18px;
+}
+
+@media (min-width: 720px) {
+  .lead:not(.leadTextOnly) {
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1fr);
+    gap: 32px;
+    align-items: start;
+  }
+}
+
+.leadFigure {
+  display: block;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--image-ground);
+  aspect-ratio: 16 / 10;
+}
+.leadImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 500ms var(--ease-out);
+}
+.leadFigure:hover .leadImage {
+  transform: scale(1.02);
+}
+
+.leadBody {
+  min-width: 0;
+}
+
+/* No qualifying picture: the lead is carried by type alone, full measure. */
+.lead.leadTextOnly {
+  grid-template-columns: minmax(0, 1fr);
+}
+.leadTextOnly .leadTitle {
+  font-size: clamp(28px, 1.2rem + 1.8vw, 40px);
+  max-width: 26ch;
+}
+.leadTextOnly .leadSummary {
+  max-width: 68ch;
+}
+
+.leadTitle {
+  margin: 0;
+  font-size: clamp(24px, 1.1rem + 1.2vw, 32px);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+
+.leadSummary {
+  font-size: 17px;
+  margin-top: 10px;
+  -webkit-line-clamp: 6;
+  line-clamp: 6;
+}
+
+/* ---------- Releases ---------- */
+
+.versionRange {
+  font-size: 0.72em;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.disclosure {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  text-underline-offset: 4px;
+}
+.disclosure:hover {
+  text-decoration: underline;
+}
+
+.disclosureIcon {
+  width: 11px;
+  height: 11px;
+  transition: transform 200ms var(--ease-out);
+}
+.disclosureIconOpen {
+  transform: rotate(180deg);
+}
+
+.versions {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  max-width: 420px;
+}
+.versions li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 9px 0;
+  border-top: 1px solid var(--rule);
+  font-size: 14px;
+}
+.versionLink {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-underline-offset: 3px;
+}
+.versionLink:hover {
+  text-decoration: underline;
+}
+.versions .seen .versionLink {
+  color: var(--ink-3);
+  font-weight: 500;
+}
+.versionTime {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-3);
+}
+
+/* ---------- Industry panel ---------- */
+
+.industry {
+  background: var(--tint);
+  border-radius: 12px;
+  padding: 18px 22px 14px;
+  outline: none;
+}
+.industry:focus-visible {
+  outline: 2px solid var(--focus);
+}
+
+.industryAside {
+  position: sticky;
+  top: 76px;
+  margin-top: 28px;
+}
+
+.industryInline {
+  margin: 22px 0 4px;
+}
+
+.industryTitle {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.industryList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.industryItem {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--tint-rule);
+}
+.industryItem:last-child {
+  border-bottom: 0;
+}
+
+.industryLink {
+  display: block;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--ink);
+  text-underline-offset: 3px;
+}
+.industryLink:hover {
+  text-decoration: underline;
+}
+.industryItem.seen .industryLink {
+  color: var(--ink-3);
+}
+
+.industryMeta {
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+.industry .disclosure {
+  margin-top: 4px;
+}
+
+/* ---------- Empty and loading ---------- */
+
+.empty {
+  padding: 56px 0 24px;
+  max-width: 52ch;
+}
+.emptyTitle {
+  margin: 0;
+  font-size: clamp(22px, 1rem + 1vw, 28px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+.emptyNote {
+  margin: 10px 0 0;
+  color: var(--ink-2);
+}
+.emptyAction {
+  margin-top: 18px;
+  height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 600;
+  cursor: pointer;
+}
+.emptyAction:hover {
+  opacity: 0.85;
+}
+
+.sentinel {
+  height: 1px;
+}

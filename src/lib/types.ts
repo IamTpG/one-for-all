@@ -26,6 +26,16 @@ export type FeedItem = {
   // call failed while the English half still succeeded.
   titleVi?: string;
   summaryVi?: string;
+  // When the store first saw this item (ms). Drives "new since your last
+  // visit": publish time alone misses items fetched hours after they were
+  // published. Absent on items that never went through the store.
+  firstSeenAt?: number;
+  // Not produced by the pipeline yet. The home feed renders each one only
+  // when present, so they can be filled in later without a redesign.
+  entities?: string[];
+  contentType?: "tool" | "release" | "workflow" | "career" | "industry" | "case-study";
+  coverageCount?: number;
+  lengthMinutes?: number;
 };
 
 // What one logical source (a single RSS feed, HN, a single watched repo's
@@ -46,11 +56,6 @@ export type AiAnalysis = {
   titleVi?: string;
   summaryVi?: string;
 };
-
-export type ActiveFilter =
-  | { kind: "type"; value: SourceType | "all" }
-  | { kind: "source"; value: string }
-  | { kind: "topic"; value: string };
 
 export type SettingsGroup = {
   title: string;

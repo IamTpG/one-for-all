@@ -2,7 +2,9 @@
 
 export const RSS_FEEDS: { name: string; url: string }[] = [
   { name: "Simon Willison", url: "https://simonwillison.net/atom/everything/" },
-  { name: "Lobsters", url: "https://lobste.rs/rss" },
+  // The `vibecoding` tag (coding with AI/LLM tools) rather than the whole
+  // site: the general feed was almost entirely off-topic in triage.
+  { name: "Lobsters", url: "https://lobste.rs/t/vibecoding.rss" },
   { name: "Ars Technica", url: "https://arstechnica.com/feed/" },
   { name: "The Verge", url: "https://www.theverge.com/rss/index.xml" },
   { name: "GitHub Blog", url: "https://github.blog/feed/" },
@@ -33,6 +35,9 @@ export const WATCHED_REPOS: string[] = [
 export const DEFAULT_RSS_ITEM_LIMIT = 20;
 export const DEFAULT_HN_ITEM_LIMIT = 25;
 export const DEFAULT_GITHUB_TRENDING_LIMIT = 10;
+// GitHub Trending is fetched from a larger pool, then narrowed to AI-related
+// repos before applying the limit above.
+export const GITHUB_TRENDING_POOL_SIZE = 100;
 export const DEFAULT_RELEASES_PER_REPO = 2;
 export const DEFAULT_ANTHROPIC_ITEM_LIMIT = 15;
 
@@ -46,30 +51,79 @@ export const EXTRACT_CACHE_TTL_MS = 60 * 60 * 1000;
 // Per-request timeout for og:image scraping and article extraction (ms).
 export const FETCH_TIMEOUT_MS = 5000;
 
-// Topics for filtering + AI classification. Keyword matching always runs
-// (free); Groq's classification (if configured) adds to these, it never
-// replaces them.
-export const TOPICS: { id: string; label: string; keywords: string[] }[] = [
+// Topics for filtering + AI classification. An item with no topic counts
+// as off-topic and is hidden from the default feed.
+//
+// Keyword matching is the instant, free first pass, applied only until Groq
+// has analysed the item; once it has, Groq's topics replace the keyword ones
+// (keywords are too blunt to be trusted over a real classification).
+// Keywords match on word boundaries; a trailing "*" makes one a prefix
+// ("agent*" matches agent, agents, agentic). A keyword topic is only
+// assigned when the text also has AI context (AI_CONTEXT_TERMS), so
+// "Windows update" or "real estate agent" never match.
+//
+// `description` is what Groq sees when classifying.
+export const TOPICS: { id: string; label: string; description: string; keywords: string[] }[] = [
   {
     id: "ai-workflow",
     label: "How devs work with AI",
-    keywords: ["workflow", "pair program", "vibe coding", "prompt", "spec-driven"],
+    description:
+      "how developers work with AI agents and coding assistants: workflows, practices, prompting, " +
+      "spec-driven development, context/harness engineering, reviewing AI-written code, managing agents",
+    keywords: [
+      "workflow*", "pair programming", "vibe coding", "vibecoding", "prompt", "prompts", "prompting",
+      "spec driven", "context engineering", "harness engineering", "agentic engineering",
+    ],
   },
   {
     id: "ai-tools",
     label: "AI tools & agents",
-    keywords: ["agent", "copilot", "claude code", "cursor", "harness", "mcp", "coding assistant"],
+    description:
+      "AI developer tools: coding agents, assistants, agent harnesses, MCP servers, skills, plugins, " +
+      "SDKs and open-source repos developers can use",
+    keywords: [
+      "agent*", "copilot", "claude code", "cursor", "codex", "harness*", "mcp", "coding assistant*",
+      "plugin*", "skills",
+    ],
   },
   {
     id: "ai-updates",
     label: "AI tool updates",
-    keywords: ["release", "changelog", "launch", "announc", "update", "v1.", "v2."],
+    description:
+      "releases, launches and changes of AI models and AI developer tools (new versions, features, " +
+      "pricing or API limit changes)",
+    keywords: ["release*", "changelog", "launch*", "announc*", "introducing", "now available"],
   },
   {
     id: "career",
     label: "Career & industry",
-    keywords: ["career", "hiring", "interview", "promotion", "salary", "layoff", "roadmap", "job market"],
+    description:
+      "how AI changes developer careers: rising or fading skills and roles, hiring, interviews, " +
+      "salaries, layoffs, the job market",
+    keywords: [
+      "career*", "hiring", "interview*", "salary", "salaries", "layoff*", "job market",
+      "forward deployed",
+    ],
   },
+  {
+    id: "ai-industry",
+    label: "AI industry",
+    description:
+      "big AI industry events only: major labs and their models, large funding/acquisitions, key " +
+      "executives joining or leaving, AI chips, GPUs and data centers. Not policy/regulation, not " +
+      "small company news",
+    keywords: ["nvidia", "gpu*", "data center*", "datacenter*", "acquir*", "acquisition*", "funding", "valuation"],
+  },
+];
+
+// Text must contain at least one of these (word-bounded, "*" = prefix) for
+// keyword topics to apply at all. Deliberately excludes ambiguous words like
+// "agent" or "cursor" on their own.
+export const AI_CONTEXT_TERMS: string[] = [
+  "ai", "llm*", "gpt*", "genai", "claude", "anthropic", "openai", "chatgpt", "codex", "gemini",
+  "deepseek", "mistral", "llama", "qwen", "copilot", "agentic", "ai agent*", "coding agent*",
+  "agent skill*", "mcp", "model context protocol", "language model*", "machine learning", "vibe coding",
+  "vibecoding", "rag", "embedding*", "inference", "fine tun*",
 ];
 
 // Set GROQ_API_KEY (and REDIS_URL) in .env.local to enable AI summaries and
@@ -155,9 +209,22 @@ export const DASHBOARD_GROQ_FAILURE_LIMIT = 50;
 export const DASHBOARD_RECENT_FAILURES_DISPLAY_LIMIT = 20;
 export const DASHBOARD_VIEWS_CHART_DAYS = 14;
 
-// Article bodies are capped before translation — very long articles only
-// get their first portion translated rather than chunked and reassembled.
+// Article bodies up to this many chars are translated in one Groq call.
+// Longer ones are split at block boundaries into chunks of at most this
+// size and translated chunk by chunk (see lib/translate.ts).
 export const TRANSLATE_MAX_CHARS = 6000;
+
+// How many untranslated chunks of a long article one page render may send
+// to Groq. A chunk costs roughly 4,000 tokens (input + output) against the
+// free tier's 8,000 tokens per minute, so two is the most that fits one
+// render; the rest waits for the reader to ask for the next batch.
+export const TRANSLATE_CHUNKS_PER_RUN = 2;
+
+// How long one page render may spend translating (ms). The article route
+// allows 60 s (maxDuration); extraction and rendering need the rest. Groq
+// calls time out at this deadline and 429 retries only happen when they fit,
+// so a rate-limited render ends with what it has instead of timing out.
+export const TRANSLATE_RENDER_BUDGET_MS = 40_000;
 
 // Output needs to cover a whole translated article rather than a short
 // summary, and Vietnamese diacritics tokenize less efficiently than plain

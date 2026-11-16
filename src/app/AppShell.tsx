@@ -2,17 +2,41 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { ChartIcon, GearIcon, LockIcon } from "@/lib/icons";
-import type { ActiveFilter, FeedItem } from "@/lib/types";
-import Card from "./Card";
+import clsx from "clsx";
+import { ChartIcon, ChevronIcon, GearIcon } from "@/lib/icons";
+import { isOnTopic, OFF_TOPIC } from "@/lib/keywordTopics";
+import type { FeedItem, SourceType } from "@/lib/types";
+import {
+  countEntries,
+  countGroups,
+  DEFAULT_FILTERS,
+  GROUP_ORDER,
+  GROUP_TOPIC,
+  groupEntries,
+  isNewItem,
+  isPureIndustry,
+  isValidFilters,
+  matchesSource,
+  matchesTopic,
+  pickLead,
+  sincePhrase,
+  TAB_TOPICS,
+  timeAgo,
+  type FeedFilters,
+  type FeedView,
+} from "./feedModel";
+import { trackVisitActivity, useSaved, useSeen, useVisit } from "./feedState";
+import { IndustryPanel, ItemRow, LeadStory, ReleaseGroupRow, type RowContext } from "./FeedItemRow";
+import { homeCopy, type GroupId } from "./homeCopy";
+import { useLanguage } from "./LanguageProvider";
 import LanguageToggle from "./LanguageToggle";
-import SidebarLeft from "./SidebarLeft";
-import SidebarRight from "./SidebarRight";
 import ThemeToggle from "./ThemeToggle";
 import ViewTracker from "./ViewTracker";
-import styles from "./AppShell.module.css";
+import styles from "./Feed.module.css";
+import world from "./world.module.css";
 
 const PAGE_SIZE = 15;
+const SOURCE_TYPES: SourceType[] = ["rss", "hn", "github-trending", "github-release"];
 
 // The App Router unmounts Home when navigating to an article (this project
 // doesn't have `cacheComponents` enabled, which is the flag that would keep
@@ -23,15 +47,15 @@ const HOME_STATE_KEY = "oneforall-home-scroll";
 
 type SavedHomeState = {
   visibleCount: number;
-  filter: ActiveFilter;
+  filters: FeedFilters;
   scrollY: number;
 };
 
 // Read via useSyncExternalStore (below) instead of an effect + setState:
 // that path applies the restored state as part of the first client render
 // pass, before anything paints, so there's no visible flash of the default
-// 15-item feed before it jumps to the restored one. getSnapshot must return
-// a referentially stable value when nothing changed, hence the raw-string
+// feed before it jumps to the restored one. getSnapshot must return a
+// referentially stable value when nothing changed, hence the raw-string
 // cache — a fresh JSON.parse() every render would look like a new value
 // every time and trigger React's "getSnapshot should be cached" warning.
 let cachedRawHomeState: string | null = null;
@@ -47,7 +71,11 @@ function getHomeStateSnapshot(): SavedHomeState | null {
   if (raw === cachedRawHomeState) return cachedHomeState;
   cachedRawHomeState = raw;
   try {
-    cachedHomeState = raw ? (JSON.parse(raw) as SavedHomeState) : null;
+    const parsed = raw ? (JSON.parse(raw) as Partial<SavedHomeState>) : null;
+    cachedHomeState =
+      parsed && isValidFilters(parsed.filters) && typeof parsed.visibleCount === "number"
+        ? { visibleCount: parsed.visibleCount, filters: parsed.filters, scrollY: Number(parsed.scrollY) || 0 }
+        : null;
   } catch {
     cachedHomeState = null;
   }
@@ -64,66 +92,61 @@ function subscribeHomeState(): () => void {
   return () => {};
 }
 
-function timeAgo(now: number, then: number): string {
-  const minutes = Math.floor((now - then) / 60000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
-  return `${Math.floor(minutes / 60)}h ago`;
+function prefersReducedMotion(): boolean {
+  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 export default function AppShell({
   items,
   feeds,
   isOwner,
-  trendingRepos,
-  topHn,
   fetchedAt,
+  retentionDays,
 }: {
   items: FeedItem[];
   feeds: { name: string; sourceId: string }[];
   isOwner: boolean;
-  trendingRepos: FeedItem[];
-  topHn: FeedItem[];
   fetchedAt: number | null;
+  retentionDays: number;
 }) {
-  const [activeFilter, setActiveFilter] = useState<ActiveFilter>({ kind: "type", value: "all" });
+  const { language } = useLanguage();
+  const copy = homeCopy(language);
+  const visit = useVisit();
+  const seen = useSeen();
+  const saved = useSaved();
+  const baseline = visit?.baseline ?? null;
+
+  const [filters, setFilters] = useState<FeedFilters>(DEFAULT_FILTERS);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [brokenImages, setBrokenImages] = useState<Set<string>>(() => new Set());
 
   // Restore a saved feed position (e.g. after coming back from an article).
   // Applied during render rather than in an effect: getServerSnapshot
   // returns null so the server/hydration render always matches (no
   // mismatch), and the moment the client snapshot resolves, this update
-  // happens synchronously before the first client paint — no visible flash
-  // of the default 15-item feed before it jumps to the restored one.
-  // (Refs can't be read/written during render, hence state — compared by
-  // reference, since getHomeStateSnapshot caches and returns the same
-  // object until sessionStorage actually changes — instead of a ref flag.)
+  // happens synchronously before the first client paint.
   const savedHomeState = useSyncExternalStore(subscribeHomeState, getHomeStateSnapshot, getHomeStateServerSnapshot);
   const [appliedHomeState, setAppliedHomeState] = useState<SavedHomeState | null>(null);
   const [pendingScrollY, setPendingScrollY] = useState<number | null>(null);
   if (savedHomeState && savedHomeState !== appliedHomeState) {
     setAppliedHomeState(savedHomeState);
-    setActiveFilter(savedHomeState.filter);
+    setFilters(savedHomeState.filters);
     setVisibleCount(savedHomeState.visibleCount);
     setPendingScrollY(savedHomeState.scrollY);
   }
-  // Starts equal to fetchedAt so the first client render matches the server
-  // render exactly (both show "just now"); ticks forward after mount. No
-  // fetch has ever run yet if fetchedAt is null (a fresh store) — "now"
-  // just doesn't matter in that case since the header shows a fixed string.
-  const [now, setNow] = useState(() => fetchedAt ?? Date.now());
+
+  // Starts from a value the server and client agree on (the last fetch),
+  // then ticks forward after mount.
+  const [now, setNow] = useState(() => fetchedAt ?? (items[0] ? Date.parse(items[0].publishedAt) : 0));
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const feedTopRef = useRef<HTMLDivElement | null>(null);
 
   // The order you're currently scrolling through, frozen independently of
-  // the `items` prop. A router.refresh() (e.g. after toggling a source or
-  // watched repo) re-renders this component with a freshly re-sorted
-  // `items` array, which would otherwise splice new items into wherever
-  // their publish date lands — including above stuff you've already
-  // scrolled past. Instead, anything still present just gets its data
-  // refreshed in place, anything gone disappears immediately (that's the
-  // point of the toggle you just clicked), and anything genuinely new gets
-  // appended to the end. A real page reload (fresh mount) just takes
-  // whatever order the server gives it, no diffing involved.
+  // the `items` prop. A router.refresh() re-renders this component with a
+  // freshly re-sorted `items` array, which would otherwise splice new items
+  // into wherever their publish date lands — including above stuff you've
+  // already scrolled past. Anything still present gets its data refreshed
+  // in place, anything gone disappears, and anything new is appended.
   const [stableItems, setStableItems] = useState<FeedItem[]>(items);
   const previousItemsRef = useRef(items);
 
@@ -142,81 +165,196 @@ export default function AppShell({
     });
   }, [items]);
 
-  // Counts for the left sidebar's "All 142" / per-type / per-topic /
-  // per-feed badges — computed off the full item set, not the current
-  // filter, so a count never changes just because you clicked a filter.
-  const sidebarCounts = useMemo(() => {
-    const byType: Record<string, number> = { all: items.length };
-    const byTopic: Record<string, number> = {};
-    const bySource: Record<string, number> = {};
-    for (const item of items) {
-      byType[item.sourceType] = (byType[item.sourceType] ?? 0) + 1;
-      bySource[item.sourceId] = (bySource[item.sourceId] ?? 0) + 1;
-      for (const topicId of item.topics ?? []) {
-        byTopic[topicId] = (byTopic[topicId] ?? 0) + 1;
-      }
-    }
-    return { byType, byTopic, bySource };
-  }, [items]);
+  const liveIds = useMemo(() => new Set(stableItems.map((item) => item.id)), [stableItems]);
+  const savedIds = useMemo(() => new Set(saved.map((item) => item.id)), [saved]);
 
-  const filteredItems = useMemo(() => {
-    if (activeFilter.kind === "source") {
-      return stableItems.filter((item) => item.sourceId === activeFilter.value);
-    }
-    if (activeFilter.kind === "topic") {
-      return stableItems.filter((item) => item.topics?.includes(activeFilter.value));
-    }
-    if (activeFilter.value === "all") return stableItems;
-    return stableItems.filter((item) => item.sourceType === activeFilter.value);
-  }, [stableItems, activeFilter]);
+  // ---------- Catch-up summary ----------
 
-  const visibleItems = filteredItems.slice(0, visibleCount);
-  const hasMore = visibleCount < filteredItems.length;
+  const onTopicItems = useMemo(() => stableItems.filter(isOnTopic), [stableItems]);
+  const newItems = useMemo(
+    () => (baseline === null ? [] : onTopicItems.filter((item) => isNewItem(item, baseline))),
+    [onTopicItems, baseline]
+  );
+  const groupCounts = useMemo(
+    () => countGroups(baseline === null ? onTopicItems : newItems),
+    [baseline, onTopicItems, newItems]
+  );
+  // Counted as rows, the way the stream shows them (a repo's releases are one).
+  const newCount = useMemo(() => countEntries(newItems), [newItems]);
+  const onTopicCount = useMemo(() => countEntries(onTopicItems), [onTopicItems]);
+  const oldestSeenAt = useMemo(() => {
+    let oldest = Infinity;
+    for (const item of stableItems) {
+      const ts = item.firstSeenAt ?? Date.parse(item.publishedAt);
+      if (ts < oldest) oldest = ts;
+    }
+    return oldest;
+  }, [stableItems]);
 
-  function handleFilterChange(filter: ActiveFilter) {
-    setActiveFilter(filter);
+  const view: FeedView = filters.view ?? (newItems.length > 0 ? "new" : "all");
+
+  // ---------- The list ----------
+
+  const scoped = useMemo<FeedItem[]>(() => {
+    if (view === "saved") {
+      const liveById = new Map(stableItems.map((item) => [item.id, item]));
+      return saved.map((snapshot) => liveById.get(snapshot.id) ?? (snapshot as FeedItem));
+    }
+    return stableItems.filter(
+      (item) =>
+        matchesTopic(item, filters.topic) &&
+        matchesSource(item, filters.source) &&
+        (view !== "new" || isNewItem(item, baseline))
+    );
+  }, [view, stableItems, saved, filters.topic, filters.source, baseline]);
+
+  const lead = view !== "saved" && filters.topic !== OFF_TOPIC ? pickLead(scoped, filters.topic) : null;
+  const entries = useMemo(
+    () => groupEntries(lead ? scoped.filter((item) => item.id !== lead.id) : scoped),
+    [scoped, lead]
+  );
+  const visibleEntries = entries.slice(0, visibleCount);
+  const hasMore = visibleCount < entries.length;
+
+  // The industry panel follows the view (only new ones in New) and the
+  // source filter, and has no place on the Off-topic tab or in Saved.
+  const showIndustry = view !== "saved" && filters.topic !== OFF_TOPIC;
+  const industryItems = useMemo(
+    () =>
+      showIndustry
+        ? stableItems.filter(
+            (item) =>
+              isOnTopic(item) &&
+              isPureIndustry(item) &&
+              matchesSource(item, filters.source) &&
+              (view !== "new" || isNewItem(item, baseline))
+          )
+        : [],
+    [showIndustry, stableItems, filters.source, view, baseline]
+  );
+
+  const tabCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const topic of ["all", ...TAB_TOPICS, OFF_TOPIC]) {
+      counts[topic] = countEntries(
+        stableItems.filter(
+          (item) =>
+            matchesTopic(item, topic) &&
+            matchesSource(item, filters.source) &&
+            (view !== "new" || isNewItem(item, baseline))
+        )
+      );
+    }
+    return counts;
+  }, [stableItems, filters.source, view, baseline]);
+
+  function updateFilters(next: Partial<FeedFilters>) {
+    setFilters((prev) => ({ ...prev, ...next }));
     setVisibleCount(PAGE_SIZE);
   }
 
+  function scrollToFeed() {
+    const node = feedTopRef.current;
+    if (!node) return;
+    if (node.getBoundingClientRect().top < 0 || node.getBoundingClientRect().top > window.innerHeight * 0.6) {
+      node.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
+    }
+  }
+
+  function selectGroup(group: GroupId) {
+    if (group === "industry") {
+      const panel = Array.from(document.querySelectorAll<HTMLElement>("[data-industry-panel]")).find(
+        (node) => node.offsetParent !== null
+      );
+      panel?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
+      panel?.focus({ preventScroll: true });
+      return;
+    }
+    const viewForGroup: FeedView = baseline === null ? "all" : "new";
+    if (group === "releases") updateFilters({ view: viewForGroup, topic: "all", source: "type:github-release" });
+    else updateFilters({ view: viewForGroup, topic: GROUP_TOPIC[group] ?? "all", source: "all" });
+    scrollToFeed();
+  }
+
+  const markImageBroken = (id: string) =>
+    setBrokenImages((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+
+  const ctx: RowContext = {
+    copy,
+    language,
+    now,
+    baseline,
+    seen,
+    savedIds,
+    liveIds,
+    showNewBadge: view !== "new",
+    onImageError: markImageBroken,
+  };
+
+  // ---------- Effects ----------
+
   // Runs after the restored item count has committed to the DOM but before
-  // the browser paints, so the scroll jump is never visible either. Clearing
-  // pendingScrollY is deferred (like the `now` tick below) since a direct
-  // setState call isn't allowed synchronously within an effect body — it
-  // doesn't need to be synchronous, only the scrollTo above does.
+  // the browser paints, so the scroll jump is never visible either.
   useLayoutEffect(() => {
     if (pendingScrollY === null) return;
     window.scrollTo(0, pendingScrollY);
     const timeout = setTimeout(() => setPendingScrollY(null), 0);
     return () => clearTimeout(timeout);
-  }, [pendingScrollY, visibleItems.length]);
+  }, [pendingScrollY, visibleEntries.length]);
 
   // Persist the position for the next mount (coming back from an article,
   // or a reload). Written only on unmount / pagehide, never on every state
   // change: the write feeds getHomeStateSnapshot above, so saving while
-  // mounted makes the snapshot change under a live component, which
-  // "restores" the stale state, which changes visibleCount/filter, which
-  // saves again — an infinite loop (React error #185). The latest values
-  // are mirrored into a ref so the one-time cleanup doesn't capture stale
-  // ones.
-  const latestHomeStateRef = useRef({ visibleCount, filter: activeFilter });
+  // mounted would "restore" stale state in a loop.
+  const latestHomeStateRef = useRef({ visibleCount, filters });
   useEffect(() => {
-    latestHomeStateRef.current = { visibleCount, filter: activeFilter };
+    latestHomeStateRef.current = { visibleCount, filters };
   });
+
+  // The position is tracked as it changes: by the time this component
+  // unmounts during a client-side navigation, the router may already have
+  // moved the page, so window.scrollY at that moment is not the reader's.
+  const latestScrollYRef = useRef(0);
+  useEffect(() => {
+    latestScrollYRef.current = window.scrollY;
+    function onScroll() {
+      // The router's own scroll-to-top can fire while this page is still
+      // mounted (its cleanup runs later); that position is not the reader's.
+      if (window.location.pathname !== "/") return;
+      latestScrollYRef.current = window.scrollY;
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Coming back with nothing saved (a link from elsewhere, e.g. an article
+  // opened directly): start at the top. Links back from an article keep the
+  // router from scrolling (scroll={false}), so this is what resets them.
+  useLayoutEffect(() => {
+    if (!getHomeStateSnapshot()) window.scrollTo({ top: 0, behavior: "instant" });
+  }, []);
 
   useEffect(() => {
     function save() {
       try {
         sessionStorage.setItem(
           HOME_STATE_KEY,
-          JSON.stringify({ ...latestHomeStateRef.current, scrollY: window.scrollY } satisfies SavedHomeState)
+          JSON.stringify({ ...latestHomeStateRef.current, scrollY: latestScrollYRef.current } satisfies SavedHomeState)
         );
       } catch {
         // Private browsing / storage full — nothing to fall back to.
       }
     }
-    window.addEventListener("pagehide", save);
+    // Leaving the tab records when the reader was last here; coming back
+    // after a long gap starts a new visit (touchActivity decides).
+    const stopTracking = trackVisitActivity(save);
     return () => {
-      window.removeEventListener("pagehide", save);
+      stopTracking();
       save();
     };
   }, []);
@@ -235,37 +373,102 @@ export default function AppShell({
     if (!hasMore) return;
     const node = sentinelRef.current;
     if (!node) return;
-
     const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, filteredItems.length));
+      (observed) => {
+        if (observed[0].isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, entries.length));
         }
       },
       { rootMargin: "800px" }
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, [hasMore, filteredItems.length]);
+  }, [hasMore, entries.length]);
+
+  // ---------- Band copy ----------
+
+  const neverFetched = fetchedAt === null && stableItems.length === 0;
+  let sentence: string;
+  let leadLine: string | null = null;
+  let note: string | null = null;
+  if (neverFetched) {
+    sentence = copy.neverFetched;
+    note = copy.neverFetchedNote;
+  } else if (visit === null || baseline === null) {
+    sentence = copy.firstVisit(onTopicCount);
+    note = visit === null ? null : copy.firstVisitNote;
+  } else if (newCount === 0) {
+    sentence = copy.nothingNew(sincePhrase(now, baseline, copy));
+  } else {
+    sentence = copy.newSince(newCount, sincePhrase(now, baseline, copy));
+    const leadGroup = (["workflow", "career", "releases", "tools"] as GroupId[]).find(
+      (group) => groupCounts[group] > 0 && copy.newLead[group]
+    );
+    if (leadGroup) leadLine = copy.newLead[leadGroup]!(groupCounts[leadGroup]);
+    if (baseline < oldestSeenAt) note = copy.longGapNote(retentionDays);
+  }
+  // Any sentence that opens with a number gets the band's numeral setting.
+  const leadingNumber = sentence.match(/^\d+/)?.[0];
+  const headline: React.ReactNode = leadingNumber ? (
+    <>
+      <span className={styles.bandCount}>{leadingNumber}</span>
+      {sentence.slice(leadingNumber.length)}
+    </>
+  ) : (
+    sentence
+  );
+
+  const sourceTypeCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const type of SOURCE_TYPES) {
+      counts[type] = countEntries(onTopicItems.filter((item) => item.sourceType === type));
+    }
+    return counts;
+  }, [onTopicItems]);
+
+  const showTabs = view !== "saved";
+  // No industry items: no reserved column, the stream owns the page.
+  const hasAside = industryItems.length > 0;
+  const filtersActive = filters.topic !== "all" || filters.source !== "all";
+  const industryInlineAt = Math.min(4, visibleEntries.length);
+
+  function renderEntry(index: number) {
+    const entry = visibleEntries[index];
+    return entry.kind === "releases" ? (
+      <ReleaseGroupRow key={entry.key} group={entry} ctx={ctx} />
+    ) : (
+      <ItemRow key={entry.key} item={entry.item} ctx={ctx} />
+    );
+  }
+
+  const industryInline =
+    hasAside ? (
+      <IndustryPanel
+        key="industry-inline"
+        items={industryItems}
+        ctx={ctx}
+        id="tin-nganh-inline"
+        className={styles.industryInline}
+      />
+    ) : null;
 
   return (
-    <>
-      <a href="#main-feed" className={styles.skipLink}>
-        Skip to content
+    <div className={world.world}>
+      <a href="#main-feed" className={world.skipLink}>
+        {copy.skip}
       </a>
       <ViewTracker type="home" />
-      <header className={styles.topbar}>
-        <div className={styles.topbarInner}>
-          {/* Plain <a>, not next/link's <Link> — Link would soft-navigate
-              and no-op since we're already on "/", whereas a real anchor
-              always triggers a full browser reload, refetching everything
-              fresh (new items, reset scroll/pagination state). Clearing the
-              saved-scroll key here too, otherwise this "fresh reload" would
+
+      <header className={styles.top}>
+        <div className={clsx(world.container, world.topInner)}>
+          {/* Plain <a>, not next/link's <Link> — a real anchor always
+              triggers a full reload, refetching everything fresh. The saved
+              scroll key is cleared too, otherwise this "fresh reload" would
               immediately restore the old position it's meant to discard. */}
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a
             href="/"
-            className={styles.brand}
+            className={world.brand}
             onClick={() => {
               try {
                 sessionStorage.removeItem(HOME_STATE_KEY);
@@ -274,63 +477,175 @@ export default function AppShell({
               }
             }}
           >
-            <svg className={styles.brandMark} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M4 17 L4 9" />
-              <path d="M9 17 L9 5" />
-              <path d="M14 17 L14 12" />
-              <path d="M19 17 L19 7" />
-            </svg>
-            <div className={styles.brandText}>
-              <h1 className={`${styles.brandTitle} display`}>OneForAll</h1>
-              <span className={`${styles.brandTagline} mono`}>AI · DEV · GITHUB</span>
-            </div>
+            OneForAll
           </a>
-          <div className={styles.headerRight}>
-            <span className={`${styles.feedMeta} mono`}>
-              <span className={styles.liveDot} aria-hidden="true" />
-              {items.length} items ·{" "}
-              {fetchedAt === null ? "not fetched yet" : `updated ${timeAgo(now, fetchedAt)}`}
-            </span>
+          <nav className={styles.views} aria-label={copy.viewsLabel}>
+            {(["new", "all", "saved"] as FeedView[]).map((option) => {
+              const count = option === "new" ? newCount : option === "saved" ? saved.length : 0;
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  className={styles.viewButton}
+                  aria-pressed={view === option}
+                  onClick={() => updateFilters({ view: option })}
+                >
+                  {copy.views[option]}
+                  {count > 0 && <span className={styles.viewCount}>{count}</span>}
+                </button>
+              );
+            })}
+          </nav>
+          <div className={world.topActions}>
             {isOwner && (
-              <Link href="/dashboard" className={styles.themeToggle} aria-label="Dashboard">
-                <ChartIcon />
-              </Link>
+              <>
+                <Link href="/dashboard" className={world.circleButton} aria-label={copy.dashboard} title={copy.dashboard}>
+                  <ChartIcon />
+                </Link>
+                <Link href="/settings" className={world.circleButton} aria-label={copy.settings} title={copy.settings}>
+                  <GearIcon />
+                </Link>
+              </>
             )}
-            {isOwner ? (
-              <Link href="/settings" className={styles.themeToggle} aria-label="Settings">
-                <GearIcon />
-              </Link>
-            ) : (
-              <Link href="/owner-login" className={styles.themeToggle} aria-label="Owner sign-in">
-                <LockIcon />
-              </Link>
-            )}
-            <LanguageToggle />
-            <ThemeToggle />
+            <LanguageToggle className={world.pillButton} />
+            <ThemeToggle
+              className={world.inkButton}
+              labels={{ toDark: copy.themeToDark, toLight: copy.themeToLight }}
+            />
           </div>
         </div>
       </header>
 
-      <div className={styles.layout}>
-        <SidebarLeft
-          feeds={feeds}
-          activeFilter={activeFilter}
-          onSelect={handleFilterChange}
-          counts={sidebarCounts}
-        />
-
-        <main id="main-feed" className={styles.feed}>
-          {visibleItems.length === 0 && (
-            <p className={styles.emptyState}>No items for this filter yet.</p>
+      <section className={styles.band} aria-label={copy.catchUpLabel}>
+        <div className={world.container}>
+          <h1 className={styles.bandHeadline}>
+            {headline}
+            {leadLine && <span className={styles.bandLead}> {leadLine}</span>}
+          </h1>
+          {!neverFetched && GROUP_ORDER.some((group) => groupCounts[group] > 0) && (
+            <ul className={styles.groups}>
+              {GROUP_ORDER.filter((group) => groupCounts[group] > 0).map((group) => (
+                <li key={group}>
+                  <button type="button" className={styles.groupChip} onClick={() => selectGroup(group)}>
+                    <span className={styles.groupCount}>{groupCounts[group]}</span>
+                    {copy.groups[group](groupCounts[group])}
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
-          {visibleItems.map((item) => (
-            <Card key={item.id} item={item} />
-          ))}
-          {hasMore && <div ref={sentinelRef} className={styles.sentinel} aria-hidden="true" />}
+          <p className={styles.bandNote}>
+            {note && <span>{note}</span>}
+            {fetchedAt !== null && (
+              <span className={styles.bandUpdated}>{copy.updatedAgo(timeAgo(now, fetchedAt, copy))}</span>
+            )}
+          </p>
+        </div>
+      </section>
+
+      <div ref={feedTopRef} className={styles.filterBar}>
+        <div className={clsx(world.container, styles.filterInner)}>
+          {showTabs ? (
+            <nav className={styles.tabs} aria-label={copy.topicsLabel}>
+              {(["all", ...TAB_TOPICS, OFF_TOPIC] as string[]).map((topic) => (
+                <button
+                  key={topic}
+                  type="button"
+                  className={styles.tab}
+                  aria-pressed={filters.topic === topic}
+                  onClick={() => updateFilters({ topic })}
+                >
+                  {topic === "all" ? copy.topicAll : copy.topics[topic]}
+                  <span className={styles.tabCount}>{tabCounts[topic] ?? 0}</span>
+                </button>
+              ))}
+            </nav>
+          ) : (
+            <p className={styles.savedNote}>{copy.savedNote}</p>
+          )}
+          {showTabs && (
+            <label className={styles.sourceSelect}>
+              <span className={world.visuallyHidden}>{copy.sourceLabel}</span>
+              <select
+                value={filters.source}
+                onChange={(event) => updateFilters({ source: event.target.value })}
+                aria-label={copy.sourceLabel}
+              >
+                <option value="all">{copy.sourceAll}</option>
+                <optgroup label={copy.sourceTypes}>
+                  {SOURCE_TYPES.map((type) => (
+                    <option key={type} value={`type:${type}`}>
+                      {copy.typeNames[type]} (
+                      {type === "github-release"
+                        ? copy.repoCount(sourceTypeCounts[type] ?? 0)
+                        : (sourceTypeCounts[type] ?? 0)}
+                      )
+                    </option>
+                  ))}
+                </optgroup>
+                {feeds.length > 0 && (
+                  <optgroup label={copy.sourceFeeds}>
+                    {feeds.map((feed) => (
+                      <option key={feed.sourceId} value={`src:${feed.sourceId}`}>
+                        {feed.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+              </select>
+              <ChevronIcon className={styles.selectIcon} />
+            </label>
+          )}
+        </div>
+      </div>
+
+      <div className={clsx(world.container, styles.layout, hasAside && styles.layoutWithSide)}>
+        <main id="main-feed" className={styles.stream} tabIndex={-1}>
+          {lead && <LeadStory item={lead} ctx={ctx} withImage={Boolean(lead.imageUrl) && !brokenImages.has(lead.id)} />}
+          {visibleEntries.length === 0 && !lead && (
+            <div className={styles.empty}>
+              {view === "saved" ? (
+                <>
+                  <p className={styles.emptyTitle}>{copy.emptySaved}</p>
+                  <p className={styles.emptyNote}>{copy.emptySavedNote}</p>
+                </>
+              ) : stableItems.length === 0 ? (
+                <p className={styles.emptyTitle}>{copy.emptyStore}</p>
+              ) : filtersActive ? (
+                <>
+                  <p className={styles.emptyTitle}>{copy.emptyFilter}</p>
+                  <button type="button" className={styles.emptyAction} onClick={() => updateFilters({ topic: "all", source: "all" })}>
+                    {copy.emptyFilterAction}
+                  </button>
+                </>
+              ) : view === "new" ? (
+                <>
+                  <p className={styles.emptyTitle}>{copy.emptyNew}</p>
+                  <button type="button" className={styles.emptyAction} onClick={() => updateFilters({ view: "all" })}>
+                    {copy.emptyNewAction}
+                  </button>
+                </>
+              ) : (
+                <p className={styles.emptyTitle}>{copy.emptyStore}</p>
+              )}
+            </div>
+          )}
+          {visibleEntries.slice(0, industryInlineAt).map((_, index) => renderEntry(index))}
+          {industryInline}
+          {visibleEntries.slice(industryInlineAt).map((_, index) => renderEntry(index + industryInlineAt))}
+          {hasMore && (
+            <div ref={sentinelRef} className={styles.sentinel} role="status">
+              <span className={world.visuallyHidden}>{copy.loadingMore}</span>
+            </div>
+          )}
         </main>
 
-        <SidebarRight trendingRepos={trendingRepos} topHn={topHn} />
+        {hasAside && (
+          <aside className={styles.side}>
+            <IndustryPanel items={industryItems} ctx={ctx} id="tin-nganh" className={styles.industryAside} />
+          </aside>
+        )}
       </div>
-    </>
+    </div>
   );
 }
