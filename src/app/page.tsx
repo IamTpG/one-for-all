@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { isOwnerRequest, OWNER_COOKIE_NAME } from "@/lib/ownerAuth";
 import { buildFeedsList } from "@/lib/settingsGroups";
+import { isOnTopic } from "@/lib/keywordTopics";
 import { getSiteSettings } from "@/lib/siteSettings";
 import { filterByWatchedRepos, getLastFetchAt, getStoredItems } from "@/lib/store";
 import AppShell from "./AppShell";
@@ -19,11 +20,13 @@ export default async function Home() {
     (item) => !disabledSet.has(item.sourceId)
   );
 
-  const trendingRepos = items
+  const onTopic = items.filter(isOnTopic);
+
+  const trendingRepos = onTopic
     .filter((item) => item.sourceType === "github-trending")
     .slice(0, 5);
 
-  const topHn = items
+  const topHn = onTopic
     .filter((item) => item.sourceType === "hn")
     .sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
     .slice(0, 5);

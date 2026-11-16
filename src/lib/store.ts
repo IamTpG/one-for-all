@@ -1,7 +1,7 @@
 import { AI_BACKFILL_BATCH_SIZE, AI_CACHE_TTL_SECONDS, AI_CONCURRENCY } from "@/lib/config";
 import { recordBackfillTick, recordGroqFailure } from "@/lib/dashboardStats";
 import { classifyAndSummarize } from "@/lib/groq";
-import { matchKeywordTopics } from "@/lib/keywordTopics";
+import { matchKeywordTopics, sourceTopics } from "@/lib/keywordTopics";
 import {
   deleteHashFields,
   getCachedAnalyses,
@@ -12,7 +12,7 @@ import {
   setIfNotExists,
   setJson,
 } from "@/lib/redis";
-import type { FeedItem } from "@/lib/types";
+import type { AiAnalysis, FeedItem } from "@/lib/types";
 
 const ITEMS_KEY = "wire:items";
 const LAST_FETCH_KEY = "wire:lastFetchAt";
@@ -26,6 +26,24 @@ function stripInternalFields(item: StoredItem): FeedItem {
   const rest: Partial<StoredItem> = { ...item };
   delete rest.firstSeenAt;
   return rest as FeedItem;
+}
+
+function mergeTopics(...lists: string[][]): string[] {
+  return Array.from(new Set(lists.flat()));
+}
+
+// The single rule for an item's topics: source-implied topics, plus Groq's
+// classification when one exists, otherwise the provisional keyword match.
+function recomputeTopics(item: FeedItem, analysis: AiAnalysis | undefined): string[] {
+  return mergeTopics(
+    sourceTopics(item),
+    analysis ? analysis.topics : matchKeywordTopics(`${item.title} ${item.summary ?? ""}`)
+  );
+}
+
+function sameTopics(a: string[], b: string[] | undefined): boolean {
+  const setB = new Set(b ?? []);
+  return a.length === setB.size && a.every((topic) => setB.has(topic));
 }
 
 function sortByDateDesc(items: FeedItem[]): FeedItem[] {
@@ -69,8 +87,8 @@ export async function getLastFetchAt(): Promise<number | null> {
 // present in this cycle's fresh results — dropped only when both fail.
 // firstSeenAt is set once and never touched again. Cost is proportional to
 // this cycle's fetch size, not the whole store: items retained purely by
-// the time window (absent from this cycle's fetch) are left untouched, no
-// read-modify-write.
+// the time window (absent from this cycle's fetch) are only rewritten when
+// their topics change (see recomputeTopics) — no other read-modify-write.
 export async function mergeFreshItems(
   fresh: FeedItem[],
   retentionDays: number
@@ -82,7 +100,10 @@ export async function mergeFreshItems(
   // Reuses the same analysis cache the backfill tick writes to, so an item
   // that ages out of the store and later reappears (an HN id resurfacing, a
   // re-fetched release) can skip a redundant Groq call.
-  const cached = await getCachedAnalyses(fresh.map((item) => item.id));
+  // Also covers every stored item, so their topics can be recomputed below.
+  const cached = await getCachedAnalyses(
+    Array.from(new Set([...fresh.map((item) => item.id), ...existing.keys()]))
+  );
 
   const toWrite: Record<string, StoredItem> = {};
   const newIds = new Set<string>();
@@ -92,31 +113,38 @@ export async function mergeFreshItems(
       newIds.add(item.id);
       newBySource[item.sourceId] = (newBySource[item.sourceId] ?? 0) + 1;
     }
-    const keywordTopics = matchKeywordTopics(`${item.title} ${item.summary ?? ""}`);
     const hit = cached.get(item.id);
     const enriched: FeedItem = hit
       ? {
           ...item,
           summary: hit.summary,
           aiSummary: true,
-          topics: Array.from(new Set([...keywordTopics, ...hit.topics])),
           titleVi: hit.titleVi,
           summaryVi: hit.summaryVi,
         }
-      : { ...item, topics: keywordTopics };
+      : item;
+    enriched.topics = recomputeTopics(enriched, hit);
 
     const firstSeenAt = existing.get(item.id)?.firstSeenAt ?? now;
     toWrite[item.id] = { ...enriched, firstSeenAt };
   }
-  await setHashFields(ITEMS_KEY, toWrite);
 
   const freshIds = new Set(fresh.map((item) => item.id));
   const toDrop: string[] = [];
   for (const [id, stored] of existing) {
-    if (freshIds.has(id)) continue; // just (re)written above
+    if (freshIds.has(id)) continue; // written above
     const withinGracePeriod = now - stored.firstSeenAt < retentionMs;
-    if (!withinGracePeriod) toDrop.push(id);
+    if (!withinGracePeriod) {
+      toDrop.push(id);
+      continue;
+    }
+    // Retained items keep whatever topics they were stored with, so a change
+    // to the topic rules would otherwise only reach them once they're
+    // re-fetched. Recompute (no Groq call) and rewrite only on a change.
+    const topics = recomputeTopics(stored, cached.get(id));
+    if (!sameTopics(topics, stored.topics)) toWrite[id] = { ...stored, topics };
   }
+  await setHashFields(ITEMS_KEY, toWrite);
   if (toDrop.length > 0) await deleteHashFields(ITEMS_KEY, toDrop);
 
   await setJson(LAST_FETCH_KEY, now);
@@ -164,7 +192,10 @@ export async function runAiBackfillTick(
       ...item,
       summary: result.summary,
       aiSummary: true,
-      topics: Array.from(new Set([...(item.topics ?? []), ...result.topics])),
+      // Groq's topics replace the provisional keyword ones rather than
+      // adding to them — otherwise a keyword false positive could never be
+      // corrected.
+      topics: mergeTopics(sourceTopics(item), result.topics),
       titleVi: result.titleVi,
       summaryVi: result.summaryVi,
     };

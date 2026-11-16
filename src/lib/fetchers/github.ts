@@ -1,5 +1,7 @@
 import { marked } from "marked";
+import { GITHUB_TRENDING_POOL_SIZE } from "@/lib/config";
 import { errorMessage } from "@/lib/errors";
+import { hasAiContext } from "@/lib/keywordTopics";
 import type { FeedItem, FetchSourceResult } from "@/lib/types";
 import { sanitizeArticleHtml } from "@/lib/sanitize";
 import { slugify } from "@/lib/slug";
@@ -52,6 +54,7 @@ type GithubRepo = {
   description: string | null;
   stargazers_count: number;
   created_at: string;
+  topics?: string[];
 };
 
 type GithubRelease = {
@@ -63,8 +66,33 @@ type GithubRelease = {
   published_at: string | null;
 };
 
+// Words too common in AI repo names to tell two repos apart.
+const GENERIC_NAME_WORDS = new Set([
+  "ai", "llm", "llms", "gpt", "mcp", "agent", "agents", "agentic", "claude", "openai", "copilot",
+  "awesome", "open", "free", "my", "the", "app", "studio", "hub", "kit", "tool", "tools", "suite",
+  "server", "bridge", "lab", "desk", "flow", "forge", "pro", "plus", "demo",
+]);
+
+// Spam farms push near-identical repos into the trending list
+// (blender-ai-copilot-studio, -flow, -hub, Blender-AI-MCP-Suite, ...). Keep
+// only the most-starred repo per name stem: the first word of the repo name
+// that isn't a generic AI/tooling word. Input is already sorted by stars.
+function dedupeByNameStem(repos: GithubRepo[]): GithubRepo[] {
+  const seen = new Set<string>();
+  return repos.filter((repo) => {
+    const words = (repo.full_name.split("/")[1] ?? "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+    const stem = words.find((word) => !GENERIC_NAME_WORDS.has(word));
+    if (!stem) return true;
+    if (seen.has(stem)) return false;
+    seen.add(stem);
+    return true;
+  });
+}
+
 // GitHub has no official "trending" API, so this approximates it with repos
-// created in the last week sorted by stars.
+// created in the last week sorted by stars. A bigger pool is fetched and
+// narrowed to AI-related repos (name, description and GitHub topics) before
+// the limit applies — the raw top-by-stars list is mostly unrelated repos.
 export async function fetchGithubTrending(limit: number): Promise<FetchSourceResult[]> {
   const sourceId = "github-trending";
   const label = "GitHub Trending";
@@ -73,13 +101,19 @@ export async function fetchGithubTrending(limit: number): Promise<FetchSourceRes
       .toISOString()
       .slice(0, 10);
     const res = await fetch(
-      `https://api.github.com/search/repositories?q=created:>${since}&sort=stars&order=desc&per_page=${limit}`,
+      `https://api.github.com/search/repositories?q=created:>${since}&sort=stars&order=desc&per_page=${GITHUB_TRENDING_POOL_SIZE}`,
       { headers: githubHeaders(), cache: "no-store" }
     );
     await assertGithubOk(res, "GitHub search API");
     const data: { items: GithubRepo[] } = await res.json();
 
-    const items: FeedItem[] = data.items.map((repo) => ({
+    const aiRepos = dedupeByNameStem(
+      data.items.filter((repo) =>
+        hasAiContext(`${repo.full_name} ${repo.description ?? ""} ${(repo.topics ?? []).join(" ")}`, { repo: true })
+      )
+    ).slice(0, limit);
+
+    const items: FeedItem[] = aiRepos.map((repo) => ({
       id: `gh-trending:${repo.full_name}`,
       source: "GitHub Trending",
       sourceId: "github-trending",

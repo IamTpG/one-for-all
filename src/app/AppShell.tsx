@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { ChartIcon, GearIcon, LockIcon } from "@/lib/icons";
+import { isOnTopic, OFF_TOPIC } from "@/lib/keywordTopics";
 import type { ActiveFilter, FeedItem } from "@/lib/types";
 import Card from "./Card";
 import LanguageToggle from "./LanguageToggle";
@@ -145,11 +146,14 @@ export default function AppShell({
   // Counts for the left sidebar's "All 142" / per-type / per-topic /
   // per-feed badges — computed off the full item set, not the current
   // filter, so a count never changes just because you clicked a filter.
+  // Off-topic items are left out of every count except the "Off-topic"
+  // entry itself, matching what each filter actually shows.
   const sidebarCounts = useMemo(() => {
-    const byType: Record<string, number> = { all: items.length };
-    const byTopic: Record<string, number> = {};
+    const onTopic = items.filter(isOnTopic);
+    const byType: Record<string, number> = { all: onTopic.length };
+    const byTopic: Record<string, number> = { [OFF_TOPIC]: items.length - onTopic.length };
     const bySource: Record<string, number> = {};
-    for (const item of items) {
+    for (const item of onTopic) {
       byType[item.sourceType] = (byType[item.sourceType] ?? 0) + 1;
       bySource[item.sourceId] = (bySource[item.sourceId] ?? 0) + 1;
       for (const topicId of item.topics ?? []) {
@@ -160,14 +164,18 @@ export default function AppShell({
   }, [items]);
 
   const filteredItems = useMemo(() => {
+    if (activeFilter.kind === "topic" && activeFilter.value === OFF_TOPIC) {
+      return stableItems.filter((item) => !isOnTopic(item));
+    }
+    const onTopic = stableItems.filter(isOnTopic);
     if (activeFilter.kind === "source") {
-      return stableItems.filter((item) => item.sourceId === activeFilter.value);
+      return onTopic.filter((item) => item.sourceId === activeFilter.value);
     }
     if (activeFilter.kind === "topic") {
-      return stableItems.filter((item) => item.topics?.includes(activeFilter.value));
+      return onTopic.filter((item) => item.topics?.includes(activeFilter.value));
     }
-    if (activeFilter.value === "all") return stableItems;
-    return stableItems.filter((item) => item.sourceType === activeFilter.value);
+    if (activeFilter.value === "all") return onTopic;
+    return onTopic.filter((item) => item.sourceType === activeFilter.value);
   }, [stableItems, activeFilter]);
 
   const visibleItems = filteredItems.slice(0, visibleCount);
@@ -288,7 +296,7 @@ export default function AppShell({
           <div className={styles.headerRight}>
             <span className={`${styles.feedMeta} mono`}>
               <span className={styles.liveDot} aria-hidden="true" />
-              {items.length} items ·{" "}
+              {sidebarCounts.byType.all} items ·{" "}
               {fetchedAt === null ? "not fetched yet" : `updated ${timeAgo(now, fetchedAt)}`}
             </span>
             {isOwner && (

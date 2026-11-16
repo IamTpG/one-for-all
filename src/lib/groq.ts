@@ -32,7 +32,7 @@ function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }
 
-const TOPIC_LIST = TOPICS.map((t) => `${t.id} (${t.label})`).join(", ");
+const TOPIC_LIST = TOPICS.map((t) => `  - ${t.id}: ${t.description}`).join("\n");
 
 function buildPrompt(item: FeedItem): string {
   // Kept short — Groq's free tier caps at 8,000 tokens/minute shared across
@@ -42,8 +42,10 @@ function buildPrompt(item: FeedItem): string {
   return `Title: ${item.title}\n\nContent: ${text || "(no content available, use the title alone)"}\n\n` +
     `Return a JSON object with:\n` +
     `- "summary": a neutral 2-3 sentence summary of the piece, in English\n` +
-    `- "topics": an array of zero or more of these topic ids that genuinely apply: ${TOPIC_LIST}. ` +
-    `Only include a topic if the piece is actually about it — most items match none.\n` +
+    `- "topics": an array of zero or more of these topic ids that genuinely apply:\n${TOPIC_LIST}\n` +
+    `  The reader is a software developer following AI-assisted development. Only include a topic ` +
+    `if the piece is actually about it. General tech, science, security, space, gaming, hardware ` +
+    `or programming news with no real AI angle matches none — return []. Most items match none.\n` +
     `- "titleVi": a natural Vietnamese translation of the title\n` +
     `- "summaryVi": a natural Vietnamese translation of the summary you wrote above`;
 }

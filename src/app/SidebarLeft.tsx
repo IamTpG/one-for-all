@@ -1,4 +1,5 @@
 import { TOPICS } from "@/lib/config";
+import { OFF_TOPIC } from "@/lib/keywordTopics";
 import type { ActiveFilter, SourceType } from "@/lib/types";
 import styles from "./AppShell.module.css";
 
@@ -58,6 +59,15 @@ export default function SidebarLeft({
             <span className={styles.navCount}>{counts.byTopic[topic.id] ?? 0}</span>
           </button>
         ))}
+        <button
+          className={styles.navLink}
+          type="button"
+          aria-pressed={activeFilter.kind === "topic" && activeFilter.value === OFF_TOPIC}
+          onClick={() => onSelect({ kind: "topic", value: OFF_TOPIC })}
+        >
+          <span>Off-topic</span>
+          <span className={styles.navCount}>{counts.byTopic[OFF_TOPIC] ?? 0}</span>
+        </button>
       </nav>
       {feeds.length > 0 && (
         <nav className={styles.navSection}>
