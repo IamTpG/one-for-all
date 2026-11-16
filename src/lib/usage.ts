@@ -1,4 +1,4 @@
-import { GROQ_USAGE_RETENTION_DAYS } from "@/lib/config";
+import { GROQ_BUDGET_RESERVE, GROQ_LIMITS, GROQ_USAGE_RETENTION_DAYS } from "@/lib/config";
 import { getHashAll, getJson, incrHashFields, setJson } from "@/lib/redis";
 
 // Groq has no usage API, so the app counts its own calls: one Redis hash per
@@ -136,4 +136,53 @@ export async function getGroqUsage(): Promise<GroqUsage> {
     today: { requests: todayRequests, tokens: todayTokens, rateLimited: todayRateLimited },
     rate,
   };
+}
+
+// ---------- Circuit breaker ----------
+
+// While this key exists, Groq is not called at all: no request, so no 429.
+// Its TTL is the pause length, so it clears itself.
+const COOLDOWN_KEY = "wire:groq:cooldown";
+
+export type GroqCooldown = {
+  until: number; // epoch ms
+  // "retry-after": Groq answered 429 with a long retry-after (daily limit).
+  // "daily-budget": our own counters reached the daily limit.
+  reason: "retry-after" | "daily-budget";
+};
+
+export function nextUtcMidnight(now: number = Date.now()): number {
+  return Math.floor(now / ONE_DAY_MS) * ONE_DAY_MS + ONE_DAY_MS;
+}
+
+// One cheap GET — safe to call before every Groq request. Fails open: if
+// Redis is down, Groq is simply tried.
+export async function getGroqCooldown(): Promise<GroqCooldown | null> {
+  const cooldown = await getJson<GroqCooldown>(COOLDOWN_KEY);
+  return cooldown && cooldown.until > Date.now() ? cooldown : null;
+}
+
+export async function setGroqCooldown(until: number, reason: GroqCooldown["reason"]): Promise<void> {
+  const ttlSeconds = Math.max(1, Math.ceil((until - Date.now()) / 1000));
+  await setJson(COOLDOWN_KEY, { until, reason } satisfies GroqCooldown, ttlSeconds);
+}
+
+// Checks today's own counters against the daily limits and, when they are
+// (nearly) used up, pauses Groq until the next UTC midnight. Reads the usage
+// hashes, so call it once per run (cron tick, page render), not per request.
+// Returns the active pause, if any.
+export async function enforceGroqBudget(): Promise<GroqCooldown | null> {
+  const existing = await getGroqCooldown();
+  if (existing) return existing;
+
+  const { today } = await getGroqUsage();
+  const spent =
+    today.requests >= GROQ_LIMITS.requestsPerDay - GROQ_BUDGET_RESERVE.requests ||
+    today.tokens >= GROQ_LIMITS.tokensPerDay - GROQ_BUDGET_RESERVE.tokens;
+  if (!spent) return null;
+
+  const until = nextUtcMidnight();
+  console.error("[groq] daily budget used up, pausing until next UTC midnight");
+  await setGroqCooldown(until, "daily-budget");
+  return { until, reason: "daily-budget" };
 }
