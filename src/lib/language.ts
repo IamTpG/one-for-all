@@ -25,6 +25,7 @@ export function resolveLocalized(
   return { text: undefined, note: NO_SUMMARY_MESSAGE };
 }
 
+// Vietnamese is the primary reading language; English only on request.
 export function parseLanguageCookie(value: string | undefined): Language {
-  return value === "vi" ? "vi" : "en";
+  return value === "en" ? "en" : "vi";
 }

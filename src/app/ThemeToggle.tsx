@@ -8,7 +8,10 @@ function systemPrefersDark(): boolean {
   return typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches;
 }
 
-export default function ThemeToggle() {
+export default function ThemeToggle({
+  className,
+  labels = { toDark: "Switch to dark theme", toLight: "Switch to light theme" },
+}: { className?: string; labels?: { toDark: string; toLight: string } } = {}) {
   const [theme, setTheme] = useState<"light" | "dark" | null>(null);
 
   useEffect(() => {
@@ -34,11 +37,11 @@ export default function ThemeToggle() {
 
   return (
     <button
-      className={styles.themeToggle}
+      className={className ?? styles.themeToggle}
       type="button"
       onClick={toggle}
       aria-pressed={isDark}
-      aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+      aria-label={isDark ? labels.toLight : labels.toDark}
     >
       {isDark ? <MoonIcon /> : <SunIcon />}
     </button>

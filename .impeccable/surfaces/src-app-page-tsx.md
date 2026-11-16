@@ -2,7 +2,7 @@
 version: 1
 slug: "src-app-page-tsx"
 primary_target: "src/app/page.tsx"
-related_targets: ["src/app/AppShell.tsx","src/app/Card.tsx","src/app/SidebarLeft.tsx","src/app/SidebarRight.tsx"]
+related_targets: ["src/app/AppShell.tsx","src/app/FeedItemRow.tsx","src/app/feedState.ts"]
 ---
 
 # Home feed
@@ -82,7 +82,23 @@ Design the card and layout so these drop in without a redesign. Render nothing w
 - Equal phone and desktop use: the phone is a first-class layout, not a collapsed desktop.
 - Accessibility: keyboard reachable filters and actions, visible focus, sufficient contrast in both themes.
 
-## Open decisions (not for the builder to invent)
+## Decisions (direction round, 2026-11-16)
 
-- The visual world (palette, type, component language): decided in the redesign direction round.
-- Where saved items live (filter vs. dedicated view): decide during the direction round.
+- Visual world: "Chữ lớn · Chanh" (see Direction contract). The user steered away from metaphor worlds toward modern AI-lab newsroom pages, then picked big-type + lead image + lime band.
+- Saved items: a dedicated view (Mới · Tất cả · Đã lưu), not a filter. Saved items keep a browser snapshot so they outlive retention.
+- "Since last visit" importance: grouped counts, no ranking or invented score; the lead prefers workflow/career items (highest read rates).
+- Images: the user asked to try a large lead image and small thumbnails, overriding "no media on cards"; images render only when the item has one, never placeholders.
+
+## Direction contract
+
+THESIS: The home feed is a newsroom index where type is the interface: one sentence says what changed since your last visit, then big-type headlines with Vietnamese summaries. It refuses the category's sidebar-and-card reader and the old frosted-glass look.
+
+OWN-WORLD: White page, near-black ink (#0B0B0B), one saturated lime field (#D9F85A) that owns only the catch-up band; everything else is black, white and two greys. Mona Sans alone, big negative-tracked headlines, underline tabs, pill controls, hairline rules, 6px-radius images. Dark theme swaps the lime field for deep olive with lime numerals.
+
+STORY: The returning reader sees "18 tin mới kể từ thứ Sáu", the group counts, and a lead story; they skim headlines and summaries, open one or two, save one, and leave knowing they missed nothing.
+
+FIRST VIEWPORT: Top bar (brand, Mới/Tất cả/Đã lưu, Nguồn menu, VI/EN, theme). Full-width lime band: 56px sentence + group-count chips that filter. Topic tabs with underline. Left 780px stream: lead story (large image left, 32px title right), then rows with 24px titles and right thumbnails; right 340px "Tin ngành" one-liners in a lime-tinted panel. Primary action: the headline link.
+
+FORM: Grounded newsroom variant "Chữ lớn + ảnh dẫn" in the "Chanh" palette, chosen by the user after steered rounds (safer, bolder, newsroom, bolder newsroom, variants, colours); position: user-steered, not on the original ordered list. seed:e6f660ccdd1bb109. Signature move: the lime catch-up band whose sentence and counts are computed from the reader's own last visit; new items carry a lime-ringed dot until opened.
+
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance

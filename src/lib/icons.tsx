@@ -38,13 +38,6 @@ export function ReleaseIcon({ className }: { className?: string }) {
   );
 }
 
-export function PlayIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M8 5 L19 12 L8 19 Z" />
-    </svg>
-  );
-}
 
 export function ChevronIcon({ className }: { className?: string }) {
   return (
@@ -54,39 +47,9 @@ export function ChevronIcon({ className }: { className?: string }) {
   );
 }
 
-export function OpenIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M7 17 L17 7" />
-      <path d="M9 7h8v8" />
-    </svg>
-  );
-}
 
-export function UpvoteIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M12 19 V5" />
-      <path d="M6 11 L12 5 L18 11" />
-    </svg>
-  );
-}
 
-export function CommentIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M4 4h16v12H8l-4 4z" />
-    </svg>
-  );
-}
 
-export function StarIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2 L14.9 8.6 L22 9.3 L16.7 14 L18.2 21 L12 17.4 L5.8 21 L7.3 14 L2 9.3 L9.1 8.6 Z" />
-    </svg>
-  );
-}
 
 export function SunIcon({ className }: { className?: string }) {
   return (
@@ -105,14 +68,6 @@ export function MoonIcon({ className }: { className?: string }) {
   );
 }
 
-export function LockIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="5" y="11" width="14" height="9" rx="2" />
-      <path d="M8 11 V7 a4 4 0 0 1 8 0 v4" />
-    </svg>
-  );
-}
 
 export function ChartIcon({ className }: { className?: string }) {
   return (
@@ -131,6 +86,23 @@ export function GearIcon({ className }: { className?: string }) {
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="3" />
       <path d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.5-2-3.5-2.4 1a7.4 7.4 0 0 0-1.7-1L15 3h-4l-.3 2.5a7.4 7.4 0 0 0-1.7 1l-2.4-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.5 2.4-1a7.4 7.4 0 0 0 1.7 1L11 21h4l.3-2.5a7.4 7.4 0 0 0 1.7-1l2.4 1 2-3.5Z" />
+    </svg>
+  );
+}
+
+export function BookmarkIcon({ className, filled = false }: { className?: string; filled?: boolean }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
+      <path d="M6.5 3.5 H17.5 V20.5 L12 16.2 L6.5 20.5 Z" />
+    </svg>
+  );
+}
+
+export function ArrowUpRightIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M7 17 L17 7" />
+      <path d="M8.5 7 H17 V15.5" />
     </svg>
   );
 }

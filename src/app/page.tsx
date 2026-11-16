@@ -1,7 +1,6 @@
 import { cookies } from "next/headers";
 import { isOwnerRequest, OWNER_COOKIE_NAME } from "@/lib/ownerAuth";
 import { buildFeedsList } from "@/lib/settingsGroups";
-import { isOnTopic } from "@/lib/keywordTopics";
 import { getSiteSettings } from "@/lib/siteSettings";
 import { filterByWatchedRepos, getLastFetchAt, getStoredItems } from "@/lib/store";
 import AppShell from "./AppShell";
@@ -12,7 +11,7 @@ export default async function Home() {
   const cookieStore = await cookies();
   const isOwner = isOwnerRequest(cookieStore.get(OWNER_COOKIE_NAME)?.value);
 
-  const { disabledFeeds, watchedRepos } = await getSiteSettings();
+  const { disabledFeeds, watchedRepos, retentionDays } = await getSiteSettings();
   const [allItems, fetchedAt] = await Promise.all([getStoredItems(), getLastFetchAt()]);
 
   const disabledSet = new Set(disabledFeeds);
@@ -20,25 +19,13 @@ export default async function Home() {
     (item) => !disabledSet.has(item.sourceId)
   );
 
-  const onTopic = items.filter(isOnTopic);
-
-  const trendingRepos = onTopic
-    .filter((item) => item.sourceType === "github-trending")
-    .slice(0, 5);
-
-  const topHn = onTopic
-    .filter((item) => item.sourceType === "hn")
-    .sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
-    .slice(0, 5);
-
   return (
     <AppShell
       items={items}
-      feeds={buildFeedsList()}
+      feeds={buildFeedsList().filter((feed) => !disabledSet.has(feed.sourceId))}
       isOwner={isOwner}
-      trendingRepos={trendingRepos}
-      topHn={topHn}
       fetchedAt={fetchedAt}
+      retentionDays={retentionDays}
     />
   );
 }

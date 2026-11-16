@@ -17,16 +17,10 @@ import type { AiAnalysis, FeedItem } from "@/lib/types";
 const ITEMS_KEY = "wire:items";
 const LAST_FETCH_KEY = "wire:lastFetchAt";
 
-// Extends FeedItem with when it was first ever fetched — set once, never
-// touched again. This is internal bookkeeping for the retention rule, not
-// part of the public FeedItem shape sent to pages.
+// Every stored item carries when it was first ever fetched — set once,
+// never touched again. It drives the retention rule, and the home feed
+// reads it to tell what is new since a reader's last visit.
 type StoredItem = FeedItem & { firstSeenAt: number };
-
-function stripInternalFields(item: StoredItem): FeedItem {
-  const rest: Partial<StoredItem> = { ...item };
-  delete rest.firstSeenAt;
-  return rest as FeedItem;
-}
 
 function mergeTopics(...lists: string[][]): string[] {
   return Array.from(new Set(lists.flat()));
@@ -70,7 +64,7 @@ export function filterByWatchedRepos(items: FeedItem[], repos: string[]): FeedIt
 
 export async function getStoredItems(): Promise<FeedItem[]> {
   const stored = await getHashAll<StoredItem>(ITEMS_KEY);
-  return sortByDateDesc(Array.from(stored.values()).map(stripInternalFields));
+  return sortByDateDesc(Array.from(stored.values()));
 }
 
 export async function getStoredItemById(id: string, watchedRepos: string[]): Promise<FeedItem | null> {
