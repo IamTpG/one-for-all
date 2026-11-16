@@ -7,13 +7,14 @@ import { ChartIcon, ChevronIcon, GearIcon } from "@/lib/icons";
 import { isOnTopic, OFF_TOPIC } from "@/lib/keywordTopics";
 import type { FeedItem, SourceType } from "@/lib/types";
 import {
+  countEntries,
   countGroups,
   DEFAULT_FILTERS,
   GROUP_ORDER,
   GROUP_TOPIC,
   groupEntries,
-  isIndustry,
   isNewItem,
+  isPureIndustry,
   isValidFilters,
   matchesSource,
   matchesTopic,
@@ -24,7 +25,7 @@ import {
   type FeedFilters,
   type FeedView,
 } from "./feedModel";
-import { touchLastVisit, useSaved, useSeen, useVisit } from "./feedState";
+import { touchActivity, useSaved, useSeen, useVisit } from "./feedState";
 import { IndustryPanel, ItemRow, LeadStory, ReleaseGroupRow, type RowContext } from "./FeedItemRow";
 import { homeCopy, type GroupId } from "./homeCopy";
 import { useLanguage } from "./LanguageProvider";
@@ -177,6 +178,9 @@ export default function AppShell({
     () => countGroups(baseline === null ? onTopicItems : newItems),
     [baseline, onTopicItems, newItems]
   );
+  // Counted as rows, the way the stream shows them (a repo's releases are one).
+  const newCount = useMemo(() => countEntries(newItems), [newItems]);
+  const onTopicCount = useMemo(() => countEntries(onTopicItems), [onTopicItems]);
   const oldestSeenAt = useMemo(() => {
     let oldest = Infinity;
     for (const item of stableItems) {
@@ -211,20 +215,34 @@ export default function AppShell({
   const visibleEntries = entries.slice(0, visibleCount);
   const hasMore = visibleCount < entries.length;
 
+  // The industry panel follows the view (only new ones in New) and the
+  // source filter, and has no place on the Off-topic tab or in Saved.
+  const showIndustry = view !== "saved" && filters.topic !== OFF_TOPIC;
   const industryItems = useMemo(
-    () => stableItems.filter((item) => isOnTopic(item) && isIndustry(item) && matchesSource(item, filters.source)),
-    [stableItems, filters.source]
+    () =>
+      showIndustry
+        ? stableItems.filter(
+            (item) =>
+              isOnTopic(item) &&
+              isPureIndustry(item) &&
+              matchesSource(item, filters.source) &&
+              (view !== "new" || isNewItem(item, baseline))
+          )
+        : [],
+    [showIndustry, stableItems, filters.source, view, baseline]
   );
 
   const tabCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const topic of ["all", ...TAB_TOPICS, OFF_TOPIC]) {
-      counts[topic] = stableItems.filter(
-        (item) =>
-          matchesTopic(item, topic) &&
-          matchesSource(item, filters.source) &&
-          (view !== "new" || isNewItem(item, baseline))
-      ).length;
+      counts[topic] = countEntries(
+        stableItems.filter(
+          (item) =>
+            matchesTopic(item, topic) &&
+            matchesSource(item, filters.source) &&
+            (view !== "new" || isNewItem(item, baseline))
+        )
+      );
     }
     return counts;
   }, [stableItems, filters.source, view, baseline]);
@@ -310,16 +328,29 @@ export default function AppShell({
     }
     function onPageHide() {
       save();
-      touchLastVisit();
+      touchActivity();
     }
+    // Leaving the tab records when the reader was last here; coming back
+    // after a long gap starts a new visit (touchActivity decides).
     function onVisibility() {
-      if (document.visibilityState === "hidden") touchLastVisit();
+      touchActivity();
     }
+    // Reading counts as activity, throttled so storage isn't hit per event.
+    let lastTouch = 0;
+    function onInput() {
+      const t = Date.now();
+      if (t - lastTouch < 15_000) return;
+      lastTouch = t;
+      touchActivity();
+    }
+    const inputEvents = ["pointerdown", "keydown", "scroll", "wheel"] as const;
     window.addEventListener("pagehide", onPageHide);
     document.addEventListener("visibilitychange", onVisibility);
+    inputEvents.forEach((name) => window.addEventListener(name, onInput, { passive: true }));
     return () => {
       window.removeEventListener("pagehide", onPageHide);
       document.removeEventListener("visibilitychange", onVisibility);
+      inputEvents.forEach((name) => window.removeEventListener(name, onInput));
       save();
     };
   }, []);
@@ -360,12 +391,12 @@ export default function AppShell({
     sentence = copy.neverFetched;
     note = copy.neverFetchedNote;
   } else if (visit === null || baseline === null) {
-    sentence = copy.firstVisit(onTopicItems.length);
+    sentence = copy.firstVisit(onTopicCount);
     note = visit === null ? null : copy.firstVisitNote;
-  } else if (newItems.length === 0) {
+  } else if (newCount === 0) {
     sentence = copy.nothingNew(sincePhrase(now, baseline, copy));
   } else {
-    sentence = copy.newSince(newItems.length, sincePhrase(now, baseline, copy));
+    sentence = copy.newSince(newCount, sincePhrase(now, baseline, copy));
     const leadGroup = (["workflow", "career", "releases", "tools"] as GroupId[]).find(
       (group) => groupCounts[group] > 0 && copy.newLead[group]
     );
@@ -385,13 +416,15 @@ export default function AppShell({
 
   const sourceTypeCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    for (const item of onTopicItems) counts[item.sourceType] = (counts[item.sourceType] ?? 0) + 1;
+    for (const type of SOURCE_TYPES) {
+      counts[type] = countEntries(onTopicItems.filter((item) => item.sourceType === type));
+    }
     return counts;
   }, [onTopicItems]);
 
   const showTabs = view !== "saved";
   // No industry items: no reserved column, the stream owns the page.
-  const hasAside = view !== "saved" && industryItems.length > 0;
+  const hasAside = industryItems.length > 0;
   const filtersActive = filters.topic !== "all" || filters.source !== "all";
   const industryInlineAt = Math.min(4, visibleEntries.length);
 
@@ -405,7 +438,7 @@ export default function AppShell({
   }
 
   const industryInline =
-    view !== "saved" ? (
+    hasAside ? (
       <IndustryPanel
         key="industry-inline"
         items={industryItems}
@@ -444,7 +477,7 @@ export default function AppShell({
           </a>
           <nav className={styles.views} aria-label={copy.viewsLabel}>
             {(["new", "all", "saved"] as FeedView[]).map((option) => {
-              const count = option === "new" ? newItems.length : option === "saved" ? saved.length : 0;
+              const count = option === "new" ? newCount : option === "saved" ? saved.length : 0;
               return (
                 <button
                   key={option}
@@ -538,7 +571,11 @@ export default function AppShell({
                 <optgroup label={copy.sourceTypes}>
                   {SOURCE_TYPES.map((type) => (
                     <option key={type} value={`type:${type}`}>
-                      {copy.typeNames[type]} ({sourceTypeCounts[type] ?? 0})
+                      {copy.typeNames[type]} (
+                      {type === "github-release"
+                        ? copy.repoCount(sourceTypeCounts[type] ?? 0)
+                        : (sourceTypeCounts[type] ?? 0)}
+                      )
                     </option>
                   ))}
                 </optgroup>

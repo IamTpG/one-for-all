@@ -15,14 +15,17 @@ export type FeedFilters = {
 
 export const DEFAULT_FILTERS: FeedFilters = { view: null, topic: "all", source: "all" };
 
-// Topics shown as tabs, in reading-priority order. ai-industry has its own
-// compact panel and never appears in the main stream.
+// Topics shown as tabs, in reading-priority order. Items that are only
+// ai-industry have their own compact panel instead of a stream row.
 export const TAB_TOPICS = ["ai-workflow", "ai-tools", "ai-updates", "career"] as const;
 export const INDUSTRY_TOPIC = "ai-industry";
 const SOURCE_TYPES: SourceType[] = ["rss", "hn", "github-trending", "github-release"];
 
-export function isIndustry(item: Pick<FeedItem, "topics">): boolean {
-  return item.topics?.includes(INDUSTRY_TOPIC) ?? false;
+// Industry news that is about nothing else: routed to the industry panel.
+// An item that also carries a main topic stays in the stream.
+export function isPureIndustry(item: Pick<FeedItem, "topics">): boolean {
+  const topics = item.topics ?? [];
+  return topics.includes(INDUSTRY_TOPIC) && !topics.some((topic) => (TAB_TOPICS as readonly string[]).includes(topic));
 }
 
 export function isNewItem(item: FeedItem, baseline: number | null): boolean {
@@ -44,28 +47,35 @@ export function primaryTopic(item: FeedItem): string | null {
 export const GROUP_ORDER: GroupId[] = ["workflow", "career", "tools", "releases", "industry"];
 
 // The band's chips count exactly what clicking them shows: the same rule
-// as the topic tabs (an item can sit in several topics), releases by source
-// type, industry by its own panel.
+// as the topic tabs (an item can sit in several topics), releases by repo
+// as the stream groups them, industry by its own panel.
 export const GROUP_TOPIC: Partial<Record<GroupId, string>> = {
   workflow: "ai-workflow",
   career: "career",
   tools: "ai-tools",
 };
 
-export function countGroups(items: FeedItem[]): Record<GroupId, number> {
-  const counts: Record<GroupId, number> = { workflow: 0, career: 0, tools: 0, releases: 0, industry: 0 };
+// Counts rows as the stream shows them: each repo's releases are one row.
+export function countEntries(items: FeedItem[]): number {
+  let count = 0;
+  const repos = new Set<string>();
   for (const item of items) {
-    if (!isOnTopic(item)) continue;
-    if (isIndustry(item)) {
-      counts.industry += 1;
-      continue;
-    }
-    if (item.sourceType === "github-release") counts.releases += 1;
-    for (const group of ["workflow", "career", "tools"] as const) {
-      if (item.topics?.includes(GROUP_TOPIC[group]!)) counts[group] += 1;
-    }
+    const repo = releaseRepo(item);
+    if (repo) repos.add(repo);
+    else count += 1;
   }
-  return counts;
+  return count + repos.size;
+}
+
+export function countGroups(items: FeedItem[]): Record<GroupId, number> {
+  const onTopic = items.filter(isOnTopic);
+  return {
+    workflow: countEntries(onTopic.filter((item) => matchesTopic(item, "ai-workflow"))),
+    career: countEntries(onTopic.filter((item) => matchesTopic(item, "career"))),
+    tools: countEntries(onTopic.filter((item) => matchesTopic(item, "ai-tools"))),
+    releases: countEntries(onTopic.filter((item) => item.sourceType === "github-release")),
+    industry: onTopic.filter(isPureIndustry).length,
+  };
 }
 
 export function matchesSource(item: FeedItem, source: string): boolean {
@@ -77,8 +87,11 @@ export function matchesSource(item: FeedItem, source: string): boolean {
 
 export function matchesTopic(item: FeedItem, topic: string): boolean {
   if (topic === OFF_TOPIC) return !isOnTopic(item);
-  if (!isOnTopic(item) || isIndustry(item)) return false;
+  if (!isOnTopic(item) || isPureIndustry(item)) return false;
   if (topic === "all") return true;
+  // Every release is tagged ai-tools by its source; releases belong under
+  // tool updates (and their own group), not in the tools & agents tab.
+  if (topic === "ai-tools" && item.sourceType === "github-release") return false;
   return item.topics?.includes(topic) ?? false;
 }
 

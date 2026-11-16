@@ -69,51 +69,90 @@ function createLocalStore<T>(key: string, parse: (raw: string) => T, empty: T) {
 
 // ---------- Last visit ----------
 
-const LAST_VISIT_KEY = "oneforall-last-visit";
-const BASELINE_KEY = "oneforall-visit-baseline";
+// A visit is a run of activity with no gap longer than VISIT_GAP_MS. Both
+// keys live in localStorage, so every tab shares one visit, and a reload or
+// a new tab inside the same visit keeps the same "new" marks. After a longer
+// gap the next visit starts, and its baseline is when the reader was last
+// active, i.e. the end of the previous visit.
+const VISIT_GAP_MS = 30 * 60 * 1000;
+const LAST_ACTIVITY_KEY = "oneforall-last-activity";
+const BASELINE_KEY = "oneforall-visit-baseline"; // ms, or "none" for a first visit
+// Written by earlier builds at session start; read once as a fallback.
+const LEGACY_LAST_VISIT_KEY = "oneforall-last-visit";
 
 export type VisitInfo = { baseline: number | null };
 
 let visitInfo: VisitInfo | null = null;
+let memoryLastActivity: number | null = null;
+const visitListeners = new Set<Listener>();
 
-// The baseline is fixed once per tab session: the previous visit's time is
-// read the first time the feed renders in a session and then kept, so
-// opening an article and coming back does not wipe the "new" marks.
-function readVisit(): VisitInfo {
-  if (visitInfo) return visitInfo;
+function readNumber(key: string): number | null {
+  const raw = localStorage.getItem(key);
+  const value = raw ? Number(raw) : NaN;
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
+// Resolves the visit for "now": continue the current one when the reader
+// was active within the gap, otherwise start a new one. Records activity.
+function resolveVisit(now: number): VisitInfo {
   let baseline: number | null = null;
   try {
-    const session = sessionStorage.getItem(BASELINE_KEY);
-    if (session !== null) {
-      baseline = session === "none" ? null : Number(session) || null;
+    const lastActivity = readNumber(LAST_ACTIVITY_KEY) ?? readNumber(LEGACY_LAST_VISIT_KEY);
+    const stored = localStorage.getItem(BASELINE_KEY);
+    if (lastActivity !== null && now - lastActivity < VISIT_GAP_MS && stored !== null) {
+      baseline = stored === "none" ? null : readNumber(BASELINE_KEY);
     } else {
-      const last = localStorage.getItem(LAST_VISIT_KEY);
-      baseline = last ? Number(last) || null : null;
-      sessionStorage.setItem(BASELINE_KEY, baseline === null ? "none" : String(baseline));
-      localStorage.setItem(LAST_VISIT_KEY, String(Date.now()));
+      baseline = lastActivity;
+      localStorage.setItem(BASELINE_KEY, baseline === null ? "none" : String(baseline));
     }
+    localStorage.setItem(LAST_ACTIVITY_KEY, String(now));
+    localStorage.removeItem(LEGACY_LAST_VISIT_KEY);
   } catch {
-    baseline = null;
+    // Storage blocked: one visit per page load, baseline kept in memory.
+    baseline = memoryLastActivity !== null && now - memoryLastActivity >= VISIT_GAP_MS ? memoryLastActivity : null;
   }
-  visitInfo = { baseline };
+  memoryLastActivity = now;
+  return { baseline };
+}
+
+function readVisit(): VisitInfo {
+  if (!visitInfo) visitInfo = resolveVisit(Date.now());
   return visitInfo;
 }
 
-// Called when the reader leaves (pagehide / tab hidden), so the next
-// session's baseline is the end of this one, not its start.
-export function touchLastVisit() {
+// Called on reader activity (input, scroll, leaving or returning to the
+// tab). If the gap since the last activity ended the visit, a new visit
+// starts and subscribers re-render with the new baseline, so a tab left
+// open for hours advances "since last visit" when the reader comes back.
+export function touchActivity() {
+  const now = Date.now();
+  let lastActivity = memoryLastActivity;
   try {
-    localStorage.setItem(LAST_VISIT_KEY, String(Date.now()));
+    lastActivity = readNumber(LAST_ACTIVITY_KEY) ?? lastActivity;
   } catch {
-    // Storage blocked — the next visit simply counts as a first visit.
+    // Storage blocked: fall back to the in-memory value.
+  }
+  if (visitInfo && lastActivity !== null && now - lastActivity >= VISIT_GAP_MS) {
+    visitInfo = resolveVisit(now);
+    visitListeners.forEach((listener) => listener());
+    return;
+  }
+  memoryLastActivity = now;
+  try {
+    localStorage.setItem(LAST_ACTIVITY_KEY, String(now));
+  } catch {
+    // Storage blocked: activity is tracked in memory only.
   }
 }
 
-const noopSubscribe = () => () => {};
+function subscribeVisit(listener: Listener): () => void {
+  visitListeners.add(listener);
+  return () => visitListeners.delete(listener);
+}
 
 // null on the server and during hydration; the client value right after.
 export function useVisit(): VisitInfo | null {
-  return useSyncExternalStore(noopSubscribe, readVisit, () => null);
+  return useSyncExternalStore(subscribeVisit, readVisit, () => null);
 }
 
 // ---------- Seen items ----------

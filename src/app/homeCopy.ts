@@ -15,6 +15,7 @@ type Copy = {
   sourceTypes: string;
   sourceFeeds: string;
   typeNames: Record<"rss" | "hn" | "github-trending" | "github-release", string>;
+  repoCount: (n: number) => string;
   topicAll: string;
   topics: Record<string, string>;
   topicShort: Record<string, string>;
@@ -88,6 +89,7 @@ const vi: Copy = {
   sourceTypes: "Loại nguồn",
   sourceFeeds: "Blog",
   typeNames: { rss: "Blog", hn: "Hacker News", "github-trending": "GitHub Trending", "github-release": "Bản phát hành" },
+  repoCount: (n) => `${n} repo`,
   topicAll: "Mọi chủ đề",
   topics: {
     "ai-workflow": "Cách làm việc với AI",
@@ -110,7 +112,7 @@ const vi: Copy = {
     workflow: () => "Cách làm việc",
     career: () => "Nghề nghiệp",
     tools: () => "Công cụ & agent",
-    releases: () => "Bản phát hành",
+    releases: () => "Repo có bản phát hành",
     industry: () => "Tin ngành",
   },
   dashboard: "Dashboard",
@@ -122,7 +124,7 @@ const vi: Copy = {
   newLead: {
     workflow: (n) => `${n} về cách làm việc với agent.`,
     career: (n) => `${n} về nghề nghiệp.`,
-    releases: (n) => `${n} bản phát hành mới.`,
+    releases: (n) => `${n} repo có bản phát hành mới.`,
     tools: (n) => `${n} về công cụ và agent.`,
   },
   nothingNew: (since) => `Chưa có gì mới ${since}.`,
@@ -182,6 +184,7 @@ const en: Copy = {
   sourceTypes: "Source type",
   sourceFeeds: "Blogs",
   typeNames: { rss: "Blogs", hn: "Hacker News", "github-trending": "GitHub Trending", "github-release": "Releases" },
+  repoCount: (n) => `${n} ${n === 1 ? "repo" : "repos"}`,
   topicAll: "All topics",
   topics: {
     "ai-workflow": "Working with AI",
@@ -204,7 +207,7 @@ const en: Copy = {
     workflow: () => "Working with AI",
     career: () => "Career",
     tools: () => "Tools & agents",
-    releases: () => "Releases",
+    releases: (n) => (n === 1 ? "Repo with releases" : "Repos with releases"),
     industry: () => "Industry",
   },
   dashboard: "Dashboard",
@@ -216,7 +219,7 @@ const en: Copy = {
   newLead: {
     workflow: (n) => `${n} on working with agents.`,
     career: (n) => `${n} on careers.`,
-    releases: (n) => `${n} new ${n === 1 ? "release" : "releases"}.`,
+    releases: (n) => `${n} ${n === 1 ? "repo" : "repos"} with new releases.`,
     tools: (n) => `${n} on tools and agents.`,
   },
   nothingNew: (since) => `Nothing new ${since}.`,
