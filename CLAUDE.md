@@ -5,7 +5,7 @@
 Personal news feed that collects dev/AI news (RSS, Hacker News, GitHub), filters it to AI-assisted development, summarizes/translates it with Groq, and presents it for quick catch-up. Used by the owner and a few developer friends. See `PRODUCT.md`.
 
 ## Stack
-- Language/runtime: TypeScript 5 (strict), Node TODO (no `engines`/`.nvmrc`)
+- Language/runtime: TypeScript 5 (strict), Node 24.x (pinned in `engines`, matches Vercel)
 - Frameworks: Next.js 16.3.3 (App Router), React 19.2, Tailwind CSS 4, CSS modules
 - Data: Redis via `ioredis` (items, retention, settings, usage counters); no SQL/ORM
 - Package manager: npm
