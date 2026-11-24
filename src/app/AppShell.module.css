@@ -145,8 +145,7 @@
   height: 16px;
 }
 
-/* The EN/VI control is a text pill, not an icon button — matches
-   wire-lookbook.html's .wire-pill-btn exactly. */
+/* The EN/VI control is a text pill, not an icon button. */
 .langToggle {
   flex: none;
   font-family: var(--font-mono), monospace;
