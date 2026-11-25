@@ -36,6 +36,36 @@ export function coerceWholeLimits<T extends Record<string, number>>(incoming: Pa
   return out;
 }
 
+// What happened to one submitted limit: "invalid" when it was not a positive
+// whole number (the stored value is kept), "clamped" when it was above the
+// upper bound (the bound is stored).
+export type LimitIssue = "invalid" | "clamped";
+
+// Like coerceWholeLimits, but also reports per-field issues so the UI can say
+// what the server actually stored. Fractions are floored, as before.
+export function resolveLimits<T extends Record<string, number>>(
+  incoming: Partial<Record<keyof T, unknown>>,
+  current: T
+): { values: T; issues: Partial<Record<keyof T, LimitIssue>> } {
+  const values = coerceWholeLimits<T>(incoming, current);
+  const issues: Partial<Record<keyof T, LimitIssue>> = {};
+  for (const key of Object.keys(current) as (keyof T)[]) {
+    const raw = incoming[key];
+    const max = LIMIT_MAX[key as string] ?? Infinity;
+    if (typeof raw !== "number" || !Number.isFinite(raw) || Math.floor(raw) < 1) issues[key] = "invalid";
+    else if (Math.floor(raw) > max) issues[key] = "clamped";
+  }
+  return { values, issues };
+}
+
+// Client-side reading of a text input: a positive whole number, else null.
+export function parseLimitInput(raw: string): number | null {
+  const text = raw.trim();
+  if (!/^\d+$/.test(text)) return null;
+  const n = Number(text);
+  return Number.isSafeInteger(n) && n >= 1 ? n : null;
+}
+
 // A list of short strings that all match `pattern`, or null when the value is
 // anything else (not an array, a non-string, a bad entry, too many entries).
 export function cleanStringList(value: unknown, pattern: RegExp, maxItems = 200): string[] | null {

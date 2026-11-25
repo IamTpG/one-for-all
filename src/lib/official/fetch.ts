@@ -26,10 +26,12 @@ import { parseOfficialRss } from "@/lib/official/parsers/rss";
 import type { ParsedEntry } from "@/lib/official/parsers/types";
 import { parseXaiNews, parseXaiSitemap } from "@/lib/official/parsers/xaiNews";
 import { OFFICIAL_SOURCES, type OfficialSourceConfig } from "@/lib/official/sources";
-import { htmlToText, looksLikeHtml, truncateHtml } from "@/lib/official/text";
+import { clipSummary, htmlToText, looksLikeHtml, truncateHtml } from "@/lib/official/text";
 
 const MAX_REDIRECTS = 5;
 const SUMMARY_CHARS = 280;
+// Text read from the body before it is clipped to SUMMARY_CHARS.
+const SUMMARY_SOURCE_CHARS = 2000;
 const SEQUENTIAL_GAP_MS = 1000;
 
 type Entry = ParsedEntry;
@@ -209,7 +211,7 @@ function toItem(source: OfficialSourceConfig, entry: Entry): FeedItem {
     : "";
   const { html } = truncateHtml(rendered, OFFICIAL_MAX_BODY_CHARS);
   const fullContentHtml = html ? sanitizeArticleHtml(html) : undefined;
-  const summary = entry.summary ?? htmlToText(rendered, SUMMARY_CHARS);
+  const summary = entry.summary ?? clipSummary(htmlToText(rendered, SUMMARY_SOURCE_CHARS), SUMMARY_CHARS);
 
   // A kind the source itself states (OpenAI API changelog labels) wins over
   // keyword guessing, but not over the source's own defaultKind.
