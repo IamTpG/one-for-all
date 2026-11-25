@@ -2,6 +2,7 @@
 
 import { Fragment, useState } from "react";
 import { useRouter } from "next/navigation";
+import { LIMIT_MAX, parseLimitInput } from "@/lib/limits";
 import { setRetentionDaysAction, setSourceLimitsAction, type Retention, type SourceLimits } from "../actions/settings";
 import styles from "../SettingsControls.module.css";
 
@@ -25,6 +26,13 @@ const RETENTION_FIELDS: { key: keyof Retention; label: string; hint?: string }[]
   },
 ];
 
+type Drafts = Record<string, string>;
+type Notes = Record<string, { kind: "error" | "info"; text: string }>;
+
+function toDrafts(values: Record<string, number>): Drafts {
+  return Object.fromEntries(Object.entries(values).map(([k, v]) => [k, String(v)]));
+}
+
 export default function FetchLimitsEditor({
   initialLimits,
   initialRetention,
@@ -33,81 +41,113 @@ export default function FetchLimitsEditor({
   initialRetention: Retention;
 }) {
   const router = useRouter();
-  const [limits, setLimits] = useState(initialLimits);
-  const [retention, setRetention] = useState(initialRetention);
+  const [drafts, setDrafts] = useState<Drafts>(() => toDrafts({ ...initialLimits, ...initialRetention }));
+  const [notes, setNotes] = useState<Notes>({});
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState(false);
 
-  function updateLimit(key: keyof SourceLimits, value: string) {
-    const num = Number(value);
-    setLimits((prev) => ({ ...prev, [key]: Number.isFinite(num) && num > 0 ? num : prev[key] }));
-    setSaved(false);
-  }
-
-  function updateRetention(key: keyof Retention, value: string) {
-    const num = Number(value);
-    setRetention((prev) => ({ ...prev, [key]: Number.isFinite(num) && num > 0 ? num : prev[key] }));
+  function update(key: string, value: string) {
+    setDrafts((prev) => ({ ...prev, [key]: value }));
+    setNotes((prev) => {
+      if (!prev[key]) return prev;
+      const rest = { ...prev };
+      delete rest[key];
+      return rest;
+    });
     setSaved(false);
   }
 
   async function save() {
-    setSaving(true);
+    const next: Notes = {};
+    const parsed: Record<string, number> = {};
+    for (const { key } of [...FIELDS, ...RETENTION_FIELDS]) {
+      const n = parseLimitInput(drafts[key] ?? "");
+      if (n === null) next[key] = { kind: "error", text: "Enter a whole number of 1 or more." };
+      else parsed[key] = n;
+    }
     setError(false);
-    const [limitsResult, retentionResult] = await Promise.all([
-      setSourceLimitsAction(limits),
-      setRetentionDaysAction(retention),
-    ]);
+    setSaved(false);
+    if (Object.values(next).some((note) => note.kind === "error")) {
+      setNotes(next);
+      return;
+    }
+    setSaving(true);
+    // One after the other: both actions read-modify-write the same settings.
+    const limitsResult = await setSourceLimitsAction(pick(parsed, FIELDS) as SourceLimits);
+    const retentionResult = await setRetentionDaysAction(pick(parsed, RETENTION_FIELDS) as Retention);
     setSaving(false);
     if (!limitsResult.ok || !retentionResult.ok) {
       setError(true);
       return;
     }
+    // Show what the server stored, and say where it differs from the input.
+    const stored: Record<string, number> = { ...limitsResult.values, ...retentionResult.values };
+    const issues: Record<string, string | undefined> = { ...limitsResult.issues, ...retentionResult.issues };
+    for (const key of Object.keys(stored)) {
+      if (issues[key] === "clamped") next[key] = { kind: "info", text: `Saved as ${stored[key]} (max)` };
+      else if (issues[key] === "invalid") next[key] = { kind: "error", text: `Not saved, kept ${stored[key]}.` };
+    }
+    setDrafts(toDrafts(stored));
+    setNotes(next);
     setSaved(true);
     router.refresh();
   }
 
-  return (
-    <div className={styles.settingsGroup}>
-      {FIELDS.map((field) => (
-        <div key={field.key} className={styles.fieldRow}>
-          <span className={styles.fieldLabel}>{field.label}</span>
+  function row(field: { key: string; label: string; hint?: string }) {
+    const note = notes[field.key];
+    const hintId = field.hint ? `${field.key}-hint` : undefined;
+    const noteId = note ? `${field.key}-note` : undefined;
+    return (
+      <Fragment key={field.key}>
+        <div className={styles.fieldRow}>
+          <label htmlFor={`limit-${field.key}`} className={styles.fieldLabel}>
+            {field.label}
+          </label>
           <input
+            id={`limit-${field.key}`}
             type="number"
+            inputMode="numeric"
             min={1}
+            max={LIMIT_MAX[field.key]}
             className={styles.fieldInput}
-            value={limits[field.key]}
-            onChange={(e) => updateLimit(field.key, e.target.value)}
+            value={drafts[field.key] ?? ""}
+            aria-invalid={note?.kind === "error" || undefined}
+            aria-describedby={[hintId, noteId].filter(Boolean).join(" ") || undefined}
+            onChange={(e) => update(field.key, e.target.value)}
           />
         </div>
-      ))}
-      {RETENTION_FIELDS.map((field) => (
-        <Fragment key={field.key}>
-          <div className={styles.fieldRow}>
-            <span className={styles.fieldLabel}>{field.label}</span>
-            <input
-              type="number"
-              min={1}
-              className={styles.fieldInput}
-              value={retention[field.key]}
-              aria-describedby={field.hint ? `${field.key}-hint` : undefined}
-              onChange={(e) => updateRetention(field.key, e.target.value)}
-            />
-          </div>
-          {field.hint && (
-            <p id={`${field.key}-hint`} className={styles.hint}>
-              {field.hint}
-            </p>
-          )}
-        </Fragment>
-      ))}
+        {note && (
+          <p
+            id={noteId}
+            role={note.kind === "error" ? "alert" : "status"}
+            className={note.kind === "error" ? styles.settingsError : styles.saveConfirmed}
+          >
+            {note.text}
+          </p>
+        )}
+        {field.hint && (
+          <p id={hintId} className={styles.hint}>
+            {field.hint}
+          </p>
+        )}
+      </Fragment>
+    );
+  }
+
+  return (
+    <div className={styles.settingsGroup}>
+      {FIELDS.map(row)}
+      {RETENTION_FIELDS.map(row)}
       {error && <p className={styles.settingsError}>Couldn&apos;t save — try again.</p>}
-      {saved && !error && (
-        <p className={styles.saveConfirmed}>Saved — takes effect on the next fetch.</p>
-      )}
+      {saved && !error && <p className={styles.saveConfirmed}>Saved — takes effect on the next fetch.</p>}
       <button type="button" className={styles.saveButton} onClick={save} disabled={saving}>
         {saving ? "Saving…" : "Save"}
       </button>
     </div>
   );
+}
+
+function pick(values: Record<string, number>, fields: { key: string }[]): Record<string, number> {
+  return Object.fromEntries(fields.map(({ key }) => [key, values[key]]));
 }

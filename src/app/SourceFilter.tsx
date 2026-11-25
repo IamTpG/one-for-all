@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore, type RefObject } from "react";
+import { useRef, useState, useSyncExternalStore, type RefObject } from "react";
 import { Checkbox } from "@base-ui/react/checkbox";
 import { Dialog } from "@base-ui/react/dialog";
 import { Popover } from "@base-ui/react/popover";
@@ -178,6 +178,11 @@ export default function SourceFilter({
 }) {
   const sheet = useIsSheet();
   const [open, setOpen] = useState(false);
+  const popupRef = useRef<HTMLDivElement>(null);
+  // Opening moves focus to the first checkbox (not the sheet's "Xong" button,
+  // which comes first in the DOM); closing returns it to the trigger, which is
+  // base-ui's default finalFocus for Esc, Xong, the scrim and outside presses.
+  const firstCheckbox = () => popupRef.current?.querySelector<HTMLElement>('[role="checkbox"]') ?? true;
   const label = triggerLabel(selected, options, {
     all: copy.sourceAll,
     allOfficial: copy.sourceAllOfficial,
@@ -202,7 +207,7 @@ export default function SourceFilter({
         <Dialog.Trigger {...triggerProps} />
         <Dialog.Portal container={portalRef}>
           <Dialog.Backdrop className={styles.srcScrim} />
-          <Dialog.Popup className={styles.srcSheet}>
+          <Dialog.Popup ref={popupRef} className={styles.srcSheet} initialFocus={firstCheckbox}>
             <PanelBody {...panel} />
           </Dialog.Popup>
         </Dialog.Portal>
@@ -224,7 +229,7 @@ export default function SourceFilter({
           collisionAvoidance={{ side: "none", align: "shift", fallbackAxisSide: "none" }}
           className={styles.srcPositioner}
         >
-          <Popover.Popup className={styles.srcPopup}>
+          <Popover.Popup ref={popupRef} className={styles.srcPopup} initialFocus={firstCheckbox}>
             <PanelBody {...panel} />
           </Popover.Popup>
         </Popover.Positioner>

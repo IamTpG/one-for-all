@@ -1,7 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { cleanStringList, coerceWholeLimits, FETCH_TIME_PATTERN, REPO_PATTERN, SOURCE_ID_PATTERN } from "@/lib/limits";
+import { cleanStringList, FETCH_TIME_PATTERN, REPO_PATTERN, resolveLimits, SOURCE_ID_PATTERN, type LimitIssue } from "@/lib/limits";
 import { isOwnerRequest, OWNER_COOKIE_NAME } from "@/lib/ownerAuth";
 import { getSiteSettings, setSiteSettings } from "@/lib/siteSettings";
 
@@ -42,12 +42,17 @@ export type SourceLimits = {
   officialLookbackDays: number;
 };
 
-export async function setSourceLimitsAction(limits: SourceLimits): Promise<{ ok: boolean }> {
+// ok is true when the submitted values were stored (some possibly clamped);
+// `values` is what is stored now and `issues` says which fields were
+// rejected ("invalid", stored value kept) or clamped to their upper bound.
+export type LimitsResult<T> = { ok: boolean; values?: T; issues?: Partial<Record<keyof T, LimitIssue>> };
+
+export async function setSourceLimitsAction(limits: SourceLimits): Promise<LimitsResult<SourceLimits>> {
   if (!(await requireOwner())) return { ok: false };
   const current = await getSiteSettings();
   // A server action takes whatever the client sends: anything that is not a
   // whole number of at least 1 keeps the stored value.
-  const checked = coerceWholeLimits<SourceLimits>(limits, {
+  const { values, issues } = resolveLimits<SourceLimits>(limits, {
     rssItemLimit: current.rssItemLimit,
     hnItemLimit: current.hnItemLimit,
     githubTrendingLimit: current.githubTrendingLimit,
@@ -55,21 +60,21 @@ export async function setSourceLimitsAction(limits: SourceLimits): Promise<{ ok:
     officialItemLimit: current.officialItemLimit,
     officialLookbackDays: current.officialLookbackDays,
   });
-  const ok = await setSiteSettings({ ...current, ...checked });
-  return { ok };
+  const ok = await setSiteSettings({ ...current, ...values });
+  return { ok, values, issues };
 }
 
 export type Retention = { retentionDays: number; officialRetentionDays: number };
 
-export async function setRetentionDaysAction(retention: Retention): Promise<{ ok: boolean }> {
+export async function setRetentionDaysAction(retention: Retention): Promise<LimitsResult<Retention>> {
   if (!(await requireOwner())) return { ok: false };
   const current = await getSiteSettings();
-  const checked = coerceWholeLimits<Retention>(retention, {
+  const { values, issues } = resolveLimits<Retention>(retention, {
     retentionDays: current.retentionDays,
     officialRetentionDays: current.officialRetentionDays,
   });
-  const ok = await setSiteSettings({ ...current, ...checked });
-  return { ok };
+  const ok = await setSiteSettings({ ...current, ...values });
+  return { ok, values, issues };
 }
 
 export async function setFetchTimesAction(fetchTimesUtc: string[]): Promise<{ ok: boolean }> {
