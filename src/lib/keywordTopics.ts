@@ -1,5 +1,7 @@
-import { AI_CONTEXT_TERMS, TOPICS } from "@/lib/config";
-import type { FeedItem } from "@/lib/types";
+// Relative imports with extensions: the home feed's pure logic (feedModel.ts)
+// is tested under `node --test`, which does not resolve the "@/" alias.
+import { AI_CONTEXT_TERMS, TOPICS } from "./config.ts";
+import type { FeedItem } from "./types.ts";
 
 // Normalize hyphens/underscores/slashes to spaces so "claude-code" (as it
 // appears in repo names/titles) matches a "claude code" keyword and vice
@@ -39,17 +41,25 @@ export function hasAiContext(text: string, { repo = false }: { repo?: boolean } 
   return AI_CONTEXT.test(normalized) || (repo && REPO_AI_TERMS.test(normalized));
 }
 
-export function matchKeywordTopics(text: string): string[] {
+// `assumeAiContext` skips the AI-context check: official product updates
+// come from AI vendors by definition, and a note like "Tab completes slash
+// commands" has no AI term in it.
+export function matchKeywordTopics(
+  text: string,
+  { assumeAiContext = false }: { assumeAiContext?: boolean } = {}
+): string[] {
   const normalized = normalize(text);
-  if (!AI_CONTEXT.test(normalized)) return [];
+  if (!assumeAiContext && !AI_CONTEXT.test(normalized)) return [];
   return TOPIC_MATCHERS.filter(({ matcher }) => matcher.test(normalized)).map(({ id }) => id);
 }
 
 // Items with no topic are off-topic: hidden from the default feed, still
 // reachable through the "Off-topic" filter. Client-safe (no server imports).
+// An official product update is always on-topic: it counts even with no
+// topic, so the AI-relevance gate can never hide a vendor's own release.
 export const OFF_TOPIC = "off-topic";
-export function isOnTopic(item: Pick<FeedItem, "topics">): boolean {
-  return (item.topics?.length ?? 0) > 0;
+export function isOnTopic(item: Pick<FeedItem, "topics" | "official">): boolean {
+  return (item.topics?.length ?? 0) > 0 || Boolean(item.official?.kind);
 }
 
 // Topics implied by where an item came from, independent of its text:

@@ -1,0 +1,471 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>ChatGPT &amp; Codex changelog</title><description>Latest updates to ChatGPT and Codex.</description><link>https://developers.openai.com/</link><atom:link rel="self" type="application/rss+xml" href="https://developers.openai.com/codex/changelog/rss.xml"/><item><title>Codex app</title><link>https://developers.openai.com/codex/changelog/#codex-2026-11-23-app</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-11-23-app</guid><description>Codex app</description><pubDate>Mon, 23 Nov 2026 00:00:00 GMT</pubDate><content:encoded># Codex app
+
+### New features
+
+- Open a CSV file to preview it as a table. Select **View source** to edit it
+  in the same tab.
+- When you open another Markdown file, the editor remembers whether you last
+  used source or preview.
+
+### Performance improvements and bug fixes
+
+- On Windows, branch reviews now count changed files and lines correctly
+  when many files have long paths.
+- Fixed an issue that prevented some HTML files with large embedded images or
+  videos from opening in preview.</content:encoded></item><item><title>Codex app</title><link>https://developers.openai.com/codex/changelog/#codex-2026-11-19-app</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-11-19-app</guid><description>Codex app</description><pubDate>Thu, 19 Nov 2026 00:00:00 GMT</pubDate><content:encoded># Codex app
+
+### New features
+
+- Open a ZIP file in the file viewer to browse its folders and preview files
+  such as PDFs and images without extracting them.
+
+### Performance improvements and bug fixes
+
+- The November 20 update fixed an issue where recent activity could disappear
+  from a long local chat while Codex was still working.</content:encoded></item><item><title>ChatGPT for iOS</title><link>https://developers.openai.com/codex/changelog/#codex-2026-11-18-mobile</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-11-18-mobile</guid><description>ChatGPT for iOS</description><pubDate>Wed, 18 Nov 2026 00:00:00 GMT</pubDate><content:encoded># ChatGPT for iOS
+
+### New features
+
+- Side chats are now saved on compatible paired computers, so you can reopen them later from the original task.
+- The new project picker lets you choose Cloud or select a paired computer and project when starting a task.
+- Toggle word wrap for individual code blocks and diffs in a task.
+- Start a new Codex task with &lt;kbd&gt;Command&lt;/kbd&gt; + &lt;kbd&gt;&amp;nbsp;N&amp;nbsp;&lt;/kbd&gt; on iPad.
+
+### Improvements and bug fixes
+
+- The subagent indicator counts only agents that are still working or waiting. Open **Subagents** from the task menu to revisit finished agents and see which model and reasoning level each used.
+- Task search dismisses the keyboard when you open a result. Collapsed task list sections stay collapsed on iPhone.
+- Fixed the composer becoming unresponsive after opening a task from a completion notification.
+- Fixed transcripts jumping when reopening a task or returning to the app, and crashes when scrolling past or expanding inline videos.
+- Follow-ups no longer get stuck in the queue because an earlier turn still appears active.
+- Unsaved annotation text survives when you return to the app. Creating a worktree now preserves untracked files with names that include accented letters or quotation marks.</content:encoded></item><item><title>GPT-6.2 Astra and GPT-6.2 Sol in Work and Codex</title><link>https://developers.openai.com/codex/changelog/#codex-gpt-62-astra</link><guid>https://developers.openai.com/codex/changelog/#codex-gpt-62-astra</guid><description>GPT-6.2 Astra and GPT-6.2 Sol in Work and Codex</description><pubDate>Tue, 17 Nov 2026 00:00:00 GMT</pubDate><content:encoded># GPT-6.2 Astra and GPT-6.2 Sol in Work and Codex
+
+GPT-6.2 Astra and GPT-6.2 Sol are now available in ChatGPT Work and Codex.
+Choose Astra for your hardest projects, such as implementing and testing a change
+across an existing codebase or turning a report into slides that follow your
+template. Choose Sol for everyday coding, writing, and multistep workflows.
+With GPT-6.2 Sol, you can complete more tasks on the same paid plan than with GPT-6.1 Sol.
+
+Pro $200 subscribers can use GPT-6.2 Sol in Ultrafast mode. Pro $500 subscribers
+can use Ultrafast with both GPT-6.2 Sol and GPT-6.2 Astra. See [Models](/codex/models#recommended-models)
+for help choosing a model and [Speed](/codex/agent-configuration/speed#gpt-62-speed-options)
+for plan and workspace requirements. Read the [release announcement](https://openai.com/index/introducing-gpt-6-2-astra-sol/) for more details.</content:encoded></item><item><title>Codex CLI Release: 0.169.1</title><link>https://developers.openai.com/codex/changelog/#github-release-449266447</link><guid>https://developers.openai.com/codex/changelog/#github-release-449266447</guid><description>0.169.1</description><pubDate>Tue, 17 Nov 2026 00:00:00 GMT</pubDate><content:encoded>&lt;h2&gt;Chores&lt;/h2&gt;
+&lt;p&gt;No verified release highlights available.&lt;/p&gt;
+&lt;h2&gt;Changelog&lt;/h2&gt;
+&lt;p&gt;Full Changelog: &lt;a class=&quot;commit-link&quot; href=&quot;https://github.com/openai/codex/compare/rust-v0.169.0...rust-v0.169.1&quot;&gt;&lt;tt&gt;rust-v0.169.0...rust-v0.169.1&lt;/tt&gt;&lt;/a&gt;&lt;/p&gt;</content:encoded></item><item><title>Codex app</title><link>https://developers.openai.com/codex/changelog/#codex-2026-11-12-app</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-11-12-app</guid><description>Codex app</description><pubDate>Thu, 12 Nov 2026 00:00:00 GMT</pubDate><content:encoded># Codex app
+
+### New features
+
+- The November 17 update added a fork option to the title menu for local chats.
+  In a Git project, you can also fork the chat into a new worktree.
+- The November 18 update added [GPT-6.2 Sol and GPT-6.2 Astra](/codex/changelog#codex-gpt-62-astra)
+  to the model picker for Amazon Bedrock in supported AWS Regions.
+
+### Performance improvements and bug fixes
+
+- Fixed a formatting issue where a price such as `$5/month` and part of a later
+  link could appear as math if the link contained a dollar sign.
+- Copying part of a formatted response now preserves links, list numbering, and
+  checked boxes when you paste it into a rich-text editor.
+- Restored **Edit plugin** when you reopen an installed private workspace plugin
+  from **Personal** &gt; **Created by you**.</content:encoded></item><item><title>Codex CLI Release: 0.167.2</title><link>https://developers.openai.com/codex/changelog/#github-release-442267349</link><guid>https://developers.openai.com/codex/changelog/#github-release-442267349</guid><description>0.167.2</description><pubDate>Wed, 11 Nov 2026 00:00:00 GMT</pubDate><content:encoded>&lt;h2&gt;New Features&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;Codex now sends tool updates incrementally by default on Google Cloud Vertex AI. To opt out, set &lt;code&gt;incremental_tools_legacy_gcp = false&lt;/code&gt; under &lt;code&gt;[features]&lt;/code&gt; in &lt;code&gt;config.toml&lt;/code&gt;. (&lt;a href=&quot;https://github.com/openai/codex/pull/60617&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/openai/codex/pull/60617/hovercard&quot;&gt;#60617&lt;/a&gt;, &lt;a href=&quot;https://github.com/openai/codex/pull/60848&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/openai/codex/pull/60848/hovercard&quot;&gt;#60848&lt;/a&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Changelog&lt;/h2&gt;
+&lt;p&gt;Full Changelog: &lt;a class=&quot;commit-link&quot; href=&quot;https://github.com/openai/codex/compare/rust-v0.167.1...rust-v0.167.2&quot;&gt;&lt;tt&gt;rust-v0.167.1...rust-v0.167.2&lt;/tt&gt;&lt;/a&gt;&lt;/p&gt;</content:encoded></item><item><title>Codex app</title><link>https://developers.openai.com/codex/changelog/#codex-2026-11-10-app</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-11-10-app</guid><description>Codex app</description><pubDate>Tue, 10 Nov 2026 00:00:00 GMT</pubDate><content:encoded># Codex app
+
+### New features
+
+- When you reopen the app after a quit or crash, Codex now automatically resumes
+  eligible local chats. The chat must still be interrupted, have been active in
+  the past 24 hours, and belong to the same ChatGPT account you&apos;re using.
+
+### Performance improvements and bug fixes
+
+- Fixed an issue where switching accounts could make local projects, remote
+  projects, and pinned tasks disappear from the sidebar.
+- When you comment on a passage in Pages, the comment box now keeps focus as
+  you type and attaches your comment to the selected text.
+- Replies now render inline equations enclosed in single dollar signs, such as
+  `$x + y$`, and keep prices such as `$5 each` as text next to an equation.</content:encoded></item><item><title>ChatGPT for iOS</title><link>https://developers.openai.com/codex/changelog/#codex-2026-11-10-mobile</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-11-10-mobile</guid><description>ChatGPT for iOS</description><pubDate>Tue, 10 Nov 2026 00:00:00 GMT</pubDate><content:encoded># ChatGPT for iOS
+
+### New features
+
+- Paste images and files into the full-screen composer, and open file attachments from sent prompts.
+- Switch between drives in the folder picker on Windows hosts.
+- Dictate annotation notes.
+- Hide the task list on iPhone Duo without leaving the current task.
+
+### Improvements and bug fixes
+
+- Reopening a running Codex Cloud task keeps loaded messages visible.
+- Sent prompts stay above their replies, even when the host confirms receipt late.
+- Expanded command cards show the full command and more of its output.
+- Improved keyboard and toolbar behavior on iPad and iPhone Duo.
+- Fixed opening changed files and loading response images on Windows hosts. The folder picker now opens on Linux hosts that can&apos;t locate a home folder.
+- Manual pairing works with VoiceOver and on devices that can&apos;t scan QR codes.</content:encoded></item><item><title>Codex CLI Release: 0.167.1</title><link>https://developers.openai.com/codex/changelog/#github-release-440934118</link><guid>https://developers.openai.com/codex/changelog/#github-release-440934118</guid><description>0.167.1</description><pubDate>Tue, 10 Nov 2026 00:00:00 GMT</pubDate><content:encoded>&lt;h2&gt;Changelog&lt;/h2&gt;
+&lt;p&gt;Full Changelog: &lt;a class=&quot;commit-link&quot; href=&quot;https://github.com/openai/codex/compare/rust-v0.167.0...rust-v0.167.1&quot;&gt;&lt;tt&gt;rust-v0.167.0...rust-v0.167.1&lt;/tt&gt;&lt;/a&gt;&lt;/p&gt;</content:encoded></item><item><title>Codex app</title><link>https://developers.openai.com/codex/changelog/#codex-2026-11-05-app</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-11-05-app</guid><description>Codex app</description><pubDate>Thu, 05 Nov 2026 00:00:00 GMT</pubDate><content:encoded># Codex app
+
+### Performance improvements and bug fixes
+
+- On macOS and Windows, the home screen loads faster, the first response in an
+  existing chat appears sooner, and PDF previews and code reviews open faster.
+- Fixed an issue on macOS where the integrated terminal could display non-ASCII
+  characters incorrectly when the app started without a language setting.
+- The November 8 update made the **Send**, **Queue**, and **Steer** buttons
+  appear dimmed when they&apos;re unavailable.</content:encoded></item><item><title>Codex app</title><link>https://developers.openai.com/codex/changelog/#codex-2026-11-03-app</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-11-03-app</guid><description>Codex app</description><pubDate>Tue, 03 Nov 2026 00:00:00 GMT</pubDate><content:encoded># Codex app
+
+### New features
+
+- Codex can now use controls in the in-app browser that require holding down a
+  key.
+
+### Performance improvements and bug fixes
+
+- When you search a chat or PDF, the Find bar now waits for the search to
+  finish before reporting zero results.</content:encoded></item><item><title>ChatGPT for iOS</title><link>https://developers.openai.com/codex/changelog/#codex-2026-11-02-mobile</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-11-02-mobile</guid><description>ChatGPT for iOS</description><pubDate>Mon, 02 Nov 2026 00:00:00 GMT</pubDate><content:encoded># ChatGPT for iOS
+
+### New features
+
+- Add, preview, and remove attachments without leaving the full-screen composer.
+- Task read status now syncs with supported hosts, helping clear stale unread indicators across devices.
+
+### Improvements and bug fixes
+
+- Follow-ups steer the running task by default unless you have saved a different preference.
+- Improved response annotations: add and edit notes on selected text, and tap numbered references to revisit the selected text and its note.
+- Custom-provider tasks keep their model and reasoning effort when you send a follow-up from iOS.
+- When you reopen a task, prompts that failed to send retain their attachments, and you can retry sending them.
+- Improved keyboard behavior when opening tasks, scrolling long drafts, and returning to an open editor.
+- Drafts, text selection, and undo history survive changes between compact and split layouts.
+- Improved iPhone Duo layouts, including full-width editing and controls that stay above the keyboard.
+- Linked files open directly, and closing the preview takes you back to the task. Absolute file links outside the workspace also open correctly.
+- Images with relative file paths load from the directory where the original turn ran.
+- Fixed invisible chart labels and bars in inline visualizations.
+- Reconnect errors show a single Retry control, with better alignment on iPad.
+- Archiving a task can reconnect to its host when the computer appears offline.</content:encoded></item><item><title>Codex app</title><link>https://developers.openai.com/codex/changelog/#codex-2026-10-29-app</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-10-29-app</guid><description>Codex app</description><pubDate>Thu, 29 Oct 2026 00:00:00 GMT</pubDate><content:encoded># Codex app
+
+### New features
+
+- On Windows, shortcuts to `%LOCALAPPDATA%\Microsoft\WindowsApps\chatgpt-desktop.exe`
+  now keep working after an app update.
+- In the October 31 update, Codex offered **Resume** or **Keep paused** when you
+  reopened the app after a quit or crash. The prompt covered interrupted local
+  chats active in the past 24 hours if you were signed in with the same ChatGPT
+  account.
+
+### Performance improvements and bug fixes
+
+- If switching Git branches fails, Codex now restores which changes were staged
+  and which were unstaged.</content:encoded></item><item><title>Codex app</title><link>https://developers.openai.com/codex/changelog/#codex-2026-10-27-app</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-10-27-app</guid><description>Codex app</description><pubDate>Tue, 27 Oct 2026 00:00:00 GMT</pubDate><content:encoded># Codex app
+
+### Performance improvements and bug fixes
+
+- When you steer Codex while it&apos;s responding, the chat now keeps the interrupted
+  reply above your message and shows the revised reply below it.
+- Selecting a code review finding now takes you to the correct line and keeps
+  it in view as the diff loads.</content:encoded></item><item><title>ChatGPT for iOS</title><link>https://developers.openai.com/codex/changelog/#codex-2026-10-27-mobile</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-10-27-mobile</guid><description>ChatGPT for iOS</description><pubDate>Tue, 27 Oct 2026 00:00:00 GMT</pubDate><content:encoded># ChatGPT for iOS
+
+### New features
+
+- Play audio and video directly in responses.
+- Tap a sub-agent&apos;s name in task activity to open its conversation.
+
+### Improvements and bug fixes
+
+- Draft attachments and annotations are now restored when you reopen a task or restart the app.
+- Reference autocomplete supports chat and skill names containing spaces. Plugin skill names are also easier to read.
+- Plan mode preserves your selected reasoning effort when using the same model.
+- Loaded activity stays visible if loading older work times out, with an option to retry.
+- Queue-loading failures now offer a Retry action.
+- Improved support for Windows file links and Markdown images.
+- Fixed worktree creation on Linux hosts.
+- Fixed crashes when steering queued messages or editing pairing codes, and iPad freezes when switching or resizing tasks.</content:encoded></item><item><title>GPT-6.1 Terra in Work and Codex</title><link>https://developers.openai.com/codex/changelog/#codex-2026-10-26-gpt-61-terra</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-10-26-gpt-61-terra</guid><description>GPT-6.1 Terra in Work and Codex</description><pubDate>Mon, 26 Oct 2026 00:00:00 GMT</pubDate><content:encoded># GPT-6.1 Terra in Work and Codex
+
+GPT-6.1 Terra is now available in ChatGPT Work and Codex on Plus,
+Pro, Business, Enterprise, and Edu plans. It&apos;s a fast, efficient model for
+professional work that combines strong image understanding with precise
+computer use.
+
+Reason about images and screens, then act on what you find across your browser,
+desktop, and apps. Terra also provides clear, direct writing that puts results
+first and explains supporting details in plain language.
+
+Choose GPT-6.1 Terra from the model list in **Advanced** in the ChatGPT desktop
+app or ChatGPT Work on the web. Work also supports Terra on mobile. The model isn&apos;t available in Chat and does not support UAE inference residency. Enterprise access depends on workspace
+availability and administrator controls.
+
+See [Models](/codex/models?surface=app#app-gpt-61-terra) for guidance and
+[browser use](/codex/browser) and [computer use](/codex/computer-use) for tool
+setup and access requirements.</content:encoded></item><item><title>Codex app</title><link>https://developers.openai.com/codex/changelog/#codex-2026-10-23-app</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-10-23-app</guid><description>Codex app</description><pubDate>Fri, 23 Oct 2026 00:00:00 GMT</pubDate><content:encoded># Codex app
+
+### New features
+
+- The October 23 patch (`26.1021.31345`) added **Ask before deleting worktrees**
+  in **Settings** &gt; **Worktrees**. Turn it off to skip confirmation when you
+  manually delete a worktree.
+
+### Performance improvements and bug fixes
+
+- Staging a file type change in the **Changes** panel now leaves unrelated edits
+  unstaged.
+- The October 23 patch also restored enterprise browser policies in the in-app
+  browser.</content:encoded></item><item><title>ChatGPT for iOS</title><link>https://developers.openai.com/codex/changelog/#codex-2026-10-22-mobile</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-10-22-mobile</guid><description>ChatGPT for iOS</description><pubDate>Thu, 22 Oct 2026 00:00:00 GMT</pubDate><content:encoded># ChatGPT for iOS
+
+### New features
+
+- View and stop background commands using the new pill above the composer on supported remote hosts.
+- Mention chats from other connected hosts with `@`.
+
+### Improvements and bug fixes
+
+- A loading indicator now shows when saved messages are refreshing.
+- Activity groups are cleaner, and you can open images inspected by Codex on demand.
+- Unanswered questions remain available after a turn finishes and when reopening a chat.
+- More reliable replies to questions while another prompt is starting or finishing.
+- Autocomplete suggestions appear as each source loads, without waiting for slower sources.
+- Usage-limit explanations and reset times now appear directly in the chat.
+- Fixed prompts incorrectly appearing to fail after a response timeout.
+- Fixed extra lines in diffs after repeated edits to the same file.
+- Images in responses open in the full-screen gallery, and attachment removal targets the correct image.
+- The voice button returns after a call ends, so you can start another without reopening the chat.</content:encoded></item><item><title>Codex app</title><link>https://developers.openai.com/codex/changelog/#codex-2026-10-20-app</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-10-20-app</guid><description>Codex app</description><pubDate>Tue, 20 Oct 2026 00:00:00 GMT</pubDate><content:encoded># Codex app
+
+### Performance improvements and bug fixes
+
+- On case-sensitive file systems, dragging files such as `Report.txt` and
+  `report.txt` into a chat now attaches both in the order you dropped them.
+- The October 21 update fixed an issue that could prevent a chat from starting
+  in a new worktree.</content:encoded></item><item><title>Codex app</title><link>https://developers.openai.com/codex/changelog/#codex-2026-10-15-app</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-10-15-app</guid><description>Codex app</description><pubDate>Thu, 15 Oct 2026 00:00:00 GMT</pubDate><content:encoded># Codex app
+
+### Performance improvements and bug fixes
+
+- If you select **Steer** while Codex is compacting a conversation, a notice
+  now tells you that your message will run automatically when compaction finishes.
+- Queued messages that start with indented code now show a plain-text preview.
+  Open the preview to see the original indentation.</content:encoded></item><item><title>GPT-5.5 retirement in Codex</title><link>https://developers.openai.com/codex/changelog/#codex-2026-10-14-gpt-55-retirement</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-10-14-gpt-55-retirement</guid><description>GPT-5.5 retirement in Codex</description><pubDate>Wed, 14 Oct 2026 00:00:00 GMT</pubDate><content:encoded># GPT-5.5 retirement in Codex
+
+Effective October 14, 2026, at noon PDT (19:00 UTC), GPT-5.5 retires from
+Codex for users signed in with ChatGPT. The OpenAI API and Codex sessions
+authenticated with an API key aren&apos;t affected.
+
+Use **GPT-6.1 Sol** (`gpt-6.1-sol`) when available to your plan and client.
+Update workspace defaults, saved model settings, managed configurations,
+custom agents, scheduled tasks, and scripts that still select `gpt-5.5`.
+
+See [GPT-5.5 retirement](/codex/models#gpt-55-retirement) for plan-specific
+replacements and [workspace model availability](/codex/enterprise/workspace-model-availability#prepare-for-the-gpt-55-retirement)
+for administrator guidance.</content:encoded></item><item><title>ChatGPT for iOS</title><link>https://developers.openai.com/codex/changelog/#codex-2026-10-13-mobile</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-10-13-mobile</guid><description>ChatGPT for iOS</description><pubDate>Tue, 13 Oct 2026 00:00:00 GMT</pubDate><content:encoded># ChatGPT for iOS
+
+### New features
+
+- File citations now open directly in the file viewer.
+- Collapse the entire Projects section to reach recent tasks faster.
+
+### Improvements and bug fixes
+
+- Faster task and thread loading, with saved task names and recent messages visible while reconnecting.
+- Markdown now renders in sent prompts, with questions quoted above your replies.
+- Queued messages appear immediately, with more reliable handling during turn interruptions.
+- Markdown files open in rendered view by default.
+- Clearer skill names and improved autocomplete after punctuation.
+- Fixed missing Rename prompts and usage percentages on iPad.
+- Plan mode stays selected when returning to the task list.
+- Custom permission mode now respects project-defined permissions.
+- Improved task widget reliability, including when local authentication is enabled for Codex.
+- Usage widgets adapt to accounts with only a weekly limit.
+- Connection errors offer a Retry action without hiding saved messages.
+- Fixed raw image URLs appearing in image-only messages.</content:encoded></item><item><title>Composer predictions in Codex</title><link>https://developers.openai.com/codex/changelog/#codex-2026-10-09-composer-predictions</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-10-09-composer-predictions</guid><description>Composer predictions in Codex</description><pubDate>Fri, 09 Oct 2026 00:00:00 GMT</pubDate><content:encoded># Composer predictions in Codex
+
+Composer predictions adds autocomplete-style suggestions for your next message in
+the Codex desktop app. After Codex responds, it uses the current conversation to
+suggest a follow-up prompt in the message box. Press **Tab** to accept the suggestion
+as an editable draft, or type your own message. Accepting a prediction doesn&apos;t send
+it for you.
+
+The feature is available in beta to users aged 18 and older with personal ChatGPT
+Pro plans in supported regions, in local and SSH threads with GPT-6 Astra and
+GPT-6.1 Sol.
+
+Learn more about [composer predictions](/codex/features/composer-predictions).</content:encoded></item><item><title>Codex CLI Release: 0.162.1</title><link>https://developers.openai.com/codex/changelog/#github-release-408271623</link><guid>https://developers.openai.com/codex/changelog/#github-release-408271623</guid><description>0.162.1</description><pubDate>Fri, 09 Oct 2026 00:00:00 GMT</pubDate><content:encoded>&lt;h2&gt;Bug Fixes&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;Fixed a TUI crash when asynchronous questions contain multiple lines, preserving line breaks and complete hyperlink destinations. (&lt;a class=&quot;issue-link js-issue-link&quot; data-error-text=&quot;Failed to load title&quot; data-id=&quot;5753050054&quot; data-permission-text=&quot;Title is private&quot; data-url=&quot;https://github.com/openai/codex/issues/51866&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/openai/codex/pull/51866/hovercard&quot; href=&quot;https://github.com/openai/codex/pull/51866&quot;&gt;#51866&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;Fixed startup failures caused by differences between a running background server&apos;s feature settings and CLI defaults. Compatibility checks now apply only to explicit command-line feature overrides. (&lt;a class=&quot;issue-link js-issue-link&quot; data-error-text=&quot;Failed to load title&quot; data-id=&quot;5781941385&quot; data-permission-text=&quot;Title is private&quot; data-url=&quot;https://github.com/openai/codex/issues/52648&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/openai/codex/pull/52648/hovercard&quot; href=&quot;https://github.com/openai/codex/pull/52648&quot;&gt;#52648&lt;/a&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Full Changelog: &lt;a class=&quot;commit-link&quot; href=&quot;https://github.com/openai/codex/compare/rust-v0.162.0...rust-v0.162.1&quot;&gt;&lt;tt&gt;rust-v0.162.0...rust-v0.162.1&lt;/tt&gt;&lt;/a&gt;&lt;/p&gt;</content:encoded></item><item><title>Codex app</title><link>https://developers.openai.com/codex/changelog/#codex-2026-10-08-app</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-10-08-app</guid><description>Codex app</description><pubDate>Thu, 08 Oct 2026 00:00:00 GMT</pubDate><content:encoded># Codex app
+
+Includes updates through October 13, 2026.
+
+### Performance improvements and bug fixes
+
+- Fixed queued messages getting stuck on **Sending** and restored **Steer** in
+  secondary app windows.
+- Improved scrolling and navigation between files in the **Changes** panel.
+- Added clearer recovery guidance when a tool call needs approval but the chat&apos;s
+  permissions prevent approval requests, with a link to those permissions when available.
+- Fixed an issue on Windows where Codex could leave a background process running
+  in WSL after checking startup policies.
+- Automations scheduled for multiple times within an hour, such as at 9:00 and
+  9:30, can start up to two minutes early or late.</content:encoded></item><item><title>GPT-6.1 Sol Ultrafast in Codex and ChatGPT Work</title><link>https://developers.openai.com/codex/changelog/#codex-2026-10-08-gpt-61-sol-ultrafast</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-10-08-gpt-61-sol-ultrafast</guid><description>GPT-6.1 Sol Ultrafast in Codex and ChatGPT Work</description><pubDate>Thu, 08 Oct 2026 00:00:00 GMT</pubDate><content:encoded># GPT-6.1 Sol Ultrafast in Codex and ChatGPT Work
+
+Ultrafast mode speeds up token generation with GPT-6.1 Sol in Codex and
+ChatGPT Work.
+
+Ultrafast is available on Pro $500 and eligible Enterprise and Edu plans.
+Enterprise access is off by default; workspace owners must enable it.
+GPT-6.1 Sol Ultrafast supports inference residency in the United States and
+Europe (EEA + Switzerland).
+
+See [Ultrafast mode](/codex/agent-configuration/speed#ultrafast-mode) for plan
+and workspace requirements, [Models](/codex/models#gpt-61-sol) for model
+guidance, and [Pricing](/codex/pricing) for usage and credit rates.</content:encoded></item><item><title>Codex app</title><link>https://developers.openai.com/codex/changelog/#codex-2026-10-07-app</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-10-07-app</guid><description>Codex app</description><pubDate>Wed, 07 Oct 2026 00:00:00 GMT</pubDate><content:encoded># Codex app
+
+### Performance improvements and bug fixes
+
+- Fixed Windows sandbox refresh failures after app updates.
+- Fixed worktree creation and chat forking for WSL repositories whose paths
+  conflicted with Windows directories.
+- Kept the recent chats section collapsed when switching between chats.
+- Fixed **Remove from section** so it removes a chat from its sidebar section
+  without pinning it.</content:encoded></item><item><title>ChatGPT for iOS</title><link>https://developers.openai.com/codex/changelog/#codex-2026-10-07-mobile</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-10-07-mobile</guid><description>ChatGPT for iOS</description><pubDate>Wed, 07 Oct 2026 00:00:00 GMT</pubDate><content:encoded># ChatGPT for iOS
+
+### New features
+
+- Page previews now appear inline in responses.
+- Added support for opening Codex task links directly on iOS.
+
+### Improvements and bug fixes
+
+- Redesigned the approval picker with clearer permission choices.
+- Find plugins from a single Plugins entry in the composer&apos;s plus menu.
+- Faster streaming in long threads, with fewer freezes.
+- New tasks keep your selected computer while it reconnects or is offline.
+- Improved worktree support so files and changes match the checkout used on desktop.
+- Fixed task lists remaining empty after connecting.
+- Smoother keyboard transitions when starting tasks and swiping back.
+- Status updates no longer appear as questions that need an answer.
+- Clearer manual pairing code entry, including support for pasting formatted codes.</content:encoded></item><item><title>ChatGPT for iOS</title><link>https://developers.openai.com/codex/changelog/#codex-2026-09-18-mobile</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-09-18-mobile</guid><description>ChatGPT for iOS</description><pubDate>Fri, 18 Sep 2026 00:00:00 GMT</pubDate><content:encoded># ChatGPT for iOS
+
+### New features
+
+- Create folders directly from the file picker.
+- Added support for writing blocks, with draft alternatives and copy actions.
+
+### Improvements and bug fixes
+
+- New tasks remember your worktree mode and setup environment for each project.
+- Long queued prompts show a compact preview and expand on tap.
+- Fixed queued prompts missing or appearing outdated after reopening a task.
+- Worktree task cards now open correctly after setup completes.
+- Restored the new-task button for projects containing only worktree tasks.
+- Improved voice-call reliability during temporary connection interruptions.
+- Better alignment of project, environment, and Git controls on iPad.
+- Fixed the thinking timer resetting when a new task starts.</content:encoded></item><item><title>Linux desktop preview and agent imports</title><link>https://developers.openai.com/codex/changelog/#codex-2026-08-11-app</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-08-11-app</guid><description>Install ChatGPT on Linux, import existing agent setup, and keep desktop imports up to date.</description><pubDate>Tue, 11 Aug 2026 00:00:00 GMT</pubDate><content:encoded># Linux desktop preview and agent imports
+
+### Install the ChatGPT desktop app on Linux
+
+The [ChatGPT desktop app for Linux](/codex/linux/linux-app) is available in
+preview for supported Ubuntu, Debian, and Fedora desktop distributions on x64
+and ARM64 processors. Download the `.deb` or `.rpm` package for your
+distribution, then sign in to work with projects, local files, and Codex.
+
+### Import setup and recent work from other agents
+
+The desktop app supports **Claude Code**, **Claude Cowork**, and
+**Cursor**. [Import instructions, settings, skills, plugins, projects, and
+recent work](/codex/import), then turn on automatic updates in
+**Settings &gt; Import** to keep imported work in sync.
+
+Codex CLI can also import supported setup and recent chats from Claude Code
+and Cursor with `/import`.</content:encoded></item><item><title>Codex CLI Release: 0.144.3</title><link>https://developers.openai.com/codex/changelog/#github-release-352954174</link><guid>https://developers.openai.com/codex/changelog/#github-release-352954174</guid><description>0.144.3</description><pubDate>Mon, 13 Jul 2026 00:00:00 GMT</pubDate><content:encoded>&lt;h2&gt;Chores&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;Published a version-only release with no merged pull request changes since &lt;code&gt;rust-v0.144.2&lt;/code&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Changelog&lt;/h2&gt;
+&lt;p&gt;Full Changelog: &lt;a class=&quot;commit-link&quot; href=&quot;https://github.com/openai/codex/compare/rust-v0.144.2...rust-v0.144.3&quot;&gt;&lt;tt&gt;rust-v0.144.2...rust-v0.144.3&lt;/tt&gt;&lt;/a&gt;&lt;/p&gt;</content:encoded></item><item><title>GPT-5.3-Codex and GPT-5.2 deprecated</title><link>https://developers.openai.com/codex/changelog/#codex-2026-05-26</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-05-26</guid><description>GPT-5.3-Codex and GPT-5.2 deprecated</description><pubDate>Tue, 26 May 2026 00:00:00 GMT</pubDate><content:encoded># GPT-5.3-Codex and GPT-5.2 deprecated
+
+GPT-5.3-Codex and GPT-5.2 are now deprecated as user-selectable models in Codex
+for users signed in with ChatGPT. API-key workflows aren&apos;t affected.
+
+Use a current Codex model, such as GPT-5.5, GPT-5.4, or GPT-5.4 mini. See
+[Codex models](/codex/models#deprecated-codex-models) for model availability
+and [Codex pricing](/codex/pricing#credits-overview) for credit rates.</content:encoded></item><item><title>Build and install plugins in Codex</title><link>https://developers.openai.com/codex/changelog/#codex-2026-03-25</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-03-25</guid><description>Build and install plugins in Codex</description><pubDate>Wed, 25 Mar 2026 00:00:00 GMT</pubDate><content:encoded># Build and install plugins in Codex
+
+Codex now supports **plugins**: installable bundles that package skills, app
+integrations, and MCP server configuration for reusable workflows.
+
+Plugins are available in the Codex app, CLI, and IDE extensions.
+
+You can install curated plugins from the plugin directory, or scaffold a local
+plugin with `@plugin-creator` and test it with workspace-scoped or home-scoped
+marketplaces.
+
+Learn more in the [plugins documentation](/codex/plugins).
+
+
+
+  &lt;img
+    src=&quot;/images/codex/plugins/directory.webp&quot;
+    alt=&quot;&quot;
+    class=&quot;block w-full rounded-lg border border-default my-0&quot;
+  /&gt;
+
+
+
+#### Plugin structure
+
+Every plugin is a folder with a required `.codex-plugin/plugin.json` manifest
+and optional supporting files:
+
+```text
+my-plugin/
+  .codex-plugin/
+    plugin.json   # Required: plugin manifest
+  skills/         # Optional: packaged skills
+  .app.json       # Optional: app or connector mappings
+  .mcp.json       # Optional: MCP server configuration
+  assets/         # Optional: icons, logos, screenshots
+```
+
+#### Install plugins per-user or per-repo
+
+You can install plugins for just yourself with
+`~/.agents/plugins/marketplace.json` and `~/.codex/plugins/`, or for everyone
+on a project with `.agents/plugins/marketplace.json` and a repo-local plugin
+directory such as `./plugins/`.
+
+#### Curated plugins and local development
+
+Codex surfaces curated public plugins in the plugin directory. Codex also ships
+with the built-in `@plugin-creator` skill to help you scaffold a plugin, add a
+local marketplace entry, and test it before sharing it with teammates.</content:encoded></item><item><title>Codex app</title><link>https://developers.openai.com/codex/changelog/#codex-2026-02-12-app</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-02-12-app</guid><description>Codex app</description><pubDate>Thu, 12 Feb 2026 00:00:00 GMT</pubDate><content:encoded># Codex app
+
+### New features
+
+- Support for GPT-5.3-Codex-Spark
+- Added conversation forking
+- Added [floating pop-out window](/codex/reference/settings#keep-a-task-near-your-work) to take a conversation with you
+
+### Bug fixes
+
+- Improved performance and bug fixes
+
+Alpha testing for the Codex app on Windows is also starting. [Sign up here](https://openai.com/form/codex-app/) to be a potential alpha tester.</content:encoded></item><item><title>Introducing GPT-5-Codex-Mini</title><link>https://developers.openai.com/codex/changelog/#codex-2025-11-07</link><guid>https://developers.openai.com/codex/changelog/#codex-2025-11-07</guid><description>Introducing GPT-5-Codex-Mini</description><pubDate>Fri, 07 Nov 2025 00:00:00 GMT</pubDate><content:encoded># Introducing GPT-5-Codex-Mini
+
+Today we are introducing a new `gpt-5-codex-mini` model option to Codex CLI and the IDE Extension. The model is a smaller, more cost-effective, but less capable version of `gpt-5-codex` that provides approximately 4x more usage as part of your ChatGPT subscription.
+
+Starting today, the CLI and IDE Extension will automatically suggest switching to `gpt-5-codex-mini` when you reach 90% of your 5-hour usage limit, to help you work longer without interruptions.
+
+You can try the model for a new Codex CLI session using:
+
+```bash
+codex --model gpt-5-codex-mini
+```
+
+You can also use the `/model` slash command in the CLI. In the Codex IDE Extension you can select GPT-5-Codex-Mini from the dropdown menu.
+
+Alternatively, you can change your default model to `gpt-5-codex-mini` by updating your `config.toml` [configuration file](/codex/local-config):
+
+```toml
+model = &quot;gpt-5-codex-mini”
+```</content:encoded></item></channel></rss>

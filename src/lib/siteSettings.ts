@@ -1,12 +1,15 @@
 import {
-  DEFAULT_ANTHROPIC_ITEM_LIMIT,
   DEFAULT_GITHUB_TRENDING_LIMIT,
   DEFAULT_HN_ITEM_LIMIT,
+  DEFAULT_OFFICIAL_ITEM_LIMIT,
+  DEFAULT_OFFICIAL_LOOKBACK_DAYS,
+  DEFAULT_OFFICIAL_RETENTION_DAYS,
   DEFAULT_RELEASES_PER_REPO,
   DEFAULT_RETENTION_DAYS,
   DEFAULT_RSS_ITEM_LIMIT,
   WATCHED_REPOS,
 } from "./config";
+import { coerceNumber } from "./limits";
 import { getJson, setJson } from "./redis";
 import { DEFAULT_FETCH_TIMES_UTC } from "./schedule";
 
@@ -19,8 +22,10 @@ export type SiteSettings = {
   hnItemLimit: number;
   githubTrendingLimit: number;
   releasesPerRepo: number;
-  anthropicItemLimit: number;
+  officialItemLimit: number;
+  officialLookbackDays: number;
   retentionDays: number;
+  officialRetentionDays: number;
   fetchTimesUtc: string[];
 };
 
@@ -32,14 +37,12 @@ function defaults(): SiteSettings {
     hnItemLimit: DEFAULT_HN_ITEM_LIMIT,
     githubTrendingLimit: DEFAULT_GITHUB_TRENDING_LIMIT,
     releasesPerRepo: DEFAULT_RELEASES_PER_REPO,
-    anthropicItemLimit: DEFAULT_ANTHROPIC_ITEM_LIMIT,
+    officialItemLimit: DEFAULT_OFFICIAL_ITEM_LIMIT,
+    officialLookbackDays: DEFAULT_OFFICIAL_LOOKBACK_DAYS,
     retentionDays: DEFAULT_RETENTION_DAYS,
+    officialRetentionDays: DEFAULT_OFFICIAL_RETENTION_DAYS,
     fetchTimesUtc: DEFAULT_FETCH_TIMES_UTC,
   };
-}
-
-function coerceNumber(value: unknown, fallback: number): number {
-  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
 // Shared across every visitor — not a per-browser cookie. Falls back to
@@ -57,8 +60,10 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     hnItemLimit: coerceNumber(stored.hnItemLimit, base.hnItemLimit),
     githubTrendingLimit: coerceNumber(stored.githubTrendingLimit, base.githubTrendingLimit),
     releasesPerRepo: coerceNumber(stored.releasesPerRepo, base.releasesPerRepo),
-    anthropicItemLimit: coerceNumber(stored.anthropicItemLimit, base.anthropicItemLimit),
+    officialItemLimit: coerceNumber(stored.officialItemLimit, base.officialItemLimit),
+    officialLookbackDays: coerceNumber(stored.officialLookbackDays, base.officialLookbackDays),
     retentionDays: coerceNumber(stored.retentionDays, base.retentionDays),
+    officialRetentionDays: coerceNumber(stored.officialRetentionDays, base.officialRetentionDays),
     fetchTimesUtc: Array.isArray(stored.fetchTimesUtc) && stored.fetchTimesUtc.length > 0
       ? stored.fetchTimesUtc
       : base.fetchTimesUtc,

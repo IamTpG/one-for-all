@@ -70,6 +70,7 @@ function toArticleItem(item: FeedItem): ArticleItem {
     points: item.points,
     firstSeenAt: item.firstSeenAt,
     lengthMinutes: item.lengthMinutes,
+    official: item.official,
   };
 }
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useRouter } from "next/navigation";
-import { setRetentionDaysAction, setSourceLimitsAction, type SourceLimits } from "../actions/settings";
+import { setRetentionDaysAction, setSourceLimitsAction, type Retention, type SourceLimits } from "../actions/settings";
 import styles from "../SettingsControls.module.css";
 
 const FIELDS: { key: keyof SourceLimits; label: string }[] = [
@@ -10,19 +10,31 @@ const FIELDS: { key: keyof SourceLimits; label: string }[] = [
   { key: "hnItemLimit", label: "Hacker News top stories" },
   { key: "githubTrendingLimit", label: "GitHub Trending repos" },
   { key: "releasesPerRepo", label: "Releases per watched repo" },
-  { key: "anthropicItemLimit", label: "Anthropic posts" },
+  { key: "officialItemLimit", label: "Official items per source" },
+  { key: "officialLookbackDays", label: "Official lookback (days)" },
+];
+
+// Lowering a retention drops stored items for good: a source may no longer
+// list them, so they cannot be fetched back.
+const RETENTION_FIELDS: { key: keyof Retention; label: string; hint?: string }[] = [
+  { key: "retentionDays", label: "Retention (days)" },
+  {
+    key: "officialRetentionDays",
+    label: "Official retention (days)",
+    hint: "Lowering this deletes stored official items older than that; they cannot be fetched back.",
+  },
 ];
 
 export default function FetchLimitsEditor({
   initialLimits,
-  initialRetentionDays,
+  initialRetention,
 }: {
   initialLimits: SourceLimits;
-  initialRetentionDays: number;
+  initialRetention: Retention;
 }) {
   const router = useRouter();
   const [limits, setLimits] = useState(initialLimits);
-  const [retentionDays, setRetentionDays] = useState(initialRetentionDays);
+  const [retention, setRetention] = useState(initialRetention);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState(false);
@@ -33,9 +45,9 @@ export default function FetchLimitsEditor({
     setSaved(false);
   }
 
-  function updateRetention(value: string) {
+  function updateRetention(key: keyof Retention, value: string) {
     const num = Number(value);
-    setRetentionDays((prev) => (Number.isFinite(num) && num > 0 ? num : prev));
+    setRetention((prev) => ({ ...prev, [key]: Number.isFinite(num) && num > 0 ? num : prev[key] }));
     setSaved(false);
   }
 
@@ -44,7 +56,7 @@ export default function FetchLimitsEditor({
     setError(false);
     const [limitsResult, retentionResult] = await Promise.all([
       setSourceLimitsAction(limits),
-      setRetentionDaysAction(retentionDays),
+      setRetentionDaysAction(retention),
     ]);
     setSaving(false);
     if (!limitsResult.ok || !retentionResult.ok) {
@@ -69,16 +81,26 @@ export default function FetchLimitsEditor({
           />
         </div>
       ))}
-      <div className={styles.fieldRow}>
-        <span className={styles.fieldLabel}>Retention (days)</span>
-        <input
-          type="number"
-          min={1}
-          className={styles.fieldInput}
-          value={retentionDays}
-          onChange={(e) => updateRetention(e.target.value)}
-        />
-      </div>
+      {RETENTION_FIELDS.map((field) => (
+        <Fragment key={field.key}>
+          <div className={styles.fieldRow}>
+            <span className={styles.fieldLabel}>{field.label}</span>
+            <input
+              type="number"
+              min={1}
+              className={styles.fieldInput}
+              value={retention[field.key]}
+              aria-describedby={field.hint ? `${field.key}-hint` : undefined}
+              onChange={(e) => updateRetention(field.key, e.target.value)}
+            />
+          </div>
+          {field.hint && (
+            <p id={`${field.key}-hint`} className={styles.hint}>
+              {field.hint}
+            </p>
+          )}
+        </Fragment>
+      ))}
       {error && <p className={styles.settingsError}>Couldn&apos;t save — try again.</p>}
       {saved && !error && (
         <p className={styles.saveConfirmed}>Saved — takes effect on the next fetch.</p>

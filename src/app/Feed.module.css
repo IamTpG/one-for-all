@@ -246,41 +246,352 @@
   color: var(--ink-3);
 }
 
-.sourceSelect {
-  position: relative;
+/* ---------- Source filter ---------- */
+
+.srcTrigger {
   flex: none;
   display: inline-flex;
   align-items: center;
-}
-.sourceSelect select {
-  appearance: none;
+  gap: 8px;
   height: 34px;
-  max-width: 34vw;
-  padding: 0 32px 0 14px;
-  border: 0;
+  max-width: min(200px, 46vw);
+  padding: 0 12px 0 14px;
+  border: 1.5px solid transparent;
   border-radius: 999px;
   background: var(--chip);
   color: var(--ink);
   font: inherit;
   font-size: 14px;
   font-weight: 500;
-  text-overflow: ellipsis;
   cursor: pointer;
+  transition: background-color 150ms ease, transform 100ms ease;
 }
-.sourceSelect select:hover {
+.srcTrigger:hover,
+.srcTrigger[data-popup-open] {
   background: var(--chip-hover);
 }
-.sourceSelect select:focus-visible {
+.srcTrigger:active {
+  transform: scale(0.95);
+}
+.srcTrigger:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
-.selectIcon {
-  position: absolute;
-  right: 12px;
+/* A filter in force is visible from the bar: an ink outline, no lime. */
+.srcTriggerActive {
+  border-color: var(--ink);
+  font-weight: 600;
+}
+.srcTriggerLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.srcChevron {
+  flex: none;
   width: 11px;
   height: 11px;
-  pointer-events: none;
   color: var(--ink);
+}
+
+.srcPositioner {
+  z-index: 30;
+}
+.srcPopup {
+  box-sizing: border-box;
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  max-height: min(560px, var(--available-height, 560px));
+  display: flex;
+  flex-direction: column;
+  background: var(--tint);
+  color: var(--ink);
+  border: 1px solid var(--tint-rule);
+  border-radius: 12px;
+  outline: none;
+  transform-origin: var(--transform-origin);
+  transition: opacity 140ms ease, transform 160ms var(--ease-out);
+}
+.srcPopup[data-starting-style],
+.srcPopup[data-ending-style] {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.srcScrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgb(11 11 11 / 0.5);
+  transition: opacity 200ms ease;
+}
+.srcScrim[data-starting-style],
+.srcScrim[data-ending-style] {
+  opacity: 0;
+}
+.srcSheet {
+  box-sizing: border-box;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 41;
+  max-height: 82dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--tint);
+  color: var(--ink);
+  border-top: 1px solid var(--tint-rule);
+  border-radius: 12px 12px 0 0;
+  padding-bottom: env(safe-area-inset-bottom);
+  outline: none;
+  transition: transform 240ms var(--ease-out);
+}
+.srcSheet[data-starting-style],
+.srcSheet[data-ending-style] {
+  transform: translateY(100%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .srcTrigger,
+  .srcPopup,
+  .srcScrim,
+  .srcSheet {
+    transition: none;
+  }
+}
+
+.srcPanel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+.srcSheetHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 6px;
+}
+.srcSheetTitle {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.srcDone {
+  height: 36px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.srcDone:hover {
+  opacity: 0.85;
+}
+.srcDone:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.srcScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px 0;
+}
+.srcGroup + .srcGroup {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--tint-rule);
+}
+.srcGroupHead,
+.srcOption {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+.srcGroupHead {
+  min-height: 44px;
+  padding: 0 16px;
+}
+.srcGroupName {
+  font-size: 15px;
+  font-weight: 600;
+}
+.srcList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.srcOption {
+  min-height: 40px;
+  padding: 0 16px 0 46px;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+.srcGroupHead:hover,
+.srcOption:hover {
+  background: var(--tint-rule);
+}
+.srcCount {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 719.98px) {
+  .srcGroupHead {
+    min-height: 48px;
+  }
+  .srcOption {
+    min-height: 48px;
+  }
+}
+
+.srcBox {
+  flex: none;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  border: 1.5px solid var(--ink-3);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--paper);
+  cursor: pointer;
+}
+.srcBox[data-checked],
+.srcBox[data-indeterminate] {
+  border-color: var(--ink);
+  background: var(--ink);
+}
+.srcBox:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.srcBoxMark {
+  display: flex;
+  width: 14px;
+  height: 14px;
+}
+.srcBoxMark svg {
+  width: 100%;
+  height: 100%;
+}
+
+.srcFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 16px;
+  border-top: 1px solid var(--tint-rule);
+  font-size: 14px;
+  color: var(--ink-3);
+}
+.srcClear,
+.activeClear {
+  min-height: 32px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.srcClear:focus-visible,
+.activeClear:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.srcClear:disabled {
+  color: var(--ink-3);
+  font-weight: 500;
+  text-decoration: none;
+  cursor: default;
+}
+
+/* "Đang lọc": one removable chip per selected option, under the filter bar. */
+.activeFilter {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding-top: 12px;
+  font-size: 14px;
+  color: var(--ink-3);
+}
+.activeChips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.activeChip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 2px 0 12px;
+  border-radius: 999px;
+  background: var(--chip);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+}
+.activeRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.activeRemove svg {
+  width: 10px;
+  height: 10px;
+}
+.activeRemove:hover {
+  background: var(--chip-hover);
+  color: var(--ink);
+}
+.activeRemove:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 0;
+}
+.activeClear {
+  margin-left: auto;
+}
+
+.officialNote {
+  margin: 0;
+  padding: 14px 0 0;
+  font-size: 14px;
+  color: var(--ink-3);
 }
 
 /* ---------- Layout ---------- */
@@ -365,6 +676,11 @@
   margin-bottom: -6px;
   font-size: 14px;
   color: var(--ink-3);
+}
+
+.metaPublisher {
+  font-weight: 600;
+  color: var(--ink);
 }
 
 .metaText {

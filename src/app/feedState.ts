@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import type { FeedItem } from "@/lib/types";
+import { parseStoredSources, sourcesParam } from "./sourceFilterModel";
 
 // Per-reader state for the home feed, kept in this browser only: when the
 // reader last visited, which items they opened, and what they saved.
@@ -229,6 +230,7 @@ export type SavedItem = Pick<
   | "topics"
   | "tag"
   | "firstSeenAt"
+  | "official"
 > & { savedAt: number };
 
 const EMPTY_SAVED: readonly SavedItem[] = [];
@@ -264,7 +266,51 @@ export function toggleSaved(item: FeedItem) {
     topics: item.topics,
     tag: item.tag,
     firstSeenAt: item.firstSeenAt,
+    official: item.official,
     savedAt: Date.now(),
   };
   savedStore.write(JSON.stringify([snapshot, ...current]));
+}
+
+// ---------- Source filter ----------
+
+// The reader's source filter, per device (never sent to the server). Ids are
+// validated against the registry by the caller when they are read.
+const EMPTY_SOURCES: readonly string[] = [];
+
+const sourceStore = createLocalStore<readonly string[]>("oneforall-source-filter", parseStoredSources, EMPTY_SOURCES);
+
+export function useStoredSources(): readonly string[] {
+  return useSyncExternalStore(sourceStore.subscribe, sourceStore.get, sourceStore.getServer);
+}
+
+// Called only when the reader changes the filter, never for a value that
+// came from the URL.
+export function saveStoredSources(ids: readonly string[]) {
+  sourceStore.write(JSON.stringify(ids));
+}
+
+function noopSubscribe(): () => void {
+  return () => {};
+}
+
+function readSourcesParam(): string | null {
+  return new URLSearchParams(window.location.search).get("sources");
+}
+
+// The raw `?sources=` value (null when absent), read once the page is on the
+// client. A link from elsewhere can carry a filter; it wins over the saved one.
+export function useUrlSourcesParam(): string | null {
+  return useSyncExternalStore(noopSubscribe, readSourcesParam, () => null);
+}
+
+// Keeps the address bar equal to the filter (`?sources=anthropic,openai`)
+// without adding history entries; an empty filter removes the parameter.
+export function replaceUrlSources(ids: readonly string[]) {
+  const params = new URLSearchParams(window.location.search);
+  params.delete("sources");
+  const rest = params.toString();
+  const parts = [rest, ids.length > 0 ? `sources=${sourcesParam(ids.map(encodeURIComponent))}` : ""].filter(Boolean);
+  const search = parts.length > 0 ? `?${parts.join("&")}` : "";
+  window.history.replaceState(null, "", `${window.location.pathname}${search}${window.location.hash}`);
 }

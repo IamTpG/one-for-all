@@ -1,4 +1,5 @@
-import { DASHBOARD_THRESHOLDS } from "@/lib/config";
+// Relative import with extension: the thresholds are exercised under `node --test`, which knows nothing about "@/".
+import { DASHBOARD_THRESHOLDS } from "./config.ts";
 
 // Turns a handful of already-loaded numbers into the dashboard's status
 // banner: one verdict sentence plus a chip per check. Pure on purpose — no
@@ -35,6 +36,9 @@ export type StatusInputs = {
   lastRunTs: number | null;
   sourcesFailed: number;
   sourcesTotal: number;
+  // The enabled official sources with their running streaks (wire:sourceHealth);
+  // empty when none has been recorded yet.
+  officialSources?: { name: string; consecutiveFailures: number; consecutiveZeroRuns: number }[];
   backlog: number;
   groqTokensPercent: number;
   // Epoch ms until which Groq is paused (daily cap reached); null when running.
@@ -111,6 +115,21 @@ export function evaluateStatus(input: StatusInputs): StatusResult {
       level,
       label: `Sources ${input.sourcesTotal - input.sourcesFailed}/${input.sourcesTotal}`,
       problem: `${input.sourcesFailed} of ${input.sourcesTotal} sources failed on the last fetch`,
+    });
+  }
+
+  const official = input.officialSources ?? [];
+  if (official.length > 0) {
+    const streak = T.officialStreak;
+    const stuck = official.filter((s) => s.consecutiveFailures >= streak || s.consecutiveZeroRuns >= streak);
+    const level: CheckLevel =
+      stuck.length === 0 ? "ok" : stuck.length / official.length >= T.officialStuckShare ? "bad" : "warn";
+    const names = stuck.slice(0, 2).map((s) => s.name).join(", ");
+    checks.push({
+      id: "official",
+      level,
+      label: `Official ${official.length - stuck.length}/${official.length}`,
+      problem: `${stuck.length} of ${official.length} official sources ${stuck.length === 1 ? "has" : "have"} failed or come back empty ${streak}+ runs in a row (${names}${stuck.length > 2 ? ", …" : ""})`,
     });
   }
 

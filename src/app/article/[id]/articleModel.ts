@@ -1,4 +1,5 @@
 import { resolveLocalized, type Language } from "@/lib/language";
+import { officialTitle } from "@/lib/official/headline";
 import type { FeedItem } from "@/lib/types";
 import { releaseRepo, releaseVersion, repoDisplayName } from "../../feedModel";
 
@@ -23,6 +24,7 @@ export type ArticleItem = Pick<
   | "points"
   | "firstSeenAt"
   | "lengthMinutes"
+  | "official"
 >;
 
 // Releases read as "Claude Code v2.1.325" in both languages.
@@ -31,7 +33,8 @@ export function displayTitle(item: ArticleItem, language: Language): string {
     const repo = releaseRepo(item as FeedItem);
     if (repo) return `${repoDisplayName(repo)} ${releaseVersion(item as FeedItem)}`;
   }
-  return resolveLocalized(item.title, item.titleVi, language).text ?? item.title;
+  const base = officialTitle(item);
+  return resolveLocalized(base, item.titleVi, language).text ?? base;
 }
 
 export function sourceName(item: ArticleItem): string {

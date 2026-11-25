@@ -7,6 +7,8 @@ import { getHashAll, getJson, incrHashFields, setJson } from "@/lib/redis";
 //   field "HHMM:req" / "HHMM:in" / "HHMM:out" / "HHMM:429"
 const MINUTE_KEY_PREFIX = "wire:groq:min:";
 const RATE_SNAPSHOT_KEY = "wire:groq:rate";
+// Calls made for official items (one per item): requests and tokens per UTC day.
+const OFFICIAL_KEY_PREFIX = "wire:groq:official:";
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 function dayKey(ms: number): string {
@@ -51,7 +53,8 @@ function headerNumber(headers: Headers, name: string): number | null {
 // write must not turn a successful AI call into a failure.
 export async function recordGroqCall(
   usage: { prompt_tokens?: number; completion_tokens?: number } | null | undefined,
-  headers: Headers
+  headers: Headers,
+  official = false
 ): Promise<void> {
   try {
     const now = Date.now();
@@ -66,6 +69,13 @@ export async function recordGroqCall(
         },
         GROQ_USAGE_RETENTION_DAYS * 24 * 60 * 60
       ),
+      official
+        ? incrHashFields(
+            OFFICIAL_KEY_PREFIX + dayKey(now),
+            { req: 1, tokens: (usage?.prompt_tokens ?? 0) + (usage?.completion_tokens ?? 0) },
+            GROQ_USAGE_RETENTION_DAYS * 24 * 60 * 60
+          )
+        : Promise.resolve(),
       setJson(RATE_SNAPSHOT_KEY, {
         ts: now,
         remainingRequests: headerNumber(headers, "x-ratelimit-remaining-requests"),
@@ -75,6 +85,21 @@ export async function recordGroqCall(
   } catch (err) {
     console.error("[usage] failed to record Groq call:", err);
   }
+}
+
+// Groq calls made for official items over the last two UTC days, and the
+// average tokens per call (prompt + completion; a retried call counts twice).
+export type OfficialGroqUsage = { requests: number; tokens: number; avgTokens: number | null };
+
+export async function getOfficialGroqUsage(): Promise<OfficialGroqUsage> {
+  const now = Date.now();
+  const [today, yesterday] = await Promise.all([
+    getHashAll<number>(OFFICIAL_KEY_PREFIX + dayKey(now)),
+    getHashAll<number>(OFFICIAL_KEY_PREFIX + dayKey(now - ONE_DAY_MS)),
+  ]);
+  const requests = (today.get("req") ?? 0) + (yesterday.get("req") ?? 0);
+  const tokens = (today.get("tokens") ?? 0) + (yesterday.get("tokens") ?? 0);
+  return { requests, tokens, avgTokens: requests > 0 ? Math.round(tokens / requests) : null };
 }
 
 export type GroqUsagePoint = { t: number; req: number; input: number; output: number; limited: number };

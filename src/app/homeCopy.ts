@@ -1,4 +1,5 @@
 import type { Language } from "@/lib/language";
+import type { UpdateKind } from "@/lib/types";
 
 // Every user-facing string on the home feed, in both languages. Vietnamese
 // is the primary voice; technical terms (agent, MCP, release…) stay English.
@@ -10,12 +11,27 @@ type Copy = {
   views: { new: string; all: string; saved: string };
   viewsLabel: string;
   topicsLabel: string;
+  // Source filter
   sourceLabel: string;
   sourceAll: string;
-  sourceTypes: string;
-  sourceFeeds: string;
-  typeNames: Record<"rss" | "hn" | "github-trending" | "github-release", string>;
-  repoCount: (n: number) => string;
+  sourceAllOfficial: string;
+  sourceGroupOfficial: string;
+  sourceGroupCommunity: string;
+  sourceSheetTitle: string;
+  sourceDone: string;
+  sourceClear: string;
+  sourceFiltering: string;
+  sourceRemove: (name: string) => string;
+  sourceCount: (n: number) => string;
+  sourceResult: (n: number) => string;
+  emptySourceNone: string;
+  emptySourceOne: (name: string) => string;
+  emptySourceNote: string;
+  emptySourceAction: string;
+  officialFailed: (n: number) => string;
+  // Official rows
+  kinds: Record<UpdateKind, string>;
+  monthOnly: (d: Date) => string;
   topicAll: string;
   topics: Record<string, string>;
   topicShort: Record<string, string>;
@@ -51,6 +67,9 @@ type Copy = {
   releasesAll: (n: number) => string;
   showVersions: (n: number) => string;
   hideVersions: string;
+  // Disclosure of the other official posts about the same launch.
+  showLaunchSources: (n: number) => string;
+  hideLaunchSources: string;
   // Industry
   industry: string;
   industryMore: (n: number) => string;
@@ -86,10 +105,30 @@ const vi: Copy = {
   topicsLabel: "Lọc theo chủ đề",
   sourceLabel: "Lọc theo nguồn",
   sourceAll: "Mọi nguồn",
-  sourceTypes: "Loại nguồn",
-  sourceFeeds: "Blog",
-  typeNames: { rss: "Blog", hn: "Hacker News", "github-trending": "GitHub Trending", "github-release": "Bản phát hành" },
-  repoCount: (n) => `${n} repo`,
+  sourceAllOfficial: "Tất cả chính thức",
+  sourceGroupOfficial: "Chính thức",
+  sourceGroupCommunity: "Cộng đồng & báo chí",
+  sourceSheetTitle: "Nguồn",
+  sourceDone: "Xong",
+  sourceClear: "Xóa lọc",
+  sourceFiltering: "Đang lọc",
+  sourceRemove: (name) => `Bỏ ${name}`,
+  sourceCount: (n) => `${n} tin`,
+  sourceResult: (n) => `${n} tin`,
+  emptySourceNone: "Không có tin khớp",
+  emptySourceOne: (name) => `${name} chưa có tin trong chủ đề này`,
+  emptySourceNote: "Thử đổi chủ đề hoặc bỏ bớt nguồn.",
+  emptySourceAction: "Xóa lọc nguồn",
+  officialFailed: (n) => `Không lấy được tin từ ${n} nguồn chính thức lần gần nhất.`,
+  kinds: {
+    "model-release": "Model mới",
+    feature: "Tính năng",
+    "tool-release": "Bản phát hành",
+    "api-change": "API",
+    deprecation: "Ngừng hỗ trợ",
+    pricing: "Giá & giới hạn",
+  },
+  monthOnly: (d) => `Tháng ${d.getMonth() + 1}`,
   topicAll: "Mọi chủ đề",
   topics: {
     "ai-workflow": "Cách làm việc với AI",
@@ -149,6 +188,8 @@ const vi: Copy = {
   releasesAll: (n) => `${n} bản`,
   showVersions: (n) => `Xem từng bản (${n})`,
   hideVersions: "Thu gọn",
+  showLaunchSources: (n) => `+${n} nguồn chính thức`,
+  hideLaunchSources: "Thu gọn",
   industry: "Tin ngành",
   industryMore: (n) => `Xem thêm ${n} tin`,
   industryLess: "Thu gọn",
@@ -181,10 +222,30 @@ const en: Copy = {
   topicsLabel: "Filter by topic",
   sourceLabel: "Filter by source",
   sourceAll: "All sources",
-  sourceTypes: "Source type",
-  sourceFeeds: "Blogs",
-  typeNames: { rss: "Blogs", hn: "Hacker News", "github-trending": "GitHub Trending", "github-release": "Releases" },
-  repoCount: (n) => `${n} ${n === 1 ? "repo" : "repos"}`,
+  sourceAllOfficial: "All official",
+  sourceGroupOfficial: "Official",
+  sourceGroupCommunity: "Community & press",
+  sourceSheetTitle: "Sources",
+  sourceDone: "Done",
+  sourceClear: "Clear filter",
+  sourceFiltering: "Filtering",
+  sourceRemove: (name) => `Remove ${name}`,
+  sourceCount: (n) => `${n} ${n === 1 ? "item" : "items"}`,
+  sourceResult: (n) => `${n} ${n === 1 ? "item" : "items"}`,
+  emptySourceNone: "No items match",
+  emptySourceOne: (name) => `No ${name} items in this topic yet`,
+  emptySourceNote: "Try another topic, or drop a source.",
+  emptySourceAction: "Clear source filter",
+  officialFailed: (n) => `Couldn't fetch ${n} official ${n === 1 ? "source" : "sources"} on the last run.`,
+  kinds: {
+    "model-release": "New model",
+    feature: "Feature",
+    "tool-release": "Release",
+    "api-change": "API change",
+    deprecation: "Deprecation",
+    pricing: "Pricing & limits",
+  },
+  monthOnly: (d) => d.toLocaleDateString("en-GB", { month: "long" }),
   topicAll: "All topics",
   topics: {
     "ai-workflow": "Working with AI",
@@ -244,6 +305,8 @@ const en: Copy = {
   releasesAll: (n) => `${n} releases`,
   showVersions: (n) => `Show each release (${n})`,
   hideVersions: "Collapse",
+  showLaunchSources: (n) => `+${n} official ${n === 1 ? "source" : "sources"}`,
+  hideLaunchSources: "Collapse",
   industry: "Industry",
   industryMore: (n) => `${n} more`,
   industryLess: "Show less",
