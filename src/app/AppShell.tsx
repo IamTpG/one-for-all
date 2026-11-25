@@ -3,9 +3,10 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import clsx from "clsx";
-import { ChartIcon, ChevronIcon, GearIcon } from "@/lib/icons";
+import { ChartIcon, CloseIcon, GearIcon } from "@/lib/icons";
 import { isOnTopic, OFF_TOPIC } from "@/lib/keywordTopics";
-import type { FeedItem, SourceType } from "@/lib/types";
+import { filterOptions, itemFilterKey } from "@/lib/sourceRegistry";
+import type { FeedItem } from "@/lib/types";
 import {
   countEntries,
   countGroups,
@@ -15,9 +16,10 @@ import {
   groupEntries,
   isNewItem,
   isPureIndustry,
-  isValidFilters,
-  matchesSource,
+  matchesSources,
   matchesTopic,
+  normaliseSources,
+  parseFilters,
   pickLead,
   sincePhrase,
   TAB_TOPICS,
@@ -25,18 +27,32 @@ import {
   type FeedFilters,
   type FeedView,
 } from "./feedModel";
-import { trackVisitActivity, useSaved, useSeen, useVisit } from "./feedState";
-import { IndustryPanel, ItemRow, LeadStory, ReleaseGroupRow, type RowContext } from "./FeedItemRow";
+import {
+  replaceUrlSources,
+  saveStoredSources,
+  trackVisitActivity,
+  useSaved,
+  useSeen,
+  useStoredSources,
+  useUrlSourcesParam,
+  useVisit,
+} from "./feedState";
+import { IndustryPanel, ItemRow, LaunchGroupRow, LeadStory, ReleaseGroupRow, type RowContext } from "./FeedItemRow";
 import { homeCopy, type GroupId } from "./homeCopy";
 import { useLanguage } from "./LanguageProvider";
 import LanguageToggle from "./LanguageToggle";
+import SourceFilter, { type SourceCounts } from "./SourceFilter";
+import { removeIds, resolveSources, selectionChips } from "./sourceFilterModel";
 import ThemeToggle from "./ThemeToggle";
 import ViewTracker from "./ViewTracker";
 import styles from "./Feed.module.css";
 import world from "./world.module.css";
 
 const PAGE_SIZE = 15;
-const SOURCE_TYPES: SourceType[] = ["rss", "hn", "github-trending", "github-release"];
+// Saved states are read before the page knows which sources are disabled, so
+// they are validated against the whole registry here and again against the
+// options on offer once the component has them.
+const REGISTRY_OPTIONS = filterOptions();
 
 // The App Router unmounts Home when navigating to an article (this project
 // doesn't have `cacheComponents` enabled, which is the flag that would keep
@@ -72,9 +88,10 @@ function getHomeStateSnapshot(): SavedHomeState | null {
   cachedRawHomeState = raw;
   try {
     const parsed = raw ? (JSON.parse(raw) as Partial<SavedHomeState>) : null;
+    const filters = parsed ? parseFilters(parsed.filters, REGISTRY_OPTIONS) : null;
     cachedHomeState =
-      parsed && isValidFilters(parsed.filters) && typeof parsed.visibleCount === "number"
-        ? { visibleCount: parsed.visibleCount, filters: parsed.filters, scrollY: Number(parsed.scrollY) || 0 }
+      parsed && filters && typeof parsed.visibleCount === "number"
+        ? { visibleCount: parsed.visibleCount, filters, scrollY: Number(parsed.scrollY) || 0 }
         : null;
   } catch {
     cachedHomeState = null;
@@ -98,16 +115,21 @@ function prefersReducedMotion(): boolean {
 
 export default function AppShell({
   items,
-  feeds,
+  disabledFeeds,
   isOwner,
   fetchedAt,
   retentionDays,
+  officialFailures = 0,
 }: {
   items: FeedItem[];
-  feeds: { name: string; sourceId: string }[];
+  // sourceIds switched off in Settings; their options leave the source filter.
+  disabledFeeds: string[];
   isOwner: boolean;
   fetchedAt: number | null;
   retentionDays: number;
+  // Official sources that failed on the last fetch (0 until the dashboard's
+  // source health feeds it).
+  officialFailures?: number;
 }) {
   const { language } = useLanguage();
   const copy = homeCopy(language);
@@ -116,7 +138,26 @@ export default function AppShell({
   const saved = useSaved();
   const baseline = visit?.baseline ?? null;
 
-  const [filters, setFilters] = useState<FeedFilters>(DEFAULT_FILTERS);
+  const options = useMemo(() => filterOptions(new Set(disabledFeeds)), [disabledFeeds]);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  // View and topic are plain state. The source filter has three origins, in
+  // this order: what the reader did on this page (sourcesOverride), the
+  // ?sources= URL parameter, then the value saved on this device. Only the
+  // reader's own change is written back to storage.
+  const [nav, setNav] = useState<Pick<FeedFilters, "view" | "topic">>({
+    view: DEFAULT_FILTERS.view,
+    topic: DEFAULT_FILTERS.topic,
+  });
+  const [sourcesOverride, setSourcesOverride] = useState<string[] | null>(null);
+  const storedSources = useStoredSources();
+  const urlSourcesParam = useUrlSourcesParam();
+  const resolvedSources = useMemo(
+    () => resolveSources(urlSourcesParam, storedSources, options).sources,
+    [urlSourcesParam, storedSources, options]
+  );
+  const sources = sourcesOverride ?? resolvedSources;
+  const filters = useMemo<FeedFilters>(() => ({ ...nav, sources }), [nav, sources]);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [brokenImages, setBrokenImages] = useState<Set<string>>(() => new Set());
 
@@ -130,7 +171,9 @@ export default function AppShell({
   const [pendingScrollY, setPendingScrollY] = useState<number | null>(null);
   if (savedHomeState && savedHomeState !== appliedHomeState) {
     setAppliedHomeState(savedHomeState);
-    setFilters(savedHomeState.filters);
+    setNav({ view: savedHomeState.filters.view, topic: savedHomeState.filters.topic });
+    // A filter in the URL wins over the one this page last had.
+    if (urlSourcesParam === null) setSourcesOverride(normaliseSources(savedHomeState.filters.sources, options));
     setVisibleCount(savedHomeState.visibleCount);
     setPendingScrollY(savedHomeState.scrollY);
   }
@@ -203,10 +246,10 @@ export default function AppShell({
     return stableItems.filter(
       (item) =>
         matchesTopic(item, filters.topic) &&
-        matchesSource(item, filters.source) &&
+        matchesSources(item, sources) &&
         (view !== "new" || isNewItem(item, baseline))
     );
-  }, [view, stableItems, saved, filters.topic, filters.source, baseline]);
+  }, [view, stableItems, saved, filters.topic, sources, baseline]);
 
   const lead = view !== "saved" && filters.topic !== OFF_TOPIC ? pickLead(scoped, filters.topic) : null;
   const entries = useMemo(
@@ -226,11 +269,11 @@ export default function AppShell({
             (item) =>
               isOnTopic(item) &&
               isPureIndustry(item) &&
-              matchesSource(item, filters.source) &&
+              matchesSources(item, sources) &&
               (view !== "new" || isNewItem(item, baseline))
           )
         : [],
-    [showIndustry, stableItems, filters.source, view, baseline]
+    [showIndustry, stableItems, sources, view, baseline]
   );
 
   const tabCounts = useMemo(() => {
@@ -240,17 +283,54 @@ export default function AppShell({
         stableItems.filter(
           (item) =>
             matchesTopic(item, topic) &&
-            matchesSource(item, filters.source) &&
+            matchesSources(item, sources) &&
             (view !== "new" || isNewItem(item, baseline))
         )
       );
     }
     return counts;
-  }, [stableItems, filters.source, view, baseline]);
+  }, [stableItems, sources, view, baseline]);
 
-  function updateFilters(next: Partial<FeedFilters>) {
-    setFilters((prev) => ({ ...prev, ...next }));
+  // What each dropdown option would show under the topic and view in force
+  // (the source selection itself is not applied: the counts say what picking
+  // an option adds).
+  const sourceCounts = useMemo<SourceCounts>(() => {
+    const byKey = new Map<string, FeedItem[]>();
+    for (const item of stableItems) {
+      if (!matchesTopic(item, filters.topic)) continue;
+      if (view === "new" && !isNewItem(item, baseline)) continue;
+      const key = itemFilterKey(item);
+      if (!key) continue;
+      const list = byKey.get(key);
+      if (list) list.push(item);
+      else byKey.set(key, [item]);
+    }
+    const byId: Record<string, number> = {};
+    for (const [key, list] of byKey) byId[key] = countEntries(list);
+    const groupCount = (group: { id: string }[]) => countEntries(group.flatMap((option) => byKey.get(option.id) ?? []));
+    return {
+      byId,
+      official: groupCount(options.official),
+      community: groupCount(options.community),
+      result: tabCounts[filters.topic] ?? 0,
+    };
+  }, [stableItems, filters.topic, view, baseline, options, tabCounts]);
+
+  // View and topic changes (the source filter has its own: changeSources).
+  function updateFilters(next: Partial<Pick<FeedFilters, "view" | "topic">>) {
+    setNav((prev) => ({ ...prev, ...next }));
     setVisibleCount(PAGE_SIZE);
+  }
+
+  // `persist` is true only for the reader's own use of the filter controls.
+  // Jumping from a band chip narrows the list for this visit and the URL, but
+  // does not replace the filter saved on this device.
+  function changeSources(next: string[], persist: boolean) {
+    const clean = normaliseSources(next, options);
+    setSourcesOverride(clean);
+    setVisibleCount(PAGE_SIZE);
+    replaceUrlSources(clean);
+    if (persist) saveStoredSources(clean);
   }
 
   function scrollToFeed() {
@@ -271,8 +351,19 @@ export default function AppShell({
       return;
     }
     const viewForGroup: FeedView = baseline === null ? "all" : "new";
-    if (group === "releases") updateFilters({ view: viewForGroup, topic: "all", source: "type:github-release" });
-    else updateFilters({ view: viewForGroup, topic: GROUP_TOPIC[group] ?? "all", source: "all" });
+    if (group === "releases") {
+      // Releases answer to their publisher (official repos) or to
+      // "GitHub releases" (the rest): select whichever the band counted.
+      const releaseKeys = onTopicItems
+        .filter((item) => item.sourceType === "github-release" && (viewForGroup === "all" || isNewItem(item, baseline)))
+        .map(itemFilterKey)
+        .filter((key): key is string => key !== null);
+      updateFilters({ view: viewForGroup, topic: "all" });
+      changeSources(releaseKeys, false);
+    } else {
+      updateFilters({ view: viewForGroup, topic: GROUP_TOPIC[group] ?? "all" });
+      changeSources([], false);
+    }
     scrollToFeed();
   }
 
@@ -418,27 +509,24 @@ export default function AppShell({
     sentence
   );
 
-  const sourceTypeCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const type of SOURCE_TYPES) {
-      counts[type] = countEntries(onTopicItems.filter((item) => item.sourceType === type));
-    }
-    return counts;
-  }, [onTopicItems]);
-
   const showTabs = view !== "saved";
   // No industry items: no reserved column, the stream owns the page.
   const hasAside = industryItems.length > 0;
-  const filtersActive = filters.topic !== "all" || filters.source !== "all";
+  const sourceChips = selectionChips(sources, options, {
+    all: copy.sourceAll,
+    allOfficial: copy.sourceAllOfficial,
+    community: copy.sourceGroupCommunity,
+  });
+  const officialSelected = sources.some((id) => options.official.some((option) => option.id === id));
+  const emptySourceName =
+    sources.length === 1 ? ([...options.official, ...options.community].find((o) => o.id === sources[0])?.name ?? sources[0]) : null;
   const industryInlineAt = Math.min(4, visibleEntries.length);
 
   function renderEntry(index: number) {
     const entry = visibleEntries[index];
-    return entry.kind === "releases" ? (
-      <ReleaseGroupRow key={entry.key} group={entry} ctx={ctx} />
-    ) : (
-      <ItemRow key={entry.key} item={entry.item} ctx={ctx} />
-    );
+    if (entry.kind === "releases") return <ReleaseGroupRow key={entry.key} group={entry} ctx={ctx} />;
+    if (entry.kind === "launch") return <LaunchGroupRow key={entry.key} group={entry} ctx={ctx} />;
+    return <ItemRow key={entry.key} item={entry.item} ctx={ctx} />;
   }
 
   const industryInline =
@@ -453,7 +541,7 @@ export default function AppShell({
     ) : null;
 
   return (
-    <div className={world.world}>
+    <div ref={rootRef} className={world.world}>
       <a href="#main-feed" className={world.skipLink}>
         {copy.skip}
       </a>
@@ -564,43 +652,51 @@ export default function AppShell({
             <p className={styles.savedNote}>{copy.savedNote}</p>
           )}
           {showTabs && (
-            <label className={styles.sourceSelect}>
-              <span className={world.visuallyHidden}>{copy.sourceLabel}</span>
-              <select
-                value={filters.source}
-                onChange={(event) => updateFilters({ source: event.target.value })}
-                aria-label={copy.sourceLabel}
-              >
-                <option value="all">{copy.sourceAll}</option>
-                <optgroup label={copy.sourceTypes}>
-                  {SOURCE_TYPES.map((type) => (
-                    <option key={type} value={`type:${type}`}>
-                      {copy.typeNames[type]} (
-                      {type === "github-release"
-                        ? copy.repoCount(sourceTypeCounts[type] ?? 0)
-                        : (sourceTypeCounts[type] ?? 0)}
-                      )
-                    </option>
-                  ))}
-                </optgroup>
-                {feeds.length > 0 && (
-                  <optgroup label={copy.sourceFeeds}>
-                    {feeds.map((feed) => (
-                      <option key={feed.sourceId} value={`src:${feed.sourceId}`}>
-                        {feed.name}
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-              </select>
-              <ChevronIcon className={styles.selectIcon} />
-            </label>
+            <SourceFilter
+              options={options}
+              selected={sources}
+              counts={sourceCounts}
+              copy={copy}
+              onChange={(next) => changeSources(next, true)}
+              portalRef={rootRef}
+            />
           )}
         </div>
       </div>
 
+      {showTabs && sourceChips.length > 0 && (
+        <div className={world.container}>
+          <div className={styles.activeFilter}>
+            <span>{copy.sourceFiltering}</span>
+            <ul className={styles.activeChips}>
+              {sourceChips.map((chip) => (
+                <li key={chip.key} className={styles.activeChip}>
+                  {chip.label}
+                  <button
+                    type="button"
+                    className={styles.activeRemove}
+                    aria-label={copy.sourceRemove(chip.label)}
+                    onClick={() => changeSources(removeIds(sources, chip.ids, options), true)}
+                  >
+                    <CloseIcon />
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <button type="button" className={styles.activeClear} onClick={() => changeSources([], true)}>
+              {copy.sourceClear}
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className={clsx(world.container, styles.layout, hasAside && styles.layoutWithSide)}>
         <main id="main-feed" className={styles.stream} tabIndex={-1}>
+          {officialFailures > 0 && officialSelected && (
+            <p className={styles.officialNote} role="status">
+              {copy.officialFailed(officialFailures)}
+            </p>
+          )}
           {lead && <LeadStory item={lead} ctx={ctx} withImage={Boolean(lead.imageUrl) && !brokenImages.has(lead.id)} />}
           {visibleEntries.length === 0 && !lead && (
             <div className={styles.empty}>
@@ -611,10 +707,20 @@ export default function AppShell({
                 </>
               ) : stableItems.length === 0 ? (
                 <p className={styles.emptyTitle}>{copy.emptyStore}</p>
-              ) : filtersActive ? (
+              ) : sources.length > 0 ? (
+                <>
+                  <p className={styles.emptyTitle}>
+                    {emptySourceName ? copy.emptySourceOne(emptySourceName) : copy.emptySourceNone}
+                  </p>
+                  <p className={styles.emptyNote}>{copy.emptySourceNote}</p>
+                  <button type="button" className={styles.emptyAction} onClick={() => changeSources([], true)}>
+                    {copy.emptySourceAction}
+                  </button>
+                </>
+              ) : filters.topic !== "all" ? (
                 <>
                   <p className={styles.emptyTitle}>{copy.emptyFilter}</p>
-                  <button type="button" className={styles.emptyAction} onClick={() => updateFilters({ topic: "all", source: "all" })}>
+                  <button type="button" className={styles.emptyAction} onClick={() => updateFilters({ topic: "all" })}>
                     {copy.emptyFilterAction}
                   </button>
                 </>

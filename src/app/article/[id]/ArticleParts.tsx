@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import clsx from "clsx";
 import { ArrowUpRightIcon, BackIcon, BookmarkIcon } from "@/lib/icons";
 import { resolveLocalized, type Language } from "@/lib/language";
+import { PUBLISHERS } from "@/lib/sourceRegistry";
 import type { FeedItem } from "@/lib/types";
 import { primaryTopic } from "../../feedModel";
 import { markSeen, toggleSaved, trackVisitActivity, useSaved } from "../../feedState";
@@ -101,8 +102,13 @@ export function ArticleMasthead({
   const thread = hnThreadUrl(item);
   const showThread = thread !== null && thread !== item.url;
   const parts: string[] = [];
-  if (topic && home.topicShort[topic]) parts.push(home.topicShort[topic]);
-  parts.push(sourceName(item));
+  // An official update opens with its publisher and kind (no "official"
+  // label); anything else with its topic.
+  const officialKind = item.official?.kind;
+  const publisher = officialKind ? (PUBLISHERS[item.official!.publisher]?.name ?? item.official!.publisher) : null;
+  if (publisher && officialKind) parts.push(publisher, home.kinds[officialKind]);
+  else if (topic && home.topicShort[topic]) parts.push(home.topicShort[topic]);
+  if (sourceName(item) !== publisher) parts.push(sourceName(item));
   parts.push(copy.date(new Date(item.publishedAt)));
   if (item.videoEmbedHtml) parts.push(copy.video);
   // HN points and stars stay in this small line: the triage found they

@@ -10,20 +10,17 @@ export const RSS_FEEDS: { name: string; url: string }[] = [
   { name: "GitHub Blog", url: "https://github.blog/feed/" },
   { name: "Pragmatic Engineer", url: "https://newsletter.pragmaticengineer.com/feed" },
   { name: "Stack Overflow Blog", url: "https://stackoverflow.blog/feed/" },
-  { name: "OpenAI News", url: "https://openai.com/news/rss.xml" },
 ];
 
-// Blog-like sources with no RSS/Atom/JSON feed available, fetched by a
-// dedicated scraper in src/lib/fetchers instead of the generic RSS fetcher.
-// Listed here just so they show up alongside RSS_FEEDS in the UI (sidebar
-// nav, settings toggles).
-export const CUSTOM_BLOG_SOURCES: { name: string; sourceId: string }[] = [
-  { name: "Anthropic", sourceId: "anthropic" },
-];
+// Vendor release notes, changelogs and news (Anthropic, OpenAI, Google, ...)
+// are not listed here: they live in the official source registry
+// (sourceRegistry.ts for names/publishers, official/sources.ts for how each
+// one is fetched).
 
 // GitHub repos to watch for new releases (AI dev tools).
 export const WATCHED_REPOS: string[] = [
   "anthropics/claude-code",
+  "google-gemini/gemini-cli",
   "continuedev/continue",
   "block/goose",
   "All-Hands-AI/OpenHands",
@@ -39,11 +36,24 @@ export const DEFAULT_GITHUB_TRENDING_LIMIT = 10;
 // repos before applying the limit above.
 export const GITHUB_TRENDING_POOL_SIZE = 100;
 export const DEFAULT_RELEASES_PER_REPO = 2;
-export const DEFAULT_ANTHROPIC_ITEM_LIMIT = 15;
+// Official sources (vendor changelogs/news): newest entries per source, cut
+// by publish date at fetch time so a feed that still lists years of history
+// cannot flood the store.
+export const DEFAULT_OFFICIAL_ITEM_LIMIT = 6;
+export const DEFAULT_OFFICIAL_LOOKBACK_DAYS = 14;
 
 // Default rolling retention window (days) for the persistent item store —
 // also overridable via the settings page.
 export const DEFAULT_RETENTION_DAYS = 3;
+// Official updates are low-volume and stay useful for weeks (a deprecation
+// announced today with a January date), so they live longer than the rest.
+export const DEFAULT_OFFICIAL_RETENTION_DAYS = 30;
+
+// Official fetches: timeout for headers + body, and the largest body read.
+export const OFFICIAL_FETCH_TIMEOUT_MS = 15_000;
+export const OFFICIAL_MAX_RESPONSE_BYTES = 8 * 1024 * 1024;
+// Largest article body kept per official item (Codex CLI release notes reach 80 KB).
+export const OFFICIAL_MAX_BODY_CHARS = 24_000;
 
 // How long on-demand article extractions are cached in-memory (ms).
 export const EXTRACT_CACHE_TTL_MS = 60 * 60 * 1000;
@@ -205,6 +215,10 @@ export const DASHBOARD_THRESHOLDS = {
   backlogGraceMinutesAfterFetch: 120,
   // Share of the last fetch's sources that failed (any failure warns).
   sourcesFailedShare: { bad: 0.5 },
+  // Official sources: stuck after this many failed or empty runs in a row;
+  // red once this share of them is stuck.
+  officialStreak: 3,
+  officialStuckShare: 0.5,
   groqTokensPercent: { warn: 70, bad: 90 },
   upstashBandwidthPercent: { warn: 70, bad: 90 },
   // Longest of the recent ticks, against the 60s function limit.

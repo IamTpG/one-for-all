@@ -98,12 +98,16 @@ export async function setJson(key: string, value: unknown, ttlSeconds?: number):
   }
 }
 
-export async function getHashAll<T>(key: string): Promise<Map<string, T>> {
-  const results = new Map<string, T>();
+// The OrNull readers tell "the read failed" (null) apart from "there is
+// nothing" (empty), for callers that would otherwise act on an empty result
+// (drop ids, mark a migration done). The plain readers below keep their
+// old "empty on failure" behaviour.
+export async function getHashAllOrNull<T>(key: string): Promise<Map<string, T> | null> {
   const redis = getClient();
-  if (!redis) return results;
+  if (!redis) return null;
 
   try {
+    const results = new Map<string, T>();
     const raw = await redis.hgetall(key);
     for (const [field, value] of Object.entries(raw)) {
       try {
@@ -112,11 +116,87 @@ export async function getHashAll<T>(key: string): Promise<Map<string, T>> {
         // corrupt entry — ignore, treat as missing
       }
     }
+    return results;
   } catch (err) {
     console.error(`[redis] failed to read hash ${key}:`, err);
+    return null;
   }
+}
 
-  return results;
+export async function getHashAll<T>(key: string): Promise<Map<string, T>> {
+  return (await getHashAllOrNull<T>(key)) ?? new Map<string, T>();
+}
+
+// Reads only the named fields of a hash (HMGET); missing or corrupt ones are
+// left out of the result. null when the read failed.
+export async function getHashFieldsOrNull<T>(key: string, fields: string[]): Promise<Map<string, T> | null> {
+  const results = new Map<string, T>();
+  if (fields.length === 0) return results;
+  const redis = getClient();
+  if (!redis) return null;
+
+  try {
+    const values = await redis.hmget(key, ...fields);
+    fields.forEach((field, i) => {
+      const raw = values[i];
+      if (!raw) return;
+      try {
+        results.set(field, JSON.parse(raw) as T);
+      } catch {
+        // corrupt entry — ignore, treat as missing
+      }
+    });
+    return results;
+  } catch (err) {
+    console.error(`[redis] failed to read fields of hash ${key}:`, err);
+    return null;
+  }
+}
+
+export async function getHashFields<T>(key: string, fields: string[]): Promise<Map<string, T>> {
+  return (await getHashFieldsOrNull<T>(key, fields)) ?? new Map<string, T>();
+}
+
+export async function addToSet(key: string, members: string[]): Promise<boolean> {
+  const redis = getClient();
+  if (!redis || members.length === 0) return false;
+
+  try {
+    await redis.sadd(key, ...members);
+    return true;
+  } catch (err) {
+    console.error(`[redis] failed to add to set ${key}:`, err);
+    return false;
+  }
+}
+
+export async function removeFromSet(key: string, members: string[]): Promise<boolean> {
+  const redis = getClient();
+  if (!redis || members.length === 0) return false;
+
+  try {
+    await redis.srem(key, ...members);
+    return true;
+  } catch (err) {
+    console.error(`[redis] failed to remove from set ${key}:`, err);
+    return false;
+  }
+}
+
+export async function getSetMembersOrNull(key: string): Promise<string[] | null> {
+  const redis = getClient();
+  if (!redis) return null;
+
+  try {
+    return await redis.smembers(key);
+  } catch (err) {
+    console.error(`[redis] failed to read set ${key}:`, err);
+    return null;
+  }
+}
+
+export async function getSetMembers(key: string): Promise<string[]> {
+  return (await getSetMembersOrNull(key)) ?? [];
 }
 
 export async function setHashFields(key: string, fields: Record<string, unknown>): Promise<boolean> {

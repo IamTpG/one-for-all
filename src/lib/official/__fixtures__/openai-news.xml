@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title><![CDATA[OpenAI News]]></title>
+        <description><![CDATA[The OpenAI blog]]></description>
+        <link>https://openai.com/news</link>
+        <image>
+            <url>https://openai.com/apple-icon.png</url>
+            <title>OpenAI News</title>
+            <link>https://openai.com/news</link>
+        </image>
+        <generator>OpenAI</generator>
+        <lastBuildDate>Wed, 25 Nov 2026 05:34:50 GMT</lastBuildDate>
+        <atom:link href="https://openai.com/news/rss.xml" rel="self" type="application/rss+xml"/>
+        <language><![CDATA[en-US]]></language>
+        <item>
+            <title><![CDATA[GPT-6 models demonstrate intrinsic protein-design capabilities]]></title>
+            <description><![CDATA[GPT-6 models design protein structures and sequences using reasoning and code. Lab tests found evidence of binding across five targets.]]></description>
+            <link>https://openai.com/index/gpt-6-models-demonstrate-intrinsic-protein-design-capabilities</link>
+            <guid isPermaLink="true">https://openai.com/index/gpt-6-models-demonstrate-intrinsic-protein-design-capabilities</guid>
+            <category><![CDATA[Science]]></category>
+            <pubDate>Tue, 24 Nov 2026 13:00:00 GMT</pubDate>
+        </item><item>
+            <title><![CDATA[Searching for distant planets with Astra]]></title>
+            <description><![CDATA[See how two amateur astronomers used Codex and Astra to find potential exoplanets in public data from NASA’s Kepler and TESS space telescopes.]]></description>
+            <link>https://openai.com/index/searching-for-distant-planets-with-astra</link>
+            <guid isPermaLink="true">https://openai.com/index/searching-for-distant-planets-with-astra</guid>
+            <category><![CDATA[Science]]></category>
+            <pubDate>Tue, 24 Nov 2026 11:00:00 GMT</pubDate>
+        </item><item>
+            <title><![CDATA[How Intentful uses dots to make more time for growth]]></title>
+            <description><![CDATA[Marina Petrova’s dot Aria helps research websites and build proposals, while proactively flagging messages and resolving issues.]]></description>
+            <link>https://openai.com/business/customer-stories/intentful-dots</link>
+            <guid isPermaLink="true">https://openai.com/business/customer-stories/intentful-dots</guid>
+            <pubDate>Tue, 24 Nov 2026 00:00:00 GMT</pubDate>
+        </item><item>
+            <title><![CDATA[How iFood scales coding agents across 15,000 repositories]]></title>
+            <link>https://openai.com/business/customer-stories/ifood</link>
+            <guid isPermaLink="true">https://openai.com/business/customer-stories/ifood</guid>
+            <pubDate>Tue, 24 Nov 2026 00:00:00 GMT</pubDate>
+        </item><item>
+            <title><![CDATA[Clay helps sales teams win with Codex and ChatGPT]]></title>
+            <description><![CDATA[ChatGPT and Codex integrations help Clay’s users research deals and turn data into go-to-market plays, with GPT-6 models handling the reasoning.]]></description>
+            <link>https://openai.com/business/customer-stories/clay-plugins-openai</link>
+            <guid isPermaLink="true">https://openai.com/business/customer-stories/clay-plugins-openai</guid>
+            <pubDate>Tue, 24 Nov 2026 00:00:00 GMT</pubDate>
+        </item><item>
+            <title><![CDATA[OpenAI and Cisco introduce Shirudo]]></title>
+            <description><![CDATA[OpenAI and Cisco introduce Shirudo, an open-source runtime for Linux. It helps teams protect running systems while they roll out patches.]]></description>
+            <link>https://openai.com/index/introducing-shirudo</link>
+            <guid isPermaLink="true">https://openai.com/index/introducing-shirudo</guid>
+            <category><![CDATA[Security]]></category>
+            <pubDate>Mon, 23 Nov 2026 21:20:00 GMT</pubDate>
+        </item><item>
+            <title><![CDATA[Connected intelligence for in-house legal]]></title>
+            <description><![CDATA[Watch OpenAI’s Stacey Wang and Craig Bruney, Mary O’Carroll of LECG, and Cooley’s Richard Segal explore how AI can help in-house legal teams connect business context, build reusable workflows and get more from outside counsel.]]></description>
+            <link>https://openai.com/business/learn/connected-intelligence-for-in-house-legal</link>
+            <guid isPermaLink="true">https://openai.com/business/learn/connected-intelligence-for-in-house-legal</guid>
+            <category><![CDATA[Webinars]]></category>
+            <pubDate>Mon, 23 Nov 2026 08:00:00 GMT</pubDate>
+        </item><item>
+            <title><![CDATA[Richpanel helps companies automate 50% of support in 30 days]]></title>
+            <description><![CDATA[Richpanel uses GPT-6 Astra and GPT-6.1 Sol to equip its AI support agents with tools and procedures, and GPT-6 Luna for their conversations.]]></description>
+            <link>https://openai.com/business/customer-stories/richpanel-ai-customer-support</link>
+            <guid isPermaLink="true">https://openai.com/business/customer-stories/richpanel-ai-customer-support</guid>
+            <category><![CDATA[Startup]]></category>
+            <pubDate>Mon, 23 Nov 2026 08:00:00 GMT</pubDate>
+        </item><item>
+            <title><![CDATA[Perplexity and Intelligence]]></title>
+            <description><![CDATA[How perplexity measures progress in AI models, and why it could help developers establish a shared approach to evaluating emerging capabilities.]]></description>
+            <link>https://openai.com/index/perplexity-and-intelligence</link>
+            <guid isPermaLink="true">https://openai.com/index/perplexity-and-intelligence</guid>
+            <category><![CDATA[Research]]></category>
+            <pubDate>Sun, 22 Nov 2026 00:00:00 GMT</pubDate>
+        </item><item>
+            <title><![CDATA[Combatting adversarial distillation]]></title>
+            <description><![CDATA[OpenAI’s layered approach to adversarial distillation combines model training, safeguards, detection, and enforcement to protect against capability extraction.]]></description>
+            <link>https://openai.com/index/combatting-adversarial-distillation</link>
+            <guid isPermaLink="true">https://openai.com/index/combatting-adversarial-distillation</guid>
+            <pubDate>Fri, 20 Nov 2026 10:00:00 GMT</pubDate>
+        </item><item>
+            <title><![CDATA[Hebbia sees improvements in financial research with GPT-6 Astra]]></title>
+            <description><![CDATA[Hebbia tested GPT-6 Astra for financial research. Its prerelease evaluations found gains in source coverage, citation relevance, and presentation quality.]]></description>
+            <link>https://openai.com/business/customer-stories/hebbia</link>
+            <guid isPermaLink="true">https://openai.com/business/customer-stories/hebbia</guid>
+            <pubDate>Fri, 20 Nov 2026 00:00:00 GMT</pubDate>
+        </item><item>
+            <title><![CDATA[Can AI help scientists identify promising drug candidates?]]></title>
+            <description><![CDATA[MedChemBench evaluates how well AI models interpret molecular structures, reason from experimental evidence, and select compounds in early drug discovery.]]></description>
+            <link>https://openai.com/index/introducing-medchembench</link>
+            <guid isPermaLink="true">https://openai.com/index/introducing-medchembench</guid>
+            <category><![CDATA[Research]]></category>
+            <pubDate>Fri, 20 Nov 2026 00:00:00 GMT</pubDate>
+        </item><item>
+            <title><![CDATA[How OpenAI’s Performance Factory keeps ChatGPT fast]]></title>
+            <description><![CDATA[Learn how OpenAI built the Performance Factory, a system of Codex-powered workflows that finds and fixes performance issues to help keep ChatGPT fast.]]></description>
+            <link>https://openai.com/index/how-openai-performance-factory-keeps-chatgpt-fast</link>
+            <guid isPermaLink="true">https://openai.com/index/how-openai-performance-factory-keeps-chatgpt-fast</guid>
+            <category><![CDATA[Engineering]]></category>
+            <pubDate>Thu, 19 Nov 2026 08:00:00 GMT</pubDate>
+        </item><item>
+            <title><![CDATA[See PR scans in action]]></title>
+            <description><![CDATA[Watch a walkthrough of PR scans and see how the presenter reviews scan results in a pull request workflow.]]></description>
+            <link>https://openai.com/business/learn/pr-scans-demo</link>
+            <guid isPermaLink="true">https://openai.com/business/learn/pr-scans-demo</guid>
+            <category><![CDATA[Demos]]></category>
+            <pubDate>Thu, 19 Nov 2026 00:00:00 GMT</pubDate>
+        </item><item>
+            <title><![CDATA[Deploying Daybreak Red]]></title>
+            <description><![CDATA[Explore a reference architecture for supervised security investigations with Daybreak Red, including safety controls, setup, and monitoring.]]></description>
+            <link>https://openai.com/business/learn/deploying-daybreak-red</link>
+            <guid isPermaLink="true">https://openai.com/business/learn/deploying-daybreak-red</guid>
+            <category><![CDATA[Guides]]></category>
+            <pubDate>Thu, 19 Nov 2026 00:00:00 GMT</pubDate>
+        </item><item>
+            <title><![CDATA[Explore the Codex Security Plugin]]></title>
+            <description><![CDATA[Watch a demo of the Codex Security Plugin and see the workflow in action, from getting started to reviewing the results shown in the recording.]]></description>
+            <link>https://openai.com/business/learn/codex-security-plugin-demo</link>
+            <guid isPermaLink="true">https://openai.com/business/learn/codex-security-plugin-demo</guid>
+            <category><![CDATA[Demos]]></category>
+            <pubDate>Thu, 19 Nov 2026 00:00:00 GMT</pubDate>
+        </item><item>
+            <title><![CDATA[Get started with Daybreak Blue]]></title>
+            <description><![CDATA[Watch a walkthrough of onboarding to Daybreak Blue, with a closer look at the setup experience and how to get started.]]></description>
+            <link>https://openai.com/business/learn/daybreak-blue-onboarding-demo</link>
+            <guid isPermaLink="true">https://openai.com/business/learn/daybreak-blue-onboarding-demo</guid>
+            <category><![CDATA[Demos]]></category>
+            <pubDate>Thu, 19 Nov 2026 00:00:00 GMT</pubDate>
+        </item><item>
+            <title><![CDATA[The Silent Consensus]]></title>
+            <description><![CDATA[Dean Ball, Head of Strategic Futures at OpenAI, examines how more capable AI could reshape society and how people can retain control of their institutions.]]></description>
+            <link>https://openai.com/index/the-silent-consensus</link>
+            <guid isPermaLink="true">https://openai.com/index/the-silent-consensus</guid>
+            <category><![CDATA[Intelligence Age]]></category>
+            <pubDate>Wed, 18 Nov 2026 10:00:00 GMT</pubDate>
+        </item><item>
+            <title><![CDATA[How Sumitomo Life’s leaders helped teams adopt ChatGPT Enterprise]]></title>
+            <description><![CDATA[Sumitomo Life uses ChatGPT Enterprise to research insurers, prepare proposals, and draft code for investment analysis. Early use by executives helped drive adoption.]]></description>
+            <link>https://openai.com/business/customer-stories/sumitomo-life</link>
+            <guid isPermaLink="true">https://openai.com/business/customer-stories/sumitomo-life</guid>
+            <pubDate>Wed, 18 Nov 2026 08:00:00 GMT</pubDate>
+        </item><item>
+            <title><![CDATA[Research acceleration: The jagged frontier]]></title>
+            <description><![CDATA[OpenAI measures how coding agents are accelerating AI research, where their performance remains uneven, and what this signals about recursive self-improvement.]]></description>
+            <link>https://openai.com/index/research-acceleration-jagged-frontier</link>
+            <guid isPermaLink="true">https://openai.com/index/research-acceleration-jagged-frontier</guid>
+            <category><![CDATA[Research]]></category>
+            <pubDate>Wed, 18 Nov 2026 08:00:00 GMT</pubDate>
+        </item><item>
+            <title><![CDATA[Attacking machine learning with adversarial examples]]></title>
+            <description><![CDATA[Adversarial examples are inputs to machine learning models that an attacker has intentionally designed to cause the model to make a mistake; they’re like optical illusions for machines. In this post we’ll show how adversarial examples work across different mediums, and will discuss why securing systems against them can be difficult.]]></description>
+            <link>https://openai.com/index/attacking-machine-learning-with-adversarial-examples</link>
+            <guid isPermaLink="true">https://openai.com/index/attacking-machine-learning-with-adversarial-examples</guid>
+            <category><![CDATA[Safety & Alignment]]></category>
+            <pubDate>Fri, 24 Feb 2017 08:00:00 GMT</pubDate>
+        </item>
+    </channel>
+</rss>

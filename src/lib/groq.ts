@@ -7,6 +7,8 @@ import {
   TRANSLATE_MAX_TOKENS,
 } from "@/lib/config";
 import { errorMessage } from "@/lib/errors";
+import { buildOfficialPrompt, parseOfficialAnalysis } from "@/lib/official/analysis";
+import { officialMergeContext } from "@/lib/official/sources";
 import { sanitizeArticleHtml } from "@/lib/sanitize";
 import { getGroqCooldown, nextUtcMidnight, recordGroq429, recordGroqCall, setGroqCooldown } from "@/lib/usage";
 import type { AiAnalysis, FeedItem } from "@/lib/types";
@@ -14,6 +16,11 @@ import type { AiAnalysis, FeedItem } from "@/lib/types";
 export type GroqResult<T> = { data: T | null; error?: string };
 
 const DEFAULT_RETRY_DELAY_MS = 5000;
+
+// The official prompt asks for more fields but a shorter summary; 750 keeps
+// the per-item cost at or below the community prompt's 900.
+const OFFICIAL_MAX_TOKENS = 750;
+const COMMUNITY_MAX_TOKENS = 900;
 
 // 429s seen by this server process, so a caller (the cron tick) can report
 // how many happened during its own run by diffing before/after.
@@ -59,7 +66,14 @@ function buildPrompt(item: FeedItem): string {
 // `deadline` (epoch ms) bounds a call made while a page is rendering: the
 // request times out at it, and a 429 is only retried when Groq's
 // retry-after still fits before it.
-type CompletionOptions = { prompt: string; jsonMode?: boolean; maxTokens: number; deadline?: number };
+type CompletionOptions = {
+  prompt: string;
+  jsonMode?: boolean;
+  maxTokens: number;
+  deadline?: number;
+  // The call analyses an official item: its tokens are also counted apart.
+  official?: boolean;
+};
 
 // Below this much time left, a call is not worth starting.
 const MIN_CALL_MS = 4000;
@@ -70,7 +84,7 @@ const MIN_CALL_MS = 4000;
 // for the caller to catch, same fail-closed pattern as everywhere else.
 async function requestCompletion(
   groq: Groq,
-  { prompt, jsonMode, maxTokens, deadline }: CompletionOptions,
+  { prompt, jsonMode, maxTokens, deadline, official }: CompletionOptions,
   logId: string,
   attempt: number
 ): Promise<string | null> {
@@ -92,7 +106,7 @@ async function requestCompletion(
       max_tokens: maxTokens,
       }, remaining === undefined ? undefined : { timeout: remaining, maxRetries: 0 })
       .withResponse();
-    await recordGroqCall(completion.usage, response.headers);
+    await recordGroqCall(completion.usage, response.headers, official);
     return completion.choices[0]?.message?.content ?? null;
   } catch (err) {
     if (err instanceof RateLimitError) {
@@ -122,7 +136,7 @@ async function requestCompletion(
       if (fits) {
         console.error(`[groq] rate limited on ${logId}, retrying in ${delayMs}ms`);
         await sleep(delayMs);
-        return requestCompletion(groq, { prompt, jsonMode, maxTokens, deadline }, logId, attempt + 1);
+        return requestCompletion(groq, { prompt, jsonMode, maxTokens, deadline, official }, logId, attempt + 1);
       }
       console.error(`[groq] rate limited on ${logId}; retry-after ${delayMs}ms does not fit the deadline`);
     }
@@ -137,13 +151,26 @@ export async function classifyAndSummarize(item: FeedItem): Promise<GroqResult<A
 
   try {
     const validIds = new Set(TOPICS.map((t) => t.id));
+    const official = Boolean(item.official);
     const raw = await requestCompletion(
       groq,
-      { prompt: buildPrompt(item), jsonMode: true, maxTokens: 900 },
+      {
+        prompt: official
+          ? buildOfficialPrompt(item, { sourceClass: officialMergeContext(item).sourceClass })
+          : buildPrompt(item),
+        jsonMode: true,
+        maxTokens: official ? OFFICIAL_MAX_TOKENS : COMMUNITY_MAX_TOKENS,
+        official,
+      },
       item.id,
       0
     );
     if (!raw) return { data: null };
+
+    if (official) {
+      const analysis = parseOfficialAnalysis(JSON.parse(raw), validIds);
+      return analysis ? { data: analysis } : { data: null };
+    }
 
     const parsed = JSON.parse(raw) as {
       summary?: unknown;

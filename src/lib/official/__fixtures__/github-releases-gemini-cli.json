@@ -1,0 +1,302 @@
+[
+ {
+  "id": 456164508,
+  "name": "Release v0.72.0-preview.0",
+  "tag_name": "v0.72.0-preview.0",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.72.0-preview.0",
+  "published_at": "2026-11-24T00:34:15Z",
+  "prerelease": true,
+  "draft": false,
+  "body": "## What's Changed\n* Changelog for v0.70.0 by @gemini-cli-robot in https://github.com/google-gemini/gemini-cli/pull/30380\n* fix(core): handle nested .gitignore negations under dir/** patterns by @uriel"
+ },
+ {
+  "id": 456283358,
+  "name": "Release v0.71.1",
+  "tag_name": "v0.71.1",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.71.1",
+  "published_at": "2026-11-24T03:50:24Z",
+  "prerelease": false,
+  "draft": false,
+  "body": "## What's Changed\n* fix(patch): cherry-pick aafdfdf to release/v0.71.0-pr-30420 to patch version v0.71.0 and create version 0.71.1 by @gemini-cli-robot in https://github.com/google-gemini/gemini-cli/p"
+ },
+ {
+  "id": 456191495,
+  "name": "Release v0.71.0",
+  "tag_name": "v0.71.0",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.71.0",
+  "published_at": "2026-11-24T01:16:44Z",
+  "prerelease": false,
+  "draft": false,
+  "body": "## What's Changed\n* Changelog for v0.70.0-preview.0 by @gemini-cli-robot in https://github.com/google-gemini/gemini-cli/pull/30361\n* chore(release): bump version to 0.71.0-nightly.20261118.g615d6bc8c "
+ },
+ {
+  "id": 456189678,
+  "name": "Release v0.71.0-nightly.20261124.gaafdfdfb5",
+  "tag_name": "v0.71.0-nightly.20261124.gaafdfdfb5",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.71.0-nightly.20261124.gaafdfdfb5",
+  "published_at": "2026-11-24T01:13:47Z",
+  "prerelease": true,
+  "draft": false,
+  "body": "## What's Changed\n* fix(a2a-server): enforce bearer token authentication and request input validation by @diegogodinezr in https://github.com/google-gemini/gemini-cli/pull/30420\n\n\n**Full Changelog**: "
+ },
+ {
+  "id": 454885398,
+  "name": "Release v0.71.0-nightly.20261123.geecccfcd5",
+  "tag_name": "v0.71.0-nightly.20261123.geecccfcd5",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.71.0-nightly.20261123.geecccfcd5",
+  "published_at": "2026-11-23T01:21:53Z",
+  "prerelease": true,
+  "draft": false,
+  "body": "**Full Changelog**: https://github.com/google-gemini/gemini-cli/compare/v0.71.0-nightly.20261122.geecccfcd5...v0.71.0-nightly.20261123.geecccfcd5"
+ },
+ {
+  "id": 454108676,
+  "name": "Release v0.71.0-nightly.20261122.geecccfcd5",
+  "tag_name": "v0.71.0-nightly.20261122.geecccfcd5",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.71.0-nightly.20261122.geecccfcd5",
+  "published_at": "2026-11-22T01:20:22Z",
+  "prerelease": true,
+  "draft": false,
+  "body": "**Full Changelog**: https://github.com/google-gemini/gemini-cli/compare/v0.71.0-nightly.20261121.geecccfcd5...v0.71.0-nightly.20261122.geecccfcd5"
+ },
+ {
+  "id": 453349994,
+  "name": "Release v0.71.0-nightly.20261121.geecccfcd5",
+  "tag_name": "v0.71.0-nightly.20261121.geecccfcd5",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.71.0-nightly.20261121.geecccfcd5",
+  "published_at": "2026-11-21T01:19:21Z",
+  "prerelease": true,
+  "draft": false,
+  "body": "## What's Changed\n* fix(cli): expand Windows home-relative paths using tilde and backslash by @urielefrenvirtusa in https://github.com/google-gemini/gemini-cli/pull/30376\n* fix(cli): resume most recen"
+ },
+ {
+  "id": 452146600,
+  "name": "Release v0.71.0-nightly.20261120.gd4cb1713f",
+  "tag_name": "v0.71.0-nightly.20261120.gd4cb1713f",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.71.0-nightly.20261120.gd4cb1713f",
+  "published_at": "2026-11-20T01:12:42Z",
+  "prerelease": true,
+  "draft": false,
+  "body": "## What's Changed\n* fix(core,cli): preserve literal `$` characters during template placeholder replacement by @jesussamuel-byte in https://github.com/google-gemini/gemini-cli/pull/30136\n* feat(cli): a"
+ },
+ {
+  "id": 451911873,
+  "name": "Release v0.71.0-preview.0",
+  "tag_name": "v0.71.0-preview.0",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.71.0-preview.0",
+  "published_at": "2026-11-19T20:48:23Z",
+  "prerelease": true,
+  "draft": false,
+  "body": "## What's Changed\n* Changelog for v0.70.0-preview.0 by @gemini-cli-robot in https://github.com/google-gemini/gemini-cli/pull/30361\n* chore(release): bump version to 0.71.0-nightly.20261118.g615d6bc8c "
+ },
+ {
+  "id": 451930728,
+  "name": "Release v0.70.0",
+  "tag_name": "v0.70.0",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.70.0",
+  "published_at": "2026-11-19T21:08:05Z",
+  "prerelease": false,
+  "draft": false,
+  "body": "## What's Changed\n* Changelog for v0.69.0-preview.0 by @gemini-cli-robot in https://github.com/google-gemini/gemini-cli/pull/30222\n* Changelog for v0.68.0 by @gemini-cli-robot in https://github.com/go"
+ },
+ {
+  "id": 450712216,
+  "name": "Release v0.70.0-preview.0",
+  "tag_name": "v0.70.0-preview.0",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.70.0-preview.0",
+  "published_at": "2026-11-19T00:09:03Z",
+  "prerelease": true,
+  "draft": false,
+  "body": "## What's Changed\n* Changelog for v0.69.0-preview.0 by @gemini-cli-robot in https://github.com/google-gemini/gemini-cli/pull/30222\n* Changelog for v0.68.0 by @gemini-cli-robot in https://github.com/go"
+ },
+ {
+  "id": 450775032,
+  "name": "Release v0.69.0",
+  "tag_name": "v0.69.0",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.69.0",
+  "published_at": "2026-11-19T01:45:47Z",
+  "prerelease": false,
+  "draft": false,
+  "body": "## What's Changed\n* fix(core,cli): preserve literal `$` characters during template placeholder replacement by @jesussamuel-byte in https://github.com/google-gemini/gemini-cli/pull/30136\n* feat(cli): a"
+ },
+ {
+  "id": 440910717,
+  "name": "Release v0.69.0-preview.0",
+  "tag_name": "v0.69.0-preview.0",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.69.0-preview.0",
+  "published_at": "2026-11-10T21:05:08Z",
+  "prerelease": true,
+  "draft": false,
+  "body": "## What's Changed\n* fix(core,cli): preserve literal `$` characters during template placeholder replacement by @jesussamuel-byte in https://github.com/google-gemini/gemini-cli/pull/30136\n* feat(cli): a"
+ },
+ {
+  "id": 440922233,
+  "name": "Release v0.68.0",
+  "tag_name": "v0.68.0",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.68.0",
+  "published_at": "2026-11-10T21:17:07Z",
+  "prerelease": false,
+  "draft": false,
+  "body": "## What's Changed\n* Changelog for v0.67.0-preview.0 by @gemini-cli-robot in https://github.com/google-gemini/gemini-cli/pull/29990\n* Changelog for v0.66.0 by @gemini-cli-robot in https://github.com/go"
+ },
+ {
+  "id": 434376521,
+  "name": "Release v0.68.0-preview.0",
+  "tag_name": "v0.68.0-preview.0",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.68.0-preview.0",
+  "published_at": "2026-11-04T19:49:22Z",
+  "prerelease": true,
+  "draft": false,
+  "body": "## What's Changed\n* Changelog for v0.67.0-preview.0 by @gemini-cli-robot in https://github.com/google-gemini/gemini-cli/pull/29990\n* Changelog for v0.66.0 by @gemini-cli-robot in https://github.com/go"
+ },
+ {
+  "id": 434415349,
+  "name": "Release v0.67.0",
+  "tag_name": "v0.67.0",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.67.0",
+  "published_at": "2026-11-04T20:27:11Z",
+  "prerelease": false,
+  "draft": false,
+  "body": "## What's Changed\n* Changelog for v0.65.0 by @gemini-cli-robot in https://github.com/google-gemini/gemini-cli/pull/29853\n* chore(release): bump version to 0.67.0-nightly.20261020.gb041de017 by @gemini"
+ },
+ {
+  "id": 433403931,
+  "name": "Release v0.67.0-nightly.20261104.g89e9d25d6",
+  "tag_name": "v0.67.0-nightly.20261104.g89e9d25d6",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.67.0-nightly.20261104.g89e9d25d6",
+  "published_at": "2026-11-04T01:20:49Z",
+  "prerelease": true,
+  "draft": false,
+  "body": "## What's Changed\n* fix(cli): handle stream failures during extension release downloads by @duvanka-prasad in https://github.com/google-gemini/gemini-cli/pull/30100\n* fix(core): preserve explicit gemi"
+ },
+ {
+  "id": 432150161,
+  "name": "Release v0.67.0-nightly.20261103.g0ac57c029",
+  "tag_name": "v0.67.0-nightly.20261103.g0ac57c029",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.67.0-nightly.20261103.g0ac57c029",
+  "published_at": "2026-11-03T01:18:35Z",
+  "prerelease": true,
+  "draft": false,
+  "body": "## What's Changed\n* fix(core): prevent interrupted Whisper model downloads from being treated as installed by @tadipavan in https://github.com/google-gemini/gemini-cli/pull/30058\n\n\n**Full Changelog**:"
+ },
+ {
+  "id": 430979718,
+  "name": "Release v0.67.0-nightly.20261102.g6814e00d6",
+  "tag_name": "v0.67.0-nightly.20261102.g6814e00d6",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.67.0-nightly.20261102.g6814e00d6",
+  "published_at": "2026-11-02T01:22:38Z",
+  "prerelease": true,
+  "draft": false,
+  "body": "**Full Changelog**: https://github.com/google-gemini/gemini-cli/compare/v0.67.0-nightly.20261101.g6814e00d6...v0.67.0-nightly.20261102.g6814e00d6"
+ },
+ {
+  "id": 430290332,
+  "name": "Release v0.67.0-nightly.20261101.g6814e00d6",
+  "tag_name": "v0.67.0-nightly.20261101.g6814e00d6",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.67.0-nightly.20261101.g6814e00d6",
+  "published_at": "2026-11-01T01:14:56Z",
+  "prerelease": true,
+  "draft": false,
+  "body": "**Full Changelog**: https://github.com/google-gemini/gemini-cli/compare/v0.67.0-nightly.20261031.g6814e00d6...v0.67.0-nightly.20261101.g6814e00d6"
+ },
+ {
+  "id": 429637949,
+  "name": "Release v0.67.0-nightly.20261031.g6814e00d6",
+  "tag_name": "v0.67.0-nightly.20261031.g6814e00d6",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.67.0-nightly.20261031.g6814e00d6",
+  "published_at": "2026-10-31T01:19:32Z",
+  "prerelease": true,
+  "draft": false,
+  "body": "## What's Changed\n* fix(core): honor .git/info/exclude and core.excludesFile in shadow repo by @urielefrenvirtusa in https://github.com/google-gemini/gemini-cli/pull/30034\n* fix(core): flush pending S"
+ },
+ {
+  "id": 428557825,
+  "name": "Release v0.67.0-nightly.20261030.gb633c0703",
+  "tag_name": "v0.67.0-nightly.20261030.gb633c0703",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.67.0-nightly.20261030.gb633c0703",
+  "published_at": "2026-10-30T01:22:17Z",
+  "prerelease": true,
+  "draft": false,
+  "body": "## What's Changed\n* docs(readme): clarify Gemini CLI scope, limitations, and tool landscape by @LyalinDotCom in https://github.com/google-gemini/gemini-cli/pull/29995\n* fix(cli): bound inline history "
+ },
+ {
+  "id": 426163846,
+  "name": "Release v0.67.0-nightly.20261028.gfa5c17365",
+  "tag_name": "v0.67.0-nightly.20261028.gfa5c17365",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.67.0-nightly.20261028.gfa5c17365",
+  "published_at": "2026-10-28T01:22:20Z",
+  "prerelease": true,
+  "draft": false,
+  "body": "## What's Changed\n* fix(core): allow trusted system paths on Android (Termux) for ripgrep resolution (#21836) by @amelidev in https://github.com/google-gemini/gemini-cli/pull/29884\n* fix(core): normal"
+ },
+ {
+  "id": 425931766,
+  "name": "Release v0.67.0-preview.0",
+  "tag_name": "v0.67.0-preview.0",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.67.0-preview.0",
+  "published_at": "2026-10-27T20:07:49Z",
+  "prerelease": true,
+  "draft": false,
+  "body": "## What's Changed\n* Changelog for v0.65.0 by @gemini-cli-robot in https://github.com/google-gemini/gemini-cli/pull/29853\n* chore(release): bump version to 0.67.0-nightly.20261020.gb041de017 by @gemini"
+ },
+ {
+  "id": 424935284,
+  "name": "Release v0.67.0-nightly.20261027.g363a13119",
+  "tag_name": "v0.67.0-nightly.20261027.g363a13119",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.67.0-nightly.20261027.g363a13119",
+  "published_at": "2026-10-27T01:15:46Z",
+  "prerelease": true,
+  "draft": false,
+  "body": "## What's Changed\n* fix(core): classify project spending cap errors as terminal quota errors by @jesussamuel-byte in https://github.com/google-gemini/gemini-cli/pull/29961\n* fix(acp): include MCP serv"
+ },
+ {
+  "id": 425948678,
+  "name": "Release v0.66.0",
+  "tag_name": "v0.66.0",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.66.0",
+  "published_at": "2026-10-27T20:26:28Z",
+  "prerelease": false,
+  "draft": false,
+  "body": "## What's Changed\n* Update ROADMAP.md to no longer reference outdated 2025 roadmap by @DavidAPierce in https://github.com/google-gemini/gemini-cli/pull/29723\n* Changelog for v0.65.0-preview.0 by @gemi"
+ },
+ {
+  "id": 423085116,
+  "name": "Release v0.67.0-nightly.20261025.gcd1b45c2d",
+  "tag_name": "v0.67.0-nightly.20261025.gcd1b45c2d",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.67.0-nightly.20261025.gcd1b45c2d",
+  "published_at": "2026-10-25T01:31:55Z",
+  "prerelease": true,
+  "draft": false,
+  "body": "**Full Changelog**: https://github.com/google-gemini/gemini-cli/compare/v0.67.0-nightly.20261024.gcd1b45c2d...v0.67.0-nightly.20261025.gcd1b45c2d"
+ },
+ {
+  "id": 422439862,
+  "name": "Release v0.67.0-nightly.20261024.gcd1b45c2d",
+  "tag_name": "v0.67.0-nightly.20261024.gcd1b45c2d",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.67.0-nightly.20261024.gcd1b45c2d",
+  "published_at": "2026-10-24T01:15:53Z",
+  "prerelease": true,
+  "draft": false,
+  "body": "## What's Changed\n* fix(cli): stop continuation stream processing and auto-nudge after request cancellation by @jesussamuel-byte in https://github.com/google-gemini/gemini-cli/pull/29868\n* fix(cli): c"
+ },
+ {
+  "id": 421364633,
+  "name": "Release v0.67.0-nightly.20261023.ga713410ab",
+  "tag_name": "v0.67.0-nightly.20261023.ga713410ab",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.67.0-nightly.20261023.ga713410ab",
+  "published_at": "2026-10-23T01:35:10Z",
+  "prerelease": true,
+  "draft": false,
+  "body": "## What's Changed\n* fix(a2a-server,core): preserve extended token usage metadata and align per-turn reporting by @jvargassanchez-dot in https://github.com/google-gemini/gemini-cli/pull/29834\n* fix(cor"
+ },
+ {
+  "id": 420213775,
+  "name": "Release v0.67.0-nightly.20261022.g09d81bf11",
+  "tag_name": "v0.67.0-nightly.20261022.g09d81bf11",
+  "html_url": "https://github.com/google-gemini/gemini-cli/releases/tag/v0.67.0-nightly.20261022.g09d81bf11",
+  "published_at": "2026-10-22T01:23:52Z",
+  "prerelease": true,
+  "draft": false,
+  "body": "## What's Changed\n* Changelog for v0.66.0-preview.0 by @gemini-cli-robot in https://github.com/google-gemini/gemini-cli/pull/29852\n* feat(cli): bridge the IDE companion into container sandboxes over e"
+ }
+]

@@ -51,9 +51,13 @@ export default async function SettingsPage() {
               hnItemLimit: settings.hnItemLimit,
               githubTrendingLimit: settings.githubTrendingLimit,
               releasesPerRepo: settings.releasesPerRepo,
-              anthropicItemLimit: settings.anthropicItemLimit,
+              officialItemLimit: settings.officialItemLimit,
+              officialLookbackDays: settings.officialLookbackDays,
             }}
-            initialRetentionDays={settings.retentionDays}
+            initialRetention={{
+              retentionDays: settings.retentionDays,
+              officialRetentionDays: settings.officialRetentionDays,
+            }}
           />
         </section>
 

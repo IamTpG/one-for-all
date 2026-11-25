@@ -30,12 +30,14 @@ import clsx from "clsx";
 import { ArrowUpRightIcon, BookmarkIcon, ChevronIcon } from "@/lib/icons";
 import { resolveLocalized, VI_NOT_READY_MESSAGE, type Language } from "@/lib/language";
 import type { FeedItem } from "@/lib/types";
+import { officialTitle } from "@/lib/official/headline";
+import { PUBLISHERS } from "@/lib/sourceRegistry";
 import {
   isNewItem,
   primaryTopic,
   releaseVersion,
-  repoDisplayName,
   timeAgo,
+  type LaunchGroup,
   type ReleaseGroup,
 } from "./feedModel";
 import { markSeen, toggleSaved } from "./feedState";
@@ -144,10 +146,19 @@ function Meta({
   const { copy } = ctx;
   const topic = primaryTopic(item);
   const parts: string[] = [];
+  // An official update leads with its publisher (no "official" label: the
+  // publisher's name is the mark), then the source it came from. Anything
+  // else leads with its topic, as before.
+  const publisher = isOfficialUpdate(item) ? publisherName(item) : null;
   const topicLabel = label ?? (topic ? copy.topicShort[topic] : undefined);
-  if (topicLabel) parts.push(topicLabel);
-  parts.push(item.sourceType === "github-release" ? (item.title.split(":")[0] ?? item.source) : item.source);
-  parts.push(timeAgo(ctx.now, new Date(item.publishedAt).getTime(), copy));
+  if (!publisher && topicLabel) parts.push(topicLabel);
+  const sourceLabel = item.sourceType === "github-release" ? (item.title.split(":")[0] ?? item.source) : item.source;
+  if (sourceLabel !== publisher) parts.push(sourceLabel);
+  parts.push(
+    item.official?.dateApprox === "month"
+      ? copy.monthOnly(new Date(item.publishedAt))
+      : timeAgo(ctx.now, new Date(item.publishedAt).getTime(), copy)
+  );
   if (item.videoEmbedHtml) {
     parts.push(item.lengthMinutes ? copy.videoMinutes(item.lengthMinutes) : copy.video);
   } else if (item.lengthMinutes && item.lengthMinutes >= 8) {
@@ -163,14 +174,39 @@ function Meta({
           {copy.newBadge}
         </span>
       )}
-      <span className={styles.metaText}>{parts.join(" · ")}</span>
+      <span className={styles.metaText}>
+        {publisher && (
+          <>
+            <span className={styles.metaPublisher}>{publisher}</span>
+            {" · "}
+          </>
+        )}
+        {parts.join(" · ")}
+      </span>
       <Actions item={item} ctx={ctx} title={title} />
     </div>
   );
 }
 
+// An official update (a vendor's own release note or product post judged to
+// be a change) as opposed to an item that merely comes from a vendor blog.
+function isOfficialUpdate(item: FeedItem): boolean {
+  return Boolean(item.official?.kind);
+}
+
+function publisherName(item: FeedItem): string | null {
+  const id = item.official?.publisher;
+  return id ? (PUBLISHERS[id]?.name ?? id) : null;
+}
+
 function Summary({ item, ctx, className }: { item: FeedItem; ctx: RowContext; className?: string }) {
-  const localized = resolveLocalized(item.summary, item.summaryVi, ctx.language);
+  // For an official update the second line says who gets it ("Pro, Max,
+  // Team · Web, Desktop") when that is known, else the summary. Availability
+  // is English product terms in both languages.
+  const availability = isOfficialUpdate(item) ? item.official?.availability : undefined;
+  const localized = availability
+    ? { text: availability, note: ctx.language === "vi" && !item.titleVi ? VI_NOT_READY_MESSAGE : null }
+    : resolveLocalized(item.summary, item.summaryVi, ctx.language);
   if (!localized.text) return null;
   return (
     <>
@@ -182,11 +218,15 @@ function Summary({ item, ctx, className }: { item: FeedItem; ctx: RowContext; cl
   );
 }
 
-function Entities({ item }: { item: FeedItem }) {
-  if (!item.entities || item.entities.length === 0) return null;
+// The kind badge of an official update comes first, then any entity chips.
+function Entities({ item, ctx }: { item: FeedItem; ctx: RowContext }) {
+  const kind = isOfficialUpdate(item) ? ctx.copy.kinds[item.official!.kind!] : null;
+  const entities = item.entities ?? [];
+  if (!kind && entities.length === 0) return null;
   return (
     <ul className={styles.entities}>
-      {item.entities.map((entity) => (
+      {kind && <li>{kind}</li>}
+      {entities.map((entity) => (
         <li key={entity}>{entity}</li>
       ))}
     </ul>
@@ -194,7 +234,11 @@ function Entities({ item }: { item: FeedItem }) {
 }
 
 function localizedTitle(item: FeedItem, language: Language): string {
-  return resolveLocalized(item.title, item.titleVi, language).text ?? item.title;
+  // A generic source title ("2.1.331") gives way to the official headline
+  // (Groq's, else one derived from the body); Vietnamese prefers titleVi,
+  // which is translated from that headline.
+  const base = officialTitle(item);
+  return resolveLocalized(base, item.titleVi, language).text ?? base;
 }
 
 export function LeadStory({ item, ctx, withImage }: { item: FeedItem; ctx: RowContext; withImage: boolean }) {
@@ -226,7 +270,7 @@ export function LeadStory({ item, ctx, withImage }: { item: FeedItem; ctx: RowCo
           </HeadlineLink>
         </h2>
         <Summary item={item} ctx={ctx} className={styles.leadSummary} />
-        <Entities item={item} />
+        <Entities item={item} ctx={ctx} />
         <Meta item={item} ctx={ctx} isNew={isNew} title={title} />
       </div>
     </article>
@@ -250,7 +294,7 @@ export function ItemRow({ item, ctx }: { item: FeedItem; ctx: RowContext }) {
             </HeadlineLink>
           </h2>
           <Summary item={item} ctx={ctx} />
-          <Entities item={item} />
+          <Entities item={item} ctx={ctx} />
         </div>
         {showImage && (
           <HeadlineLink
@@ -285,9 +329,9 @@ export function ReleaseGroupRow({ group, ctx }: { group: ReleaseGroup; ctx: RowC
   const oldest = group.items[group.items.length - 1];
   const newCount = group.items.filter((item) => isNewItem(item, ctx.baseline)).length;
   const allSeen = group.items.every((item) => ctx.seen.has(item.id));
-  const name = repoDisplayName(group.repo);
+  const name = group.label;
   const countLabel = newCount > 0 ? copy.releasesNew(newCount) : copy.releasesAll(group.items.length);
-  const listId = `versions-${group.repo.replace(/[^a-z0-9]+/gi, "-")}`;
+  const listId = `versions-${group.groupKey.replace(/[^a-z0-9]+/gi, "-")}`;
 
   return (
     <article className={clsx(styles.row, allSeen && styles.seen)}>
@@ -335,6 +379,66 @@ export function ReleaseGroupRow({ group, ctx }: { group: ReleaseGroup; ctx: RowC
                     <span className={styles.newDot} aria-label={copy.newBadge} role="img" />
                   )}
                   {timeAgo(ctx.now, new Date(item.publishedAt).getTime(), copy)}
+                </span>
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+    </article>
+  );
+}
+
+// One launch covered by several official posts: the changelog-class entry
+// leads, the others sit behind a disclosure with their own source and age.
+export function LaunchGroupRow({ group, ctx }: { group: LaunchGroup; ctx: RowContext }) {
+  const [open, setOpen] = useState(false);
+  const { copy } = ctx;
+  const lead = group.lead;
+  const others = group.items.filter((item) => item !== lead);
+  const title = localizedTitle(lead, ctx.language);
+  const isNew = group.items.some((item) => isNewItem(item, ctx.baseline));
+  const allSeen = group.items.every((item) => ctx.seen.has(item.id));
+  const listId = `launch-${group.key.replace(/[^a-z0-9]+/gi, "-")}`;
+
+  return (
+    <article className={clsx(styles.row, allSeen && styles.seen)}>
+      <div className={styles.rowBody}>
+        <h2 className={styles.rowTitle}>
+          <HeadlineLink
+            item={lead}
+            ctx={ctx}
+            className={styles.titleLink}
+            seenIds={group.items.map((item) => item.id)}
+          >
+            {title}
+          </HeadlineLink>
+        </h2>
+        <Summary item={lead} ctx={ctx} />
+        <Entities item={lead} ctx={ctx} />
+        <Meta item={lead} ctx={ctx} isNew={isNew} title={title} />
+        <button
+          type="button"
+          className={styles.disclosure}
+          aria-expanded={open}
+          aria-controls={listId}
+          onClick={() => setOpen((value) => !value)}
+        >
+          {open ? copy.hideLaunchSources : copy.showLaunchSources(others.length)}
+          <ChevronIcon className={clsx(styles.disclosureIcon, open && styles.disclosureIconOpen)} />
+        </button>
+        {open && (
+          <ol id={listId} className={styles.versions}>
+            {others.map((item) => (
+              <li key={item.id} className={clsx(ctx.seen.has(item.id) && styles.seen)}>
+                <HeadlineLink item={item} ctx={ctx} className={styles.versionLink}>
+                  {localizedTitle(item, ctx.language)}
+                </HeadlineLink>
+                <span className={styles.versionTime}>
+                  {isNewItem(item, ctx.baseline) && (
+                    <span className={styles.newDot} aria-label={copy.newBadge} role="img" />
+                  )}
+                  {item.source} · {timeAgo(ctx.now, new Date(item.publishedAt).getTime(), ctx.copy)}
                 </span>
               </li>
             ))}

@@ -4,6 +4,8 @@ import { CRON_TICK_INTERVAL_MINUTES } from "@/lib/config";
 import {
   loadBackfillHistory,
   loadItemViewCounts,
+  loadOfficialGroqUsage,
+  loadOfficialHealth,
   loadRecentFailures,
   loadRuns,
   loadSettings,
@@ -11,7 +13,8 @@ import {
   loadTickCountsDaily,
   loadTicks,
 } from "@/lib/dashboardData";
-import { formatDuration, formatTs } from "@/lib/format";
+import { formatAgo, formatDuration, formatTs } from "@/lib/format";
+import { isStuck } from "@/lib/official/health";
 import { utcToIct } from "@/lib/schedule";
 import Collapsible from "../Collapsible";
 import styles from "../Dashboard.module.css";
@@ -29,7 +32,7 @@ const TICKS_PER_DAY = Math.floor((24 * 60) / CRON_TICK_INTERVAL_MINUTES);
 // Lower-priority detail, one collapsible card each: failures (open), pipeline,
 // and the four history tables.
 export default async function ActivityTab() {
-  const [settings, runs, ticks, backfill, recentFailures, items, itemViews, tickCounts] =
+  const [settings, runs, ticks, backfill, recentFailures, items, itemViews, tickCounts, officialHealth, officialGroq] =
     await Promise.all([
       loadSettings(),
       loadRuns(),
@@ -39,7 +42,10 @@ export default async function ActivityTab() {
       loadStoredItems(),
       loadItemViewCounts(),
       loadTickCountsDaily(),
+      loadOfficialHealth(),
+      loadOfficialGroqUsage(),
     ]);
+  const officialStuck = officialHealth.filter((row) => row.health && isStuck(row.health)).length;
 
   const latestRun = runs[0] ?? null;
   const lastRunPerSlot = settings.fetchTimesUtc.map((slotUtc) => ({
@@ -144,7 +150,9 @@ export default async function ActivityTab() {
                 <td>{source.label}</td>
                 <td>{source.count}</td>
                 <td>
-                  <span className={source.ok ? styles.badgeOk : styles.badgeFail}>{source.ok ? "ok" : "fail"}</span>
+                  <span className={source.ok ? styles.badgeOk : styles.badgeFail}>
+                    {source.ok ? (source.notModified ? "304" : "ok") : "fail"}
+                  </span>
                 </td>
                 <td className={styles.errorMessage}>{source.error || "—"}</td>
               </tr>
@@ -152,6 +160,56 @@ export default async function ActivityTab() {
           />
         ) : (
           <p className={styles.emptyState}>No fetch runs recorded yet.</p>
+        )}
+      </Collapsible>
+
+      <Collapsible title="Official sources" count={officialHealth.length} defaultOpen={officialStuck > 0}>
+        {officialHealth.length === 0 ? (
+          <p className={styles.emptyState}>No official sources are switched on.</p>
+        ) : (
+          <>
+            <ExpandableTable
+              initial={8}
+              head={
+                <tr>
+                  <th>Source</th>
+                  <th>Publisher</th>
+                  <th>Format</th>
+                  <th>Last OK</th>
+                  <th>Items</th>
+                  <th>Failures</th>
+                  <th>Empty runs</th>
+                  <th>Last error</th>
+                </tr>
+              }
+              rows={officialHealth.map(({ id, name, publisher, format, health }) => (
+                <tr key={id}>
+                  <td>{name}</td>
+                  <td>{publisher}</td>
+                  <td>{format}</td>
+                  <td>
+                    {health ? (health.lastOkAt ? formatAgo(health.lastOkAt) : "never") : "not run yet"}
+                    {health?.lastNotModified ? " (304)" : ""}
+                  </td>
+                  <td>{health ? health.lastCount : "—"}</td>
+                  <td>
+                    {health && health.consecutiveFailures > 0 ? (
+                      <span className={styles.badgeFail}>{health.consecutiveFailures}</span>
+                    ) : (
+                      "0"
+                    )}
+                  </td>
+                  <td>{health ? health.consecutiveZeroRuns : "—"}</td>
+                  <td className={styles.errorMessage}>{health?.lastError || "—"}</td>
+                </tr>
+              ))}
+            />
+            <p className="px-1 pt-2 text-xs text-ink-faint">
+              {officialGroq.avgTokens === null
+                ? "Groq tokens per official item: no calls recorded yet."
+                : `Groq tokens per official item: ${officialGroq.avgTokens.toLocaleString("en-US")} on average over ${officialGroq.requests} calls (last 2 UTC days).`}
+            </p>
+          </>
         )}
       </Collapsible>
 

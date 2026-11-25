@@ -28,6 +28,8 @@ export type FetchRunSourceResult = {
   newItems?: number;
   ok: boolean;
   error?: string;
+  // Answered 304 to a conditional request: ok, nothing new.
+  notModified?: boolean;
 };
 
 export type FetchRunRecord = {

@@ -95,6 +95,7 @@ const vi: Copy = {
   unsaveLabel: "Bỏ lưu",
   original: {
     rss: "Đọc bản gốc",
+    changelog: "Đọc bản gốc",
     hn: "Đọc bản gốc",
     "github-trending": "Mở repo",
     "github-release": "Xem trên GitHub",
@@ -164,6 +165,7 @@ const en: Copy = {
   unsaveLabel: "Remove from saved",
   original: {
     rss: "Read the original",
+    changelog: "Read the original",
     hn: "Read the original",
     "github-trending": "Open the repo",
     "github-release": "View on GitHub",

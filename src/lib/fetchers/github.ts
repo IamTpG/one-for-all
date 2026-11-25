@@ -2,6 +2,9 @@ import { marked } from "marked";
 import { GITHUB_TRENDING_POOL_SIZE } from "@/lib/config";
 import { errorMessage } from "@/lib/errors";
 import { hasAiContext } from "@/lib/keywordTopics";
+import { selectRecent, selectStableReleases, withOfficialRepos } from "@/lib/official/filters";
+import { OFFICIAL_REPOS } from "@/lib/official/sources";
+import { conditionalHeaders, validatorFromHeaders, validatorSignature, type SourceValidator } from "@/lib/official/validators";
 import type { FeedItem, FetchSourceResult } from "@/lib/types";
 import { sanitizeArticleHtml } from "@/lib/sanitize";
 import { slugify } from "@/lib/slug";
@@ -64,6 +67,24 @@ type GithubRelease = {
   html_url: string;
   body: string | null;
   published_at: string | null;
+  prerelease?: boolean;
+  draft?: boolean;
+};
+
+// Releases are fetched in a larger page than the limit because prereleases
+// and drafts are filtered out afterwards (a repo whose latest few releases
+// are all alphas would otherwise yield nothing).
+const RELEASES_PAGE_FACTOR = 3;
+const GITHUB_MAX_PER_PAGE = 100;
+
+export type OfficialReleaseOptions = {
+  limit: number;
+  lookbackDays: number;
+  disabledFeeds: string[];
+  // Stored ETags by sourceId. Only official repos use them: a 304 returns no
+  // items, which would let a community repo's releases age out of the store
+  // while still being the latest.
+  validators?: ReadonlyMap<string, SourceValidator>;
 };
 
 // Words too common in AI repo names to tell two repos apart.
@@ -132,18 +153,40 @@ export async function fetchGithubTrending(limit: number): Promise<FetchSourceRes
   }
 }
 
-async function fetchReleasesForRepo(repo: string, limit: number): Promise<FetchSourceResult> {
+async function fetchReleasesForRepo(
+  repo: string,
+  limit: number,
+  officialOptions: OfficialReleaseOptions
+): Promise<FetchSourceResult> {
   const sourceId = slugify(`${repo}-releases`);
   const label = `${repo} releases`;
+  const official = OFFICIAL_REPOS[repo];
+  // Official repos follow the official limit and are cut by publish date.
+  const effectiveLimit = official ? officialOptions.limit : limit;
   try {
+    const perPage = Math.min(effectiveLimit * RELEASES_PAGE_FACTOR, GITHUB_MAX_PER_PAGE);
+    const signature = validatorSignature({ limit: effectiveLimit, lookbackDays: officialOptions.lookbackDays });
+    const conditional = official ? conditionalHeaders(officialOptions.validators?.get(sourceId), signature) : {};
     const res = await fetch(
-      `https://api.github.com/repos/${repo}/releases?per_page=${limit}`,
-      { headers: githubHeaders(), cache: "no-store" }
+      `https://api.github.com/repos/${repo}/releases?per_page=${perPage}`,
+      { headers: { ...githubHeaders(), ...conditional }, cache: "no-store" }
     );
+    if (res.status === 304 && Object.keys(conditional).length > 0) {
+      console.log(`[github] ${label}: 304 not modified`);
+      return { sourceId, label, items: [], ok: true, notModified: true };
+    }
     await assertGithubOk(res, `GitHub releases API (${repo})`);
     const releases: GithubRelease[] = await res.json();
 
-    const items: FeedItem[] = releases.map((release) => {
+    const stable = selectStableReleases(releases, effectiveLimit);
+    const kept = official
+      ? selectRecent(
+          stable.map((release) => ({ release, publishedAt: release.published_at ?? undefined })),
+          { now: Date.now(), lookbackDays: officialOptions.lookbackDays, limit: effectiveLimit }
+        ).map(({ release }) => release)
+      : stable;
+
+    const items: FeedItem[] = kept.map((release) => {
       const body = (release.body ?? "").trim();
       return {
         id: `gh-release:${repo}:${release.id}`,
@@ -158,18 +201,34 @@ async function fetchReleasesForRepo(repo: string, limit: number): Promise<FetchS
           ? sanitizeArticleHtml(marked.parse(body, { async: false }))
           : undefined,
         publishedAt: release.published_at ?? new Date().toISOString(),
+        ...(official && {
+          official: {
+            publisher: official.publisher,
+            kind: "tool-release" as const,
+            kindFrom: "source" as const,
+            product: official.product,
+          },
+        }),
       };
     });
-    return { sourceId, label, items, ok: true };
+    const validator = official ? validatorFromHeaders(res.headers, signature) : undefined;
+    return { sourceId, label, items, ok: true, parsed: releases.length, ...(validator ? { validator } : {}) };
   } catch (err) {
     console.error(`[github] failed to fetch releases for ${repo}:`, err);
     return { sourceId, label, items: [], ok: false, error: errorMessage(err) };
   }
 }
 
+// Disabled official repos are not fetched at all; disabled community repos
+// keep today's behavior (fetched, hidden at render).
 export async function fetchGithubReleases(
   repos: string[],
-  perRepoLimit: number
+  perRepoLimit: number,
+  officialOptions: OfficialReleaseOptions
 ): Promise<FetchSourceResult[]> {
-  return Promise.all(repos.map((repo) => fetchReleasesForRepo(repo, perRepoLimit)));
+  const disabled = new Set(officialOptions.disabledFeeds);
+  const wanted = withOfficialRepos(repos, Object.keys(OFFICIAL_REPOS)).filter(
+    (repo) => !(repo in OFFICIAL_REPOS && disabled.has(slugify(`${repo}-releases`)))
+  );
+  return Promise.all(wanted.map((repo) => fetchReleasesForRepo(repo, perRepoLimit, officialOptions)));
 }

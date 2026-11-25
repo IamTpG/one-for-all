@@ -114,3 +114,28 @@ export function ArrowUpRightIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+
+export function CheckIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3.5 8.5 L6.5 11.5 L12.5 5" />
+    </svg>
+  );
+}
+
+export function MinusIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <path d="M4 8 H12" />
+    </svg>
+  );
+}
+
+export function CloseIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
+      <path d="M3 3 L9 9" />
+      <path d="M9 3 L3 9" />
+    </svg>
+  );
+}
